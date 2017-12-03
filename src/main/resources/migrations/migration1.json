@@ -248,24 +248,23 @@
             ]
         }
     ],
-    "topics": [
+    "topics": 
         {
             "type_uri": "org.deepamehta.signup.configuration",
             "uri": "org.deepamehta.signup.default_configuration",
             "childs": {
-                "org.deepamehta.signup.config_project_title"    : "My DeepaMehta",
-                "org.deepamehta.signup.config_webapp_title"     : "My DeepaMehta",
+                "org.deepamehta.signup.config_project_title"    : "Climbo",
+                "org.deepamehta.signup.config_webapp_title"     : "Climbo",
                 "org.deepamehta.signup.config_webapp_logo_path" : "/org.deepamehta.sign-up/images/deepamehta-ephant.png",
                 "org.deepamehta.signup.config_custom_css_path"  : "/org.deepamehta.sign-up/style/style.css",
-                "org.deepamehta.signup.config_read_more_url"    : "https://my.deepamehta.de/",
-                "org.deepamehta.signup.config_pages_footer"     : "<a href=\"https://www.deepamehta.de\" title=\"DeepaMehta Homepage\">https://www.deepamehta.de</a>",
-                "org.deepamehta.signup.config_tos_label"        : "I agree with the \"My DeepaMehta\" Terms of use.",
-                "org.deepamehta.signup.config_tos_detail"       : "Do not use the \"My DeepaMehta\" service if you do not agree to the following: information shared with this site, including usernames and passwords, will be made available to volunteer administrators and may not be treated confidentially. Volunteers may have full access to the systems hosting the projects, allowing them access to any data or other information you submit.<br/><br/> As a result, use of your real Wikimedia credentials is highly discouraged in wmflabs.org projects. You should use a different password for your account than you would on projects like Wikipedia, Commons, etc. By creating an account in this project and/or using other Wikimedia Labs Services, you agree that the volunteer administrators of this project will have access to any data you submit. Since access to this information by volunteers is fundamental to the operation of Labs, these terms regarding use of your data <i>expressly override</i> the Wikimedia Foundation's Privacy Policy as it relates to the use and access of your personal information.",
+                "org.deepamehta.signup.config_read_more_url"    : "https://climbo.econauten.de/",
+                "org.deepamehta.signup.config_pages_footer"     : "<a href=\"https://climbo.econauten.de/\" title=\"Climbo App\">https://climbo.econauten.de/</a>",
+                "org.deepamehta.signup.config_tos_label"        : "I agree with the \"Climbo\" Terms of use.",
+                "org.deepamehta.signup.config_tos_detail"       : "Do not use \"Climbo\" if you do not agree to the following: information shared with this site, including usernames and passwords, will be made available to volunteer administrators and may not be treated confidentially. Volunteers may have full access to the systems hosting the projects, allowing them access to any data or other information you submit.<br/><br/> As a result, use of your real Wikimedia credentials is highly discouraged in wmflabs.org projects. You should use a different password for your account than you would on projects like Wikipedia, Commons, etc. By creating an account in this project and/or using other Wikimedia Labs Services, you agree that the volunteer administrators of this project will have access to any data you submit. Since access to this information by volunteers is fundamental to the operation of Labs, these terms regarding use of your data <i>expressly override</i> the Wikimedia Foundation's Privacy Policy as it relates to the use and access of your personal information.",
                 "org.deepamehta.signup.config_pd_label"         : "I understand that any private information I give to this site may be made publicly available.",
                 "org.deepamehta.signup.config_pd_detail"        : "By using this project, you agree that any private information you give to this project may be made publicly available and not be treated as confidential. Additionally you agree that the volunteer administrators of this project will have access to any data you submit. This can include your IP address, your username/password combination for accounts created in Labs services, and any other information that you send.<br/><br/>The volunteer administrators of this project are bound by the Wikimedia Labs Terms of Use, and are not allowed to share this information or use it in any non-approved way. Since access to this information is fundamental to the operation of Wikimedia Labs, these terms regarding use of your data <i>expressly override</i> the Wikimedia Foundation's Privacy Policy as it relates to the use and access of your personal information.",
-                "org.deepamehta.signup.config_from_mailbox"     : "",
-                "org.deepamehta.signup.config_admin_mailbox"    : ""
+                "org.deepamehta.signup.config_from_mailbox"     : "ingo.rau@econauten.de",
+                "org.deepamehta.signup.config_admin_mailbox"    : "ingo.rau@econauten.de"
             }
         }
-    ]
 }
