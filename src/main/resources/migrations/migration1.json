@@ -248,7 +248,7 @@
             ]
         }
     ],
-    "topics": 
+    "topics":
         {
             "type_uri": "org.deepamehta.signup.configuration",
             "uri": "org.deepamehta.signup.default_configuration",

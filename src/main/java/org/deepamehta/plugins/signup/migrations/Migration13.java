@@ -19,8 +19,12 @@ public class Migration13  extends Migration {
 
     @Override
     public void run() {
-        logger.info("###### Load Sign-up Configuration Topic");
+        logger.info("###### Load Default Sign-up Configuration Topic");
         Topic config = dm4.getTopicByUri("org.deepamehta.signup.default_configuration");
+        config.getChildTopics().set("org.deepamehta.signup.start_page_url", "/");
+        config.getChildTopics().set("org.deepamehta.signup.home_page_url", "/");
+        config.getChildTopics().set("org.deepamehta.signup.loading_app_hint", "Loading Climbo..");
+        config.getChildTopics().set("org.deepamehta.signup.logging_out_hint", "Logging out..");
         logger.info("###### Installed Climbo specific Sign-up Configuraton");
     }
     
