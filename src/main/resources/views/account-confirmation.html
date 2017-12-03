@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta charset="utf-8"></meta>
+        <title th:text="'Account confirmation - ' + ${title}">Account Confirmation</title>
+        <link rel="stylesheet" th:href="${css_path}" type="text/css" />
+    </head>
+
+    <body class="ok-page sign-up">
+
+        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
+
+        <div id="page-header">
+            <a th:href="${home_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
+                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
+                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
+                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
+            </a>
+        </div>
+        
+        <div id="receipt-view" class="dialog-body">
+            <h2 th:text="${requested_page_title}">You've got mail</h2>
+            <p>
+                <span th:text="${requested_page_1}">We sent you an Email for confirmation.</span><br/><br/>
+                <span th:text="${requested_page_2}">Please click on the link you find in the Email within the next 60 minutes.</span><br/>
+            </p>
+            <p th:text="${requested_page_3}">
+                Thank you and have a nice day!
+            </p>
+            <!-- p>
+               Do show a configurable href here so we allow navigation back to the frontpage while they
+               confirm their mailbox.
+            </p-->
+        </div>
+    </body>
+
+</html>

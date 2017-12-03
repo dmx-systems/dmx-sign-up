@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta charset="utf-8"></meta>
+        <title th:text="${signup_title} + ' - ' + ${title}">Sign up</title>
+        <link rel="stylesheet" th:href="${css_path}" type="text/css" />
+        <script type="text/javascript" src="/de.deepamehta.accesscontrol/script/vendor/sha256.js"></script>
+        <script type="text/javascript" src="/org.deepamehta.sign-up/script/sign-up.js" />
+        <script th:inline="javascript">
+        /*<![CDATA[*/
+            signupConfig.appLoadingMessage = /*[[${loading_app_hint}]]*/ 'Loading Webclient';
+            signupConfig.appStartPageURL = /*[[${start_url}]]*/ '/';
+            signupConfig.passwordLength = /*[[${password_length_hint}]]*/ "Your password must be at least 8 characters long.";
+            signupConfig.passwordMatch = /*[[${password_match_hint}]]*/ "Your passwords do not match.";
+            signupConfig.checkTerms = /*[[${check_terms_hint}]]*/ "First, please check our terms and conditions.";
+            signupConfig.usernameInvalid = /*[[${username_invalid_hint}]]*/ "This username would be invalid.";
+            signupConfig.usernameTaken = /*[[${username_taken_hint}]]*/ "This username is already taken.";
+            signupConfig.emailInvalid = /*[[${email_invalid_hint}]]*/ "This Email Address would be invalid.";
+            signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
+            signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
+        /*]]>*/
+        </script>
+        <meta th:replace="fragments/tracker" />
+    </head>
+
+    <body class="sign-up-page sign-up">
+
+        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
+
+        <div id="page-header">
+            <a th:href="${home_url}" title="Launch Web Application" th:title="${title}">
+                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
+                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
+                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
+            </a>
+        </div>
+
+        <div id="preamble">
+            <form name="aggreement">
+                <div class="part">
+                    <input id="toscheck" type="checkbox" onclick="javascript:checkAgreements()" class="tos-check"></input>
+                    <label for="toscheck" th:text="${tos_label}">I agree with the projects Terms of use.</label>
+                    <a href="javascript:showLabsTermsText()" title="Read Details" th:text="${read_more}">Read more</a>
+                    <div id="tos-details" th:utext="${tos_details}"></div>
+                </div>
+                <div class="part">
+                    <input id="privateinfo" type="checkbox" onclick="javascript:checkAgreements()" class="private-info-check"></input>
+                    <label for="privateinfo" th:text="${pd_label}">I understand that any private information I give to this site may be made publicly available.</label>
+                    <a href="javascript:showLabsPrivateText()" title="Read Details" th:text="${read_more}">Read more</a><br/>
+                    <div id="private-details" th:utext="${pd_details}"></div>
+                </div>
+            </form>
+        </div>
+
+        <div id="sign-up-view" class="dialog-body">
+            <h2 th:text="${signup_title}">Sign up</h2>
+            <form class="sign-up-form" action="javascript:voidFunction();" onsubmit="javascript:createAccount();">
+                <!-- label for="username">Username</label-->
+                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username"
+                       onblur="checkUserNameAvailability()" class="sign-up username" />
+                <!-- label for="pass-one">Password</label-->
+                <input type="password" id="pass-one" name="pass-one" th:placeholder="${label_password}" title="Password"
+                       onblur="checkPassword()" class="sign-up password" />
+                <!-- label for="pass-two">Password (Repeat)</label-->
+                <input type="password" id="pass-two" name="pass-two" th:placeholder="${label_password_repeat}" title="Password (Repeat)"
+                       onblur="comparePasswords()" class="sign-up password" />
+                <!-- label for="mailbox">Mailbox</label-->
+                <input type="text" id="mailbox" name="mailbox" th:placeholder="${label_email}" title="Email Address"
+                       onblur="checkMailboxAvailability()" class="sign-up mailbox" />
+                <div id="message-view"><span id="message"></span></div>
+                <div th:if="${administration_workspace_member}">
+                    <input id="skip-confirmation" name="skip-confirmation" type="checkbox"
+                           title="Skip the confirmation process"/>
+                    <label for="skip-confirmation" th:text="${skip_confirmation_mail_label}">
+                        Do not send confirmation mail (i know what i am doing).
+                    </label>
+                </div>
+                <input type="submit" id="create" th:value="${create_account}" title="Create Account" class="sign-up ok" />
+                &nbsp;
+                <span th:text="${or_label}">or</span> <a href="/sign-up/login" th:text="${log_in_small}" title="log in">log in</a>.
+            </form>
+        </div>
+
+        <div id="page-footer" th:utext="${footer}">
+        </div>
+
+    </body>
+
+    <noscript>
+        Without JavaScript we can not check if your desired username or mailbox is already in use. This means we cannot check in advance
+        if your chosen password meets our requirements (minimum of 8 characters).
+        Thus, your account creation may just fail. Thanks for your understanding.
+    </noscript>
+
+</html>

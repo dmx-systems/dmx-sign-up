@@ -1,0 +1,12 @@
+ {
+     "topics": [
+        {
+            "type_uri": "dm4.notes.note",
+            "uri": "org.deepamehta.signup.api_membership_requests",
+            "childs": {
+                "dm4.notes.title"    : "API Membership Requests",
+                "dm4.notes.text"     : "A Note topic to collect all the API Workspace Membersip requests. This is helpful so \"admin\" can to an e.g. \"Confidential\" Workspace (when logged in).<br/>This topic has all usernames associated which explicitly confirmed our API Terms of Service.<br/><br/>Admin, never remove topics related to this note manually."
+            }
+        }
+    ]
+}

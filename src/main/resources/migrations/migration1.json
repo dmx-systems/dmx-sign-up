@@ -1,0 +1,271 @@
+{
+    "topic_types": [
+        {
+            "value": "Sign-up Config: Web-App Title",
+            "uri": "org.deepamehta.signup.config_webapp_title",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Web-App Logo Path",
+            "uri": "org.deepamehta.signup.config_webapp_logo_path",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Custom CSS Path",
+            "uri": "org.deepamehta.signup.config_custom_css_path",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Project Title",
+            "uri": "org.deepamehta.signup.config_project_title",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: ToS Checkbox Label",
+            "uri": "org.deepamehta.signup.config_tos_label",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: ToS Detail Text",
+            "uri": "org.deepamehta.signup.config_tos_detail",
+            "data_type_uri": "dm4.core.html",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 5
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Personal Data Checkbox Label",
+            "uri": "org.deepamehta.signup.config_pd_label",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Personal Data Detail Text",
+            "uri": "org.deepamehta.signup.config_pd_detail",
+            "data_type_uri": "dm4.core.html",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 5
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: \"Read more\" URL",
+            "uri": "org.deepamehta.signup.config_read_more_url",
+            "data_type_uri": "dm4.core.text",
+            "index_mode_uris": ["dm4.core.key"],
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: Sign-up Page Footer",
+            "uri": "org.deepamehta.signup.config_pages_footer",
+            "data_type_uri": "dm4.core.html",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false,
+                        "dm4.webclient.input_field_rows": 3
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: System Recipient Mailbox",
+            "uri": "org.deepamehta.signup.config_admin_mailbox",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: System From Mailbox",
+            "uri": "org.deepamehta.signup.config_from_mailbox",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Configuration",
+            "uri": "org.deepamehta.signup.configuration",
+            "data_type_uri": "dm4.core.composite",
+            "assoc_defs": [
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_project_title",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_tos_label",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_tos_detail",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_pd_label",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_pd_detail",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_webapp_title",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_webapp_logo_path",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_custom_css_path",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_read_more_url",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_pages_footer",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_from_mailbox",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                },
+                {
+                    "child_type_uri":           "org.deepamehta.signup.config_admin_mailbox",
+                    "child_cardinality_uri":    "dm4.core.one",
+                    "assoc_type_uri":           "dm4.core.composition_def"
+                }
+            ], "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": true
+                    }
+                }
+            ]
+        }
+    ],
+    "topics": [
+        {
+            "type_uri": "org.deepamehta.signup.configuration",
+            "uri": "org.deepamehta.signup.default_configuration",
+            "childs": {
+                "org.deepamehta.signup.config_project_title"    : "My DeepaMehta",
+                "org.deepamehta.signup.config_webapp_title"     : "My DeepaMehta",
+                "org.deepamehta.signup.config_webapp_logo_path" : "/org.deepamehta.sign-up/images/deepamehta-ephant.png",
+                "org.deepamehta.signup.config_custom_css_path"  : "/org.deepamehta.sign-up/style/style.css",
+                "org.deepamehta.signup.config_read_more_url"    : "https://my.deepamehta.de/",
+                "org.deepamehta.signup.config_pages_footer"     : "<a href=\"https://www.deepamehta.de\" title=\"DeepaMehta Homepage\">https://www.deepamehta.de</a>",
+                "org.deepamehta.signup.config_tos_label"        : "I agree with the \"My DeepaMehta\" Terms of use.",
+                "org.deepamehta.signup.config_tos_detail"       : "Do not use the \"My DeepaMehta\" service if you do not agree to the following: information shared with this site, including usernames and passwords, will be made available to volunteer administrators and may not be treated confidentially. Volunteers may have full access to the systems hosting the projects, allowing them access to any data or other information you submit.<br/><br/> As a result, use of your real Wikimedia credentials is highly discouraged in wmflabs.org projects. You should use a different password for your account than you would on projects like Wikipedia, Commons, etc. By creating an account in this project and/or using other Wikimedia Labs Services, you agree that the volunteer administrators of this project will have access to any data you submit. Since access to this information by volunteers is fundamental to the operation of Labs, these terms regarding use of your data <i>expressly override</i> the Wikimedia Foundation's Privacy Policy as it relates to the use and access of your personal information.",
+                "org.deepamehta.signup.config_pd_label"         : "I understand that any private information I give to this site may be made publicly available.",
+                "org.deepamehta.signup.config_pd_detail"        : "By using this project, you agree that any private information you give to this project may be made publicly available and not be treated as confidential. Additionally you agree that the volunteer administrators of this project will have access to any data you submit. This can include your IP address, your username/password combination for accounts created in Labs services, and any other information that you send.<br/><br/>The volunteer administrators of this project are bound by the Wikimedia Labs Terms of Use, and are not allowed to share this information or use it in any non-approved way. Since access to this information is fundamental to the operation of Wikimedia Labs, these terms regarding use of your data <i>expressly override</i> the Wikimedia Foundation's Privacy Policy as it relates to the use and access of your personal information.",
+                "org.deepamehta.signup.config_from_mailbox"     : "",
+                "org.deepamehta.signup.config_admin_mailbox"    : ""
+            }
+        }
+    ]
+}

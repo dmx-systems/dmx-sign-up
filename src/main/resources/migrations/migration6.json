@@ -1,0 +1,60 @@
+{
+    "topic_types": [
+        {
+            "value": "Sign-up Config: API Description",
+            "uri": "org.deepamehta.signup.config_api_description",
+            "data_type_uri": "dm4.core.html",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: API Details",
+            "uri": "org.deepamehta.signup.config_api_details",
+            "data_type_uri": "dm4.core.html",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: API Enabled",
+            "uri": "org.deepamehta.signup.config_api_enabled",
+            "data_type_uri": "dm4.core.boolean",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        },
+        {
+            "value": "Sign-up Config: API Workspace URI",
+            "uri": "org.deepamehta.signup.config_api_workspace_uri",
+            "data_type_uri": "dm4.core.text",
+            "view_config_topics": [
+                {
+                    "type_uri": "dm4.webclient.view_config",
+                    "childs": {
+                        "dm4.webclient.show_in_create_menu": false,
+                        "dm4.webclient.searchable_as_unit": false
+                    }
+                }
+            ]
+        }
+    ]
+}

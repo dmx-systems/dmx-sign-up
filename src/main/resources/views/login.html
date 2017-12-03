@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta charset="utf-8"></meta>
+        <title th:text="'Log in - ' + ${title}">Log in</title>
+        <link rel="stylesheet" th:href="${css_path}" type="text/css" />
+        <script type="text/javascript" src="/de.deepamehta.accesscontrol/script/vendor/sha256.js"></script>
+        <script type="text/javascript" src="/org.deepamehta.sign-up/script/sign-up.js" />
+        <script th:inline="javascript">
+        /*<![CDATA[*/
+            signupConfig.appLoadingMessage = /*[[${loading_app_hint}]]*/ 'Loading Webclient';
+            signupConfig.appStartPageURL = /*[[${start_url}]]*/ '/';
+            signupConfig.passwordLength = /*[[${password_length_hint}]]*/ "Your password must be at least 8 characters long.";
+            signupConfig.passwordMatch = /*[[${password_match_hint}]]*/ "Your passwords do not match.";
+            signupConfig.checkTerms = /*[[${check_terms_hint}]]*/ "First, please check our terms and conditions.";
+            signupConfig.usernameInvalid = /*[[${username_invalid_hint}]]*/ "This username would be invalid.";
+            signupConfig.usernameTaken = /*[[${username_taken_hint}]]*/ "This username is already taken.";
+            signupConfig.emailInvalid = /*[[${email_invalid_hint}]]*/ "This Email Address would be invalid.";
+            signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
+            signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
+        /*]]>*/
+        </script>
+        <meta th:replace="fragments/tracker" />
+    </head>
+
+    <body class="log-in-page sign-up">
+
+        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
+
+        <div id="page-header">
+            <a th:href="${home_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
+                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
+                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
+                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
+            </a>
+        </div>
+        <div id="log-in-view" class="dialog-body">
+            <h2 th:text="${login_title}">Log in</h2>
+            <form class="log-in-form" action="javascript:voidFunction();" onsubmit="javascript:doLogin()">
+                <!-- label for="username">Username</label-->
+                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username" class="log-in sign-up username" />
+                <!-- label for="password">Password</label-->
+                <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
+                <div id="message-view"><span id="message"></span></div>
+                <input type="submit" th:value="${login}" class="log-in sign-up ok" />&nbsp;<span th:text="${or_label}">or</span> <a href="/sign-up/" th:text="${create_account}" >create account</a>.
+                <p class="password-reset">
+                    <span th:text="${label_forgot_password}" title="Forgot your password?">Forgot your password?</span><br/>
+                    <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
+                </p>
+            </form>
+        </div>
+
+        <div id="page-footer" th:utext="${footer}"></div>
+
+    </body>
+
+    <noscript>
+            Without JavaScript we can not authenticate you, sorry.
+    </noscript>
+
+</html>

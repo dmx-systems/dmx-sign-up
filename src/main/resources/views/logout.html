@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta charset="utf-8"></meta>
+        <title th:text="'Logout - ' + ${title}">Log in</title>
+        <link rel="stylesheet" th:href="${css_path}" type="text/css" />
+        <script type="text/javascript" src="/de.deepamehta.accesscontrol/script/vendor/sha256.js"></script>
+        <script type="text/javascript" src="/org.deepamehta.sign-up/script/sign-up.js" />
+        <script th:inline="javascript">
+        /*<![CDATA[*/
+            signupConfig.appLoggingOutHint = /*[[${logging_out_hint}]]*/ 'Logging out..';
+            signupConfig.appHomePageURL = /*[[${home_url}]]*/ '/';
+        /*]]>*/
+        </script>
+        <meta th:replace="fragments/tracker" />
+    </head>
+
+    <body class="logout-page sign-up">
+
+        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
+
+        <div id="page-header">
+            <a th:href="${home_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
+                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
+                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
+                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
+            </a>
+        </div>
+        <div class="logout dialog-body">
+            <div id="message-view">
+                <span th:text="${logged_in_as}">Logged in as</span>&nbsp;<span th:text="${username}" id="message"></span></div>
+            <form class="logout-form" action="javascript:doLogout()">
+                <input type="submit" th:value="${logout}" class="ok sign-up" />
+            </form>
+        </div>
+
+        <div id="page-footer" th:utext="${footer}">
+        </div>
+
+    </body>
+
+    <noscript>
+            Without JavaScript we can not authenticate you, sorry.
+    </noscript>
+
+</html>
