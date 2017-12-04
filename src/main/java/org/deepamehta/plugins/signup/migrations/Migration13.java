@@ -25,6 +25,8 @@ public class Migration13  extends Migration {
         config.getChildTopics().set("org.deepamehta.signup.home_page_url", "/");
         config.getChildTopics().set("org.deepamehta.signup.loading_app_hint", "Loading Climbo..");
         config.getChildTopics().set("org.deepamehta.signup.logging_out_hint", "Logging out..");
+        config.getChildTopics().set("org.deepamehta.signup.config_webapp_logo_path", "/org.deepamehta.sign-up/images/place_pink.png");
+        // ### config.getChildTopics().set("org.deepamehta.signup.config_custom_css_path", "");
         logger.info("###### Installed Climbo specific Sign-up Configuraton");
     }
     
