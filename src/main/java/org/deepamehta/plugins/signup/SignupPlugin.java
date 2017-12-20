@@ -316,6 +316,67 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      * @param username  String must be unique
      * @param password  String must be SHA-256 encoded
      * @param mailbox   String must be unique
+     * @return A String containing a JSON Object with the following properties:
+     * { "state": "success" | "error", "email_verification": "skipped" | "inactive" | "send" }
+     */
+    @GET
+    @Path("/create/{username}/{pass-one}/{mailbox}")
+    @Override
+    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
+                                    @PathParam("mailbox") String mailbox) {
+        return doSignupRequest(username, password, mailbox, false);
+    }
+
+    /**
+     * A HTTP resource to create a new user account.
+     * @param username  String must be unique
+     * @param password  String must be SHA-256 encoded
+     * @param mailbox   String must be unique
+     * @param skipConfirmation  Flag if "true" skips initiating the email verification process
+     * (useful to allow admins to create new accounts without verifying users).
+     * @return A String containing a JSON Object with the following properties:
+     * {
+     *   "state": "success" | "error",
+     *   "email_verification": "skipped" | "inactive" | "send",
+     *   "accounts_enabled": true | false
+     * }
+     */
+    @GET
+    @Path("/create/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
+    @Override
+    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
+                                        @PathParam("mailbox") String mailbox,
+                                        @PathParam("skipConfirmation") boolean skipConfirmation) {
+        JSONObject response = new JSONObject();
+        try {
+            response.put("state", "error");
+            response.put("accounts_enabled", DM4_ACCOUNTS_ENABLED);
+            if (activeModuleConfiguration.getChildTopics().getBoolean(CONFIG_EMAIL_CONFIRMATION)) {
+                if (skipConfirmation && isAdministrationWorkspaceMember()) {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
+                    createSimpleUserAccount(username, password, mailbox);
+                    response.put("email_verification", "skipped");
+                } else {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
+                    sendUserValidationToken(username, password, mailbox);
+                    response.put("email_verification", "send");
+                }
+            } else {
+                createSimpleUserAccount(username, password, mailbox);
+                response.put("email_verification", "inactive");
+            }
+            response.put("state", "success");
+        } catch (JSONException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return response.toString();
+    }
+
+    /**
+     * A HTTP resource to create a new user account.
+     * @param username  String must be unique
+     * @param password  String must be SHA-256 encoded
+     * @param mailbox   String must be unique
      * @param skipConfirmation  Flag if "true" skips intiating the email verification process
      * (useful to allow admins to create new accounts without verifying users).
      * @return 
@@ -329,7 +390,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             if (activeModuleConfiguration.getChildTopics().getBoolean(CONFIG_EMAIL_CONFIRMATION)) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator skipping confirmation mail.");
+                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
                     createSimpleUserAccount(username, password, mailbox);
                     handleAccountCreatedRedirect(username);
                 } else {
