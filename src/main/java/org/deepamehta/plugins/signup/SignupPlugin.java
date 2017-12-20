@@ -312,12 +312,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @return A String containing a JSON Object with the following properties:
-     * { "state": "success" | "error", "email_verification": "skipped" | "inactive" | "send" }
+     * A shorter method signature for doSignupRequst(username, password, mailbox, skipConfirmation).
+     * @see doSignupRequest
      */
     @GET
     @Path("/create/{username}/{pass-one}/{mailbox}")
@@ -333,7 +329,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      * @param password  String must be SHA-256 encoded
      * @param mailbox   String must be unique
      * @param skipConfirmation  Flag if "true" skips initiating the email verification process
-     * (useful to allow admins to create new accounts without verifying users).
+     * (useful to allow members of the "Administration" workspace to create new accounts without verifying users).
      * @return A String containing a JSON Object with the following properties:
      * {
      *   "state": "success" | "error",
