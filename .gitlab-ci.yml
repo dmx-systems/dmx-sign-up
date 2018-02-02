@@ -1,0 +1,4 @@
+maven-build:
+  script:
+    - export MAVEN_OPTS='-Xmx128m'
+    - mvn clean install
