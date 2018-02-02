@@ -488,9 +488,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
             } else {
                 log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-                sendSystemMailboxNotification("API Usage Revoked", "<br/>Hi admin,<br/><br/>"
+                sendSystemMailboxNotification("API Usage Revoked", "Hi admin,\n\n"
                     + usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of Service for API-Usage."
-                            + "<br/><br/>Just wanted to let you know.<br/>Cheers!");
+                            + "\n\nJust wanted to let you know.\nCheers!");
                 // 2.1) fails in all cases where user has no write access to the workspace the association was created in
                 // dm4.deleteAssociation(requestRelation.getId());
                 // For now: API Usage Membership must be revoked per Email but personally and confirmed by the administrator
@@ -523,8 +523,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     sendSystemMail("Your account on " + webAppTitle + " is now active",
                             rb.getString("mail_hello") + " " + username.getSimpleValue()
-                                    + ",<br/><br/>your account on <a href=\"" + DM4_HOST_URL + "\">" + webAppTitle + "</a> is now " +
-                                    "active.<br/><br/>" + rb.getString("mail_ciao"), mailboxValue);
+                                    + ",\n\nyour account on " + DM4_HOST_URL + "" + webAppTitle + "</a> is now " +
+                                    "active.\n\n" + rb.getString("mail_ciao"), mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
             }
@@ -865,9 +865,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 mf.newTopicRoleModel(membershipNote.getId(), "dm4.core.default")));
         dm4.getAccessControl().assignToWorkspace(apiRequest, dm4.getAccessControl().getSystemWorkspaceId());
         log.info("Request for new custom API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-        sendSystemMailboxNotification("API Usage Requested", "<br/>Hi admin,<br/><br/>"
+        sendSystemMailboxNotification("API Usage Requested", "\nHi admin,\n\n"
             + usernameTopic.getSimpleValue().toString() + " accepted the Terms of Service for API Usage."
-                    + "<br/><br/>Just wanted to let you know.<br/>Cheers!");
+                    + "\n\nJust wanted to let you know.\nCheers!");
     }
 
     private void createApiWorkspaceMembership(Topic usernameTopic) {
@@ -928,19 +928,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // Localize "sentence" structure for german, maybe via Formatter
             String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
             try {
-                String linkHref = "<a href=\"" + url + "sign-up/confirm/" + key + "\">"
+                String linkHref = "" + url + "sign-up/confirm/" + key + ""
                     + rb.getString("mail_confirmation_link_label") + "</a>";
                 if (DM4_ACCOUNTS_ENABLED) {
                     sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
-                            +rb.getString("mail_confirmation_active_body")+"<br/><br/>"
-                            + linkHref + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
+                        rb.getString("mail_hello") + " " + username + ",\n\n"
+                            +rb.getString("mail_confirmation_active_body")+"\n\n"
+                            + linkHref + "\n\n" + rb.getString("mail_ciao"), mailbox);
                 } else {
                     sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
-                            + rb.getString("mail_confirmation_proceed_1")+"<br/>"
-                            + linkHref + "<br/><br/>" + rb.getString("mail_confirmation_proceed_2")
-                            + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
+                        rb.getString("mail_hello") + " " + username + ",\n\n"
+                            + rb.getString("mail_confirmation_proceed_1")+"\n"
+                            + linkHref + "\n\n" + rb.getString("mail_confirmation_proceed_2")
+                            + "\n\n" + rb.getString("mail_ciao"), mailbox);
                 }
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
@@ -960,8 +960,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String href = url + "sign-up/password-reset/" + key;
             try {
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + username + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
-                        + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers"), mailbox);
+                    rb.getString("mail_hello") + " " + username + ",\n\n"+rb.getString("mail_pw_reset_body")+"\n"
+                        + href + "\n\n" + rb.getString("mail_cheers"), mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
                         + "we FAILED sending out the \"Password Reset\" mail, caused by: " +  ex.getMessage());
@@ -979,7 +979,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String adminMailbox = activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX);
             try {
                 sendSystemMail("Account registration on " + webAppTitle,
-                        "<br/>A user has registered.<br/><br/>Username: " + username + "<br/>Email: " + mailbox, adminMailbox);
+                        "\nA user has registered.\n\nUsername: " + username + "\nEmail: " + mailbox, adminMailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
                         + "we FAILED notifying the \"system mailbox\" about account creation, caused by: " +  ex.getMessage());
