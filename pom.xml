@@ -20,6 +20,9 @@
         <dm4.deploy.dir>/home/malted/source/mikro/deepamehta/bundle-deploy</dm4.deploy.dir>
         <dm4.deploy.dir>/home/malted/Downloads/deepamehta-4.8.1/bundle-deploy</dm4.deploy.dir>
     </properties-->
+    <properties>
+        <dm4.deploy.dir>../climbo-ldap-deepamehta/bundle-deploy</dm4.deploy.dir>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -71,6 +74,11 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.deepamehta</groupId>
+            <artifactId>dm49-ldap</artifactId>
+            <version>0.3.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -85,6 +93,7 @@
                         <Embed-Dependency>jsoup,mail,commons-email</Embed-Dependency>
                         <Import-Package>
                             sun.security.util;resolution:=optional,*
+                            de.deepamehta.ldap.service,*
                         </Import-Package>
                         <Bundle-SymbolicName>
                             org.deepamehta.sign-up

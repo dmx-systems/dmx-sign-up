@@ -1,6 +1,8 @@
 package org.deepamehta.plugins.signup;
 
 import com.sun.jersey.api.view.Viewable;
+import com.sun.jersey.core.util.Base64;
+
 import de.deepamehta.core.Association;
 import de.deepamehta.core.ChildTopics;
 import de.deepamehta.core.Topic;
@@ -14,6 +16,7 @@ import de.deepamehta.core.service.accesscontrol.AccessControl;
 import de.deepamehta.core.service.accesscontrol.Credentials;
 import de.deepamehta.core.service.event.PostUpdateTopicListener;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
+import de.deepamehta.ldap.service.LDAPPluginService;
 import de.deepamehta.accesscontrol.AccessControlService;
 import de.deepamehta.thymeleaf.ThymeleafPlugin;
 import de.deepamehta.workspaces.WorkspacesService;
@@ -22,6 +25,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -40,6 +46,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import org.apache.commons.mail.HtmlEmail;
@@ -67,6 +74,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final boolean DM4_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.security" +
             ".new_accounts_are_enabled"));
     public static final String CONFIG_TOPIC_ACCOUNT_ENABLED = "dm4.accesscontrol.login_enabled";
+    
+    // can be "LDAP" or "Basic"
+    public static final String CONFIG_SIGNUP_AUTHORIZATION_METHOD = System.getProperty("dm4.signup.authorization.method", "Basic");
 
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
@@ -105,6 +115,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private AccessControlService acService;
     @Inject
     private WorkspacesService wsService; // Used in migrations
+    
+    @Inject
+    private LDAPPluginService ldapService;
 
     @Context
     UriInfo uri;
@@ -679,6 +692,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     + "we FAILED sending out a notification mail to User \""+mailbox+"\", caused by: " +  ex.getMessage());
         }
     }
+    
+    private Topic createUser(Credentials creds) throws NoSuchAlgorithmException {
+    	if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
+    		return ldapService.createUser(creds);	
+    	} else {
+    		return acService.createUserAccount(creds);
+    	}
+    }
 
     @Override
     public String createSimpleUserAccount(String username, String password, String mailbox) {
@@ -689,11 +710,28 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 // within the same 60 minutes (tokens validity timespan). First confirming, wins.
                 throw new RuntimeException("Username was already registered and confirmed!");
             }
-            Credentials creds = new Credentials(new JSONObject()
-                .put("username", username.trim())
-                .put("password", password.trim()));
+            
+            Credentials creds = null;
+            		
+    		// When the "Basic" method is used the password is already in -SHA256- form for all other
+            // methods it is simply base64-encoded
+            if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("Basic")) {
+                creds = new Credentials(new JSONObject()
+		                .put("username", username.trim())
+		                .put("password", password.trim()));
+            } else {
+            	String plaintextPassword = Base64.base64Decode(password);
+                creds = new Credentials(username.trim(), plaintextPassword);
+                
+                // Retroactively provides plaintext password in credentials
+                creds.plaintextPassword = plaintextPassword;
+
+            }
             // 1) Create new user (in which workspace), just within the private one, no?
-            final Topic usernameTopic = acService.createUserAccount(creds);
+            
+            // TODO: Method goes into the credentials and is handled in AccessControlService
+            final Topic usernameTopic = createUser(creds);
+            
             final String eMailAddressValue = mailbox;
             // 2) create and associate e-mail address topic
             dm4.getAccessControl().runWithoutWorkspaceAssignment(new Callable<Topic>() {
@@ -1176,6 +1214,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("username", username);
             viewData("template", templateName);
             viewData("hostUrl", DM4_HOST_URL);
+            
+            viewData("authorization_method", CONFIG_SIGNUP_AUTHORIZATION_METHOD);
         } else {
             log.severe("Could not load module configuration of sign-up plugin during page preparation!");
         }

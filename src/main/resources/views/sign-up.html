@@ -10,6 +10,7 @@
         <script type="text/javascript" src="/org.deepamehta.sign-up/script/sign-up.js" />
         <script th:inline="javascript">
         /*<![CDATA[*/
+            signupConfig.authorizationMethod = /*[[${authorization_method}]]*/ 'Basic';
             signupConfig.appLoadingMessage = /*[[${loading_app_hint}]]*/ 'Loading Webclient';
             signupConfig.appStartPageURL = /*[[${start_url}]]*/ '/';
             signupConfig.passwordLength = /*[[${password_length_hint}]]*/ "Your password must be at least 8 characters long.";

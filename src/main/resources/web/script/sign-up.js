@@ -5,6 +5,7 @@
 
     // Sign-up Configuration Object Initialized via Thymeleaf
     var signupConfig = {
+    	"authorizationMethod" : "Basic",
         "customWorkspaceEnabled" : false,
         "customWorkspaceURI" : "",
         "appLoadingMessage" : "Loading Webclient",
@@ -67,7 +68,7 @@
             function authorization() {
                 try {
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
-                    return "Basic " + window.btoa(id + ":" + secret) // IE >= 10 compatible
+                    return signupConfig.authorizationMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
                 } catch (error) {
                     console.error("Error encoding Auth-Header", error)
                 }
@@ -107,7 +108,11 @@
             if (skipField && skipField.value === "on") {
                 skipConfirmation = "/true"
             }
-            var passwordVal = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
+            var passwordVal = encodeURIComponent(
+            		signupConfig.authorizationMethod == 'Basic'
+            			? '-SHA256-' + SHA256(document.getElementById("pass-one").value)
+    					: window.btoa(document.getElementById("pass-one").value))
+    					
             // employing the w3school way to go to GET the sign-up resource
             window.document.location.assign("//" +  window.location.host + "/sign-up/handle/" + usernameVal + "/"
                + passwordVal +"/" + mailbox + skipConfirmation)
@@ -255,7 +260,12 @@
     function updatePassword() {
         comparePasswords()
         var token = document.getElementById("token-info").value
-        var secret = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
+        
+        var secret = encodeURIComponent(
+        		signupConfig.authorizationMethod == 'Basic'
+        			? '-SHA256-' + SHA256(document.getElementById("pass-one").value)
+					: window.btoa(document.getElementById("pass-one").value))
+					
         document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
         /** xhr = new XMLHttpRequest()
         xhr.onload = function(e) {
