@@ -6,8 +6,8 @@
 
     <name>DeepaMehta 4 Sign up</name>
     <groupId>org.deepamehta</groupId>
-    <artifactId>dm49-sign-up</artifactId>
-    <version>1.5.3-SNAPSHOT</version>
+    <artifactId>dm49-sign-up-climbo</artifactId>
+    <version>1.5.4-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <parent>
