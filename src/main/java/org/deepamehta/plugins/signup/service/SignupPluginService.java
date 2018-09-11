@@ -141,4 +141,6 @@ public interface SignupPluginService {
 
     void reinitTemplateEngine();
 
+    String doProcessSignupRequest(String key);
+
 }

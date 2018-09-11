@@ -70,7 +70,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     // --- DeepaMehta 4 related URIs --- //
     public static final String MAILBOX_TYPE_URI = "dm4.contacts.email_address";
-    public static final String DM4_HOST_URL = System.getProperty("dm4.host.url");
     public static final boolean DM4_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.security" +
             ".new_accounts_are_enabled"));
     public static final String CONFIG_TOPIC_ACCOUNT_ENABLED = "dm4.accesscontrol.login_enabled";
@@ -78,6 +77,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     // can be "LDAP" or "Basic"
     public static final String CONFIG_SIGNUP_AUTHORIZATION_METHOD = System.getProperty("dm4.signup.authorization.method", "Basic");
 
+    public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
+    public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
+    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "sign-up/confirm/");
+    
+    public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
+    
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
     private final String CONFIG_PROJECT_TITLE       = "org.deepamehta.signup.config_project_title";
@@ -92,7 +97,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private final String CONFIG_PD_DETAILS          = "org.deepamehta.signup.config_pd_detail";
     private final String CONFIG_FROM_MAILBOX        = "org.deepamehta.signup.config_from_mailbox";
     private final String CONFIG_ADMIN_MAILBOX       = "org.deepamehta.signup.config_admin_mailbox";
-    private final String CONFIG_EMAIL_CONFIRMATION  = "org.deepamehta.signup.config_email_confirmation";
     private final String CONFIG_START_PAGE_URL      = "org.deepamehta.signup.start_page_url";
     private final String CONFIG_HOME_PAGE_URL       = "org.deepamehta.signup.home_page_url";
     private final String CONFIG_LOADING_HINT        = "org.deepamehta.signup.loading_app_hint";
@@ -360,14 +364,17 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             response.put("state", "error");
             response.put("accounts_enabled", DM4_ACCOUNTS_ENABLED);
-            if (activeModuleConfiguration.getChildTopics().getBoolean(CONFIG_EMAIL_CONFIRMATION)) {
+            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
                     log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
                     createSimpleUserAccount(username, password, mailbox);
                     response.put("email_verification", "skipped");
                 } else {
                     log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
-                    sendUserValidationToken(username, password, mailbox);
+                    String token = sendUserValidationToken(username, password, mailbox);
+                    if (CONFIG_SIGNUP_DEBUG_ENABLED) {
+                    	response.put("token", token);
+                    }
                     response.put("email_verification", "send");
                 }
             } else {
@@ -397,7 +404,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
         try {
-            if (activeModuleConfiguration.getChildTopics().getBoolean(CONFIG_EMAIL_CONFIRMATION)) {
+            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
                     log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
                     createSimpleUserAccount(username, password, mailbox);
@@ -431,6 +438,63 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public Viewable handleSignupRequest(@PathParam("username") String username,
             @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
         return handleSignupRequest(username, password, mailbox, false);
+    }
+
+    /**
+     * The HTTP resource to confirm the email address and acutally create an account.
+     * @param key String must be a valid token
+     * @return 
+     */
+    @POST
+    @Path("/do/confirm/{token}")
+    @Override
+    public String doProcessSignupRequest(@PathParam("token") String key) {
+    	JSONObject response = new JSONObject();
+    	try {
+	        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+	        if (!token.containsKey(key)) {
+	        	response.put("state", "error");
+	        	response.put("reason", "tokenInvalid");
+	        	
+	            return response.toString();
+	        }
+	        // 2) Process available token and remove it from stack
+	        String username;
+	        JSONObject input = token.get(key);
+	        token.remove(key);
+	        // 3) Create the user account and show ok OR present an error message.
+	        try {
+	            username = input.getString("username");
+	            if (input.getLong("expiration") > new Date().getTime()) {
+	                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
+	                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
+	            } else {
+		        	response.put("state", "error");
+		        	response.put("reason", "tokenExpired");
+	                return response.toString();
+	            }
+	        } catch (JSONException ex) {
+	            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+	        	response.put("state", "error");
+	        	response.put("reason", "internalError");
+	            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
+	                new Object[]{ex.getMessage(), ex.getCause().toString()});
+	            return response.toString();
+	        }
+	        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
+	        viewData("message", rb.getString("account_created"));
+	        if (!DM4_ACCOUNTS_ENABLED) {
+	            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
+	        	response.put("state", "pending");
+	            return response.toString();
+	        }
+        	response.put("state", "success");
+        	
+	        return response.toString();
+    	} catch (JSONException jsone) {
+    		
+    	}
+		return response.toString();
     }
 
     /**
@@ -536,7 +600,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     sendSystemMail("Your account on " + webAppTitle + " is now active",
                             rb.getString("mail_hello") + " " + username.getSimpleValue()
-                                    + ",\n\nyour account on " + DM4_HOST_URL + "" + webAppTitle + "</a> is now " +
+                                    + ",\n\nyour account on " + CONFIG_SIGNUP_APP_URL + "" + webAppTitle + "</a> is now " +
                                     "active.\n\n" + rb.getString("mail_ciao"), mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
@@ -847,9 +911,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return false;
     }
 
-    private void sendUserValidationToken(String username, String password, String mailbox) {
+    private String sendUserValidationToken(String username, String password, String mailbox) {
         String tokenKey = createUserValidationToken(username, password, mailbox);
         sendConfirmationMail(tokenKey, username, mailbox.trim());
+        
+        return tokenKey;
     }
 
     private void sendPasswordResetToken(String mailbox) {
@@ -960,13 +1026,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private void sendConfirmationMail(String key, String username, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
-            URL url = new URL(DM4_HOST_URL);
+            URL url = new URL(CONFIG_SIGNUP_APP_URL);
+            String confirmSlug = CONFIG_SIGNUP_CONFIRM_SLUG;
             log.info("The confirmation mails token request URL should be:"
-                + "\n" + url + "sign-up/confirm/" + key);
+                + "\n" + url + confirmSlug + key);
             // Localize "sentence" structure for german, maybe via Formatter
             String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
             try {
-                String linkHref = "" + url + "sign-up/confirm/" + key + ""
+                String linkHref = "" + url + confirmSlug + key + ""
                     + rb.getString("mail_confirmation_link_label") + "</a>";
                 if (DM4_ACCOUNTS_ENABLED) {
                     sendSystemMail(mailSubject,
@@ -992,7 +1059,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private void sendPasswordResetMail(String key, String username, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
-            URL url = new URL(DM4_HOST_URL);
+            URL url = new URL(CONFIG_SIGNUP_APP_URL);
             log.info("The password reset mails token request URL should be:"
                 + "\n" + url + "sign-up/password-reset/" + key);
             String href = url + "sign-up/password-reset/" + key;
@@ -1049,7 +1116,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // ..) Set Subject of Mail
             email.setSubject(subject);
             // ..) Set Message Body and append the Host URL
-            message += "\n\n" + DM4_HOST_URL + "\n\n";
+            message += "\n\n" + CONFIG_SIGNUP_APP_URL + "\n\n";
             email.setTextMsg(message);
             // ..) Set recipient of notification mail
             String recipientValue = recipient.trim();
@@ -1213,7 +1280,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("authenticated", (username != null));
             viewData("username", username);
             viewData("template", templateName);
-            viewData("hostUrl", DM4_HOST_URL);
+            viewData("hostUrl", CONFIG_SIGNUP_APP_URL);
             
             viewData("authorization_method", CONFIG_SIGNUP_AUTHORIZATION_METHOD);
         } else {
