@@ -82,6 +82,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "sign-up/confirm/");
     
     public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
+
+    public static final String CONFIG_FROM_MAILBOX        = System.getProperty("dm4.signup.from_mailbox", "user@localhost");
+    public static final String CONFIG_ADMIN_MAILBOX       = System.getProperty("dm4.signup.admin_mailbox", "user@localhost");
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
@@ -95,8 +98,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private final String CONFIG_TOS_DETAILS         = "org.deepamehta.signup.config_tos_detail";
     private final String CONFIG_PD_LABEL            = "org.deepamehta.signup.config_pd_label";
     private final String CONFIG_PD_DETAILS          = "org.deepamehta.signup.config_pd_detail";
-    private final String CONFIG_FROM_MAILBOX        = "org.deepamehta.signup.config_from_mailbox";
-    private final String CONFIG_ADMIN_MAILBOX       = "org.deepamehta.signup.config_admin_mailbox";
     private final String CONFIG_START_PAGE_URL      = "org.deepamehta.signup.start_page_url";
     private final String CONFIG_HOME_PAGE_URL       = "org.deepamehta.signup.home_page_url";
     private final String CONFIG_LOADING_HINT        = "org.deepamehta.signup.loading_app_hint";
