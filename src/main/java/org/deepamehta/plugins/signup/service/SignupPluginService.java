@@ -143,4 +143,6 @@ public interface SignupPluginService {
 
     String doProcessSignupRequest(String key);
 
+	Response processSignupRedirectRequest(String key);
+
 }

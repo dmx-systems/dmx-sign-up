@@ -498,6 +498,17 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 		return response.toString();
     }
 
+    @GET
+    @Path("/confirm/redirect/{token}")
+    @Override
+    public Response processSignupRedirectRequest(@PathParam("token") String key) {
+    	try {
+			return Response.temporaryRedirect(new URI(String.format("/confirm/%s", key))).build();
+		} catch (URISyntaxException e) {
+			return Response.serverError().build();
+		}
+    }
+
     /**
      * The HTTP resource to confirm the email address and acutally create an account.
      * @param key String must be a valid token
@@ -1031,8 +1042,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // Localize "sentence" structure for german, maybe via Formatter
             String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
             try {
-                String linkHref = "" + url + confirmSlug + key + ""
-                    + rb.getString("mail_confirmation_link_label") + "</a>";
+            	String linkHref = String.format(
+            			"<a href=\"%s%s%s\">%s</a>",
+            			url,
+            			confirmSlug,
+            			key,
+            			rb.getString("mail_confirmation_link_label"));
+            	
                 if (DM4_ACCOUNTS_ENABLED) {
                     sendSystemMail(mailSubject,
                         rb.getString("mail_hello") + " " + username + ",\n\n"
