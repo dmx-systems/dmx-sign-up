@@ -503,7 +503,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public Response processSignupRedirectRequest(@PathParam("token") String key) {
     	try {
-			return Response.temporaryRedirect(new URI(String.format("/confirm/%s", key))).build();
+			return Response.temporaryRedirect(new URI(String.format("/sign-up/confirm/%s", key))).build();
 		} catch (URISyntaxException e) {
 			return Response.serverError().build();
 		}
