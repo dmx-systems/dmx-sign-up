@@ -489,6 +489,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 	        	response.put("state", "pending");
 	            return response.toString();
 	        }
+	        response.put("username", username);
         	response.put("state", "success");
         	
 	        return response.toString();
