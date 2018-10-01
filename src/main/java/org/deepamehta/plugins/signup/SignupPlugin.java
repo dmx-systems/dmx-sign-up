@@ -79,7 +79,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
     public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
-    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "sign-up/confirm/");
+
+    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
     
     public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
 
@@ -1037,17 +1038,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(CONFIG_SIGNUP_APP_URL);
-            String confirmSlug = CONFIG_SIGNUP_CONFIRM_SLUG;
+            
+            // Puts key into slug template
+            String confirmSlug = String.format(CONFIG_SIGNUP_CONFIRM_SLUG, key);
+            
             log.info("The confirmation mails token request URL should be:"
                 + "\n" + url + confirmSlug + key);
             // Localize "sentence" structure for german, maybe via Formatter
             String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
             try {
             	String linkHref = String.format(
-            			"<a href=\"%s%s%s\">%s</a>",
+            			"<a href=\"%s%s\">%s</a>",
             			url,
             			confirmSlug,
-            			key,
             			rb.getString("mail_confirmation_link_label"));
             	
                 if (DM4_ACCOUNTS_ENABLED) {
