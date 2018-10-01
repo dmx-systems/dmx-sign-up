@@ -256,6 +256,31 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return Response.temporaryRedirect(new URI("/sign-up/error")).build();
     }
 
+    @POST
+    @Path("/do/password-token/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public String doInitiatePasswordReset(@PathParam("email") String email) {
+        log.info("Password reset requested for user with Email: \"" + email + "\"");
+        JSONObject response = new JSONObject();
+        try {
+            String emailAddressValue = email.trim();
+            boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
+            if (emailExists) {
+                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+                sendPasswordResetToken(emailAddressValue);
+                
+                response.put("state", "success");
+            } else {
+                log.info("Email based password reset workflow not do'able, Email Addresses does not exist.");
+                response.put("state", "error");
+            }
+        } catch (JSONException e) {
+		}
+
+        return response.toString();
+    }
+
     /** 
      * Checks the given password-reset token for validity and return either the
      * password-reset dialog or the error message page.

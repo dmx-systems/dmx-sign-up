@@ -145,4 +145,6 @@ public interface SignupPluginService {
 
 	Response processSignupRedirectRequest(String key);
 
+	String doInitiatePasswordReset(String email);
+
 }
