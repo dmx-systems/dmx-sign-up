@@ -493,6 +493,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 	        try {
 	            username = input.getString("username");
 	            if (input.getLong("expiration") > new Date().getTime()) {
+	            	// Another mail already confirmed and the user was created. Deliver proper result
+	                if (isUsernameTaken(username)) {
+	    	        	response.put("state", "error");
+	    	        	response.put("reason", "tokenInvalid");
+	    	        	
+	    	            return response.toString();
+	                }
+
 	                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
 	                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
 	            } else {
