@@ -323,6 +323,31 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
+    @POST
+    @Path("/do/password-reset/check-token/{token}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String doHandlePasswordResetRequest(@PathParam("token") String token) {
+        JSONObject response = new JSONObject();
+
+        try {
+            // 1) Process available token
+            JSONObject input = pwToken.get(token);
+            if (input != null && input.getLong("expiration") > new Date().getTime()) {
+                // 2) Tell that password can be changed
+                response.put("state", "succes");
+                
+                String username = input.getString("username");
+                response.put("username", username);
+            } else {
+                response.put("state", "error");
+            }
+        } catch (JSONException ex) {
+        	// Swallow
+        }
+        
+        return response.toString();
+    }
+
     /**
      * Updates the user password.
      * @param token
@@ -355,6 +380,46 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("message", rb.getString("reset_password_error"));
             return getFailureView("updated");
         }
+    }
+
+    /**
+     * Updates the user password.
+     * @param token
+     * @param password
+     * @return Returns the correct template for the input.
+     */
+    @POST
+    @Path("/do/password-reset/update/{token}/{password}")
+    @Transactional
+    public String doProcessPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+        JSONObject response = new JSONObject();
+        log.info("Processing Password Update Request Token... ");
+        try {
+            JSONObject entry = pwToken.get(token);
+            if (entry != null) {
+                Credentials newCreds = new Credentials("dummy", "pass");
+                newCreds.username = entry.getString("username");
+                newCreds.password = password;
+
+                if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
+            		// TODO: LDAP Password change
+            	} else {
+                    dm4.getAccessControl().changePassword(newCreds);
+            		
+            	}
+                pwToken.remove(token);
+                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+
+                response.put("state", "succes");
+                response.put("username", newCreds.username);
+                
+            } else {
+                response.put("state", "error");
+            }
+        } catch (JSONException ex) {
+        }
+        
+        return response.toString();
     }
 
     /**
