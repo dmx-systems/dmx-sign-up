@@ -402,7 +402,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 newCreds.password = password;
 
                 if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
-            		// TODO: LDAP Password change
+            		ldapService.changePassword(newCreds);
             	} else {
                     dm4.getAccessControl().changePassword(newCreds);
             		
