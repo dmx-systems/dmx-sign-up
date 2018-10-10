@@ -76,7 +76,7 @@
         </dependency>
         <dependency>
             <groupId>de.deepamehta</groupId>
-            <artifactId>dm49-ldap-climbo</artifactId>
+            <artifactId>dm49-ldap</artifactId>
             <version>0.3.2</version>
         </dependency>
     </dependencies>
