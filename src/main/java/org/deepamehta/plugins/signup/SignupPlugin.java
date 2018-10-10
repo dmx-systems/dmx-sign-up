@@ -80,7 +80,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
     public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
 
-    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
+    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = "#/confirmation/%s/signup"; //System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
+
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_SLUG = System.getProperty("dm4.signup.password_reset.slug", "#/confirmation/%s/password-reset");
     
     public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
 
@@ -1111,9 +1113,15 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(CONFIG_SIGNUP_APP_URL);
+
+            // Puts key into slug template
+            String passwordResetSlug = String.format(CONFIG_SIGNUP_PASSWORD_RESET_SLUG, key);
+            
             log.info("The password reset mails token request URL should be:"
-                + "\n" + url + "sign-up/password-reset/" + key);
-            String href = url + "sign-up/password-reset/" + key;
+                + "\n" + url + passwordResetSlug);
+            
+            String href = String.format("%s%s", url, passwordResetSlug);
+
             try {
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
                     rb.getString("mail_hello") + " " + username + ",\n\n"+rb.getString("mail_pw_reset_body")+"\n"
