@@ -337,7 +337,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             JSONObject input = pwToken.get(token);
             if (input != null && input.getLong("expiration") > new Date().getTime()) {
                 // 2) Tell that password can be changed
-                response.put("state", "succes");
+                response.put("state", "success");
                 
                 String username = input.getString("username");
                 response.put("username", username);
