@@ -80,7 +80,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
     public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
 
-    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
+    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = "#/confirmation/%s/signup"; //System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
 
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_SLUG = System.getProperty("dm4.signup.password_reset.slug", "#/confirmation/%s/password-reset");
     
@@ -91,11 +91,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
     
-    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team";
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team<br>";
 
     public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE = "Dein tendu Benutzerkonto";
     
-    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team";
+    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team<br>";
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
