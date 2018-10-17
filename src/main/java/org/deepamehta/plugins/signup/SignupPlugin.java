@@ -419,7 +419,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 pwToken.remove(token);
                 log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
 
-                response.put("state", "succes");
+                response.put("state", "success");
                 response.put("username", newCreds.username);
                 
             } else {
