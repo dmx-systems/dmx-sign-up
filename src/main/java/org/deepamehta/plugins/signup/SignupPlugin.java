@@ -80,7 +80,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
     public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
 
-    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = "#/confirmation/%s/signup"; //System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
+    public static final String CONFIG_SIGNUP_CONFIRM_SLUG = System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
 
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_SLUG = System.getProperty("dm4.signup.password_reset.slug", "#/confirmation/%s/password-reset");
     
@@ -270,7 +270,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue);
+                String token = sendPasswordResetToken(emailAddressValue);
+                if (CONFIG_SIGNUP_DEBUG_ENABLED) {
+                	response.put("token", token);
+                }
                 
                 response.put("state", "success");
             } else {
@@ -402,7 +405,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 newCreds.password = password;
 
                 if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
-            		ldapService.changePassword(newCreds);
+                	// LDAP-Plugin expects plaintextPassword to be set correctly
+                	newCreds.plaintextPassword = newCreds.password;
+            		if (ldapService.changePassword(newCreds) == null) {
+                        response.put("state", "succes");
+                        
+            			return response.toString();
+            		}
             	} else {
                     dm4.getAccessControl().changePassword(newCreds);
             		
@@ -417,6 +426,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 response.put("state", "error");
             }
         } catch (JSONException ex) {
+        	throw new RuntimeException("Unable to handle password change", ex);
         }
         
         return response.toString();
@@ -1038,10 +1048,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return tokenKey;
     }
 
-    private void sendPasswordResetToken(String mailbox) {
+    private String sendPasswordResetToken(String mailbox) {
         String username = dm4.getAccessControl().getUsername(mailbox);
         String tokenKey = createPasswordResetToken(username, mailbox);
         sendPasswordResetMail(tokenKey, username, mailbox.trim());
+        
+        return tokenKey;
     }
 
     private String createUserValidationToken(String username, String password, String mailbox) {
