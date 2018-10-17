@@ -1177,16 +1177,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             try {
             	
                 if (DM4_ACCOUNTS_ENABLED) {
-                	String linkHref = String.format(
-                			"<a href=\"%s%s\">%s</a>",
+                	String link = String.format(
+                			"%s%s",
                 			url,
-                			confirmSlug,
-                			rb.getString("mail_confirmation_link_label"));
-                    sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",\n\n"
-                            +rb.getString("mail_confirmation_active_body")+"\n\n"
-                            + linkHref + "\n\n" + rb.getString("mail_ciao"), mailbox);
+                			confirmSlug);
+                	
+                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, username, link);
+                	
+                    sendSystemMail(mailSubject, mailBody, mailbox);
                 } else {
+                	// TODO: Unused in climbo-context
                 	String link = String.format(
                 			"%s%s",
                 			url,
