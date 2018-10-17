@@ -89,13 +89,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final String CONFIG_FROM_MAILBOX        = System.getProperty("dm4.signup.from_mailbox", "user@localhost");
     public static final String CONFIG_ADMIN_MAILBOX       = System.getProperty("dm4.signup.admin_mailbox", "user@localhost");
 
-    public static final String CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
     
-    public static final String CONFIG_SIGNUP_PASSWORD_REST_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
 
     public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE = "Dein tendu Benutzerkonto";
     
-    public static final String CONFIG_SIGNUP_CONFIRMATION_REST_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
+    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
@@ -1192,7 +1192,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 			url,
                 			confirmSlug);
                 	
-                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_REST_EMAIL_BODY_TEMPLATE, username, link);
+                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, username, link);
                 	
                     sendSystemMail(mailSubject, mailBody, mailbox);
                 }
@@ -1219,9 +1219,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String passwordResetUrl = String.format("%s%s", url, passwordResetSlug);
 
             try {
-            	String mailSubject = CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE;
+            	String mailSubject = CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE;
             	
-            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE, username, passwordResetUrl);
+            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE, username, passwordResetUrl);
             	
                 sendSystemMail(mailSubject, mailBody, mailbox);
             } catch (Exception ex) {
