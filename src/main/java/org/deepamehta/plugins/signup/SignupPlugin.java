@@ -88,6 +88,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     public static final String CONFIG_FROM_MAILBOX        = System.getProperty("dm4.signup.from_mailbox", "user@localhost");
     public static final String CONFIG_ADMIN_MAILBOX       = System.getProperty("dm4.signup.admin_mailbox", "user@localhost");
+
+    public static final String CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
+    
+    public static final String CONFIG_SIGNUP_PASSWORD_REST_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
+
+    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE = "Dein tendu Benutzerkonto";
+    
+    public static final String CONFIG_SIGNUP_CONFIRMATION_REST_EMAIL_BODY_TEMPLATE = "Hallo %s\n,bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team";
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
@@ -1164,25 +1172,29 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             log.info("The confirmation mails token request URL should be:"
                 + "\n" + url + confirmSlug + key);
             // Localize "sentence" structure for german, maybe via Formatter
-            String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
+            String mailSubject = CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE;
+            
             try {
-            	String linkHref = String.format(
-            			"<a href=\"%s%s\">%s</a>",
-            			url,
-            			confirmSlug,
-            			rb.getString("mail_confirmation_link_label"));
             	
                 if (DM4_ACCOUNTS_ENABLED) {
+                	String linkHref = String.format(
+                			"<a href=\"%s%s\">%s</a>",
+                			url,
+                			confirmSlug,
+                			rb.getString("mail_confirmation_link_label"));
                     sendSystemMail(mailSubject,
                         rb.getString("mail_hello") + " " + username + ",\n\n"
                             +rb.getString("mail_confirmation_active_body")+"\n\n"
                             + linkHref + "\n\n" + rb.getString("mail_ciao"), mailbox);
                 } else {
-                    sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",\n\n"
-                            + rb.getString("mail_confirmation_proceed_1")+"\n"
-                            + linkHref + "\n\n" + rb.getString("mail_confirmation_proceed_2")
-                            + "\n\n" + rb.getString("mail_ciao"), mailbox);
+                	String link = String.format(
+                			"%s%s",
+                			url,
+                			confirmSlug);
+                	
+                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_REST_EMAIL_BODY_TEMPLATE, username, link);
+                	
+                    sendSystemMail(mailSubject, mailBody, mailbox);
                 }
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
@@ -1204,12 +1216,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             log.info("The password reset mails token request URL should be:"
                 + "\n" + url + passwordResetSlug);
             
-            String href = String.format("%s%s", url, passwordResetSlug);
+            String passwordResetUrl = String.format("%s%s", url, passwordResetSlug);
 
             try {
-                sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + username + ",\n\n"+rb.getString("mail_pw_reset_body")+"\n"
-                        + href + "\n\n" + rb.getString("mail_cheers"), mailbox);
+            	String mailSubject = CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE;
+            	
+            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_REST_EMAIL_SUBJECT_TEMPLATE, username, passwordResetUrl);
+            	
+                sendSystemMail(mailSubject, mailBody, mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
                         + "we FAILED sending out the \"Password Reset\" mail, caused by: " +  ex.getMessage());
