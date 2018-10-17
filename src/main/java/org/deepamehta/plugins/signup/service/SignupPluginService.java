@@ -117,7 +117,7 @@ public interface SignupPluginService {
      * @param mailbox
      * @return 
      */
-    String createSimpleUserAccount(String username, String password, String mailbox);
+    String createSimpleUserAccount(String userNick, String username, String password, String mailbox);
 
     boolean isValidEmailAddress(String value);
 
@@ -147,4 +147,11 @@ public interface SignupPluginService {
 
 	String doInitiatePasswordReset(String email);
 
+	public interface NickToUserNameHandler {
+		String nickToUserName(String nick);
+		
+		void setNick(String userName, String userNick);
+	}
+	
+	public void setNickToUserNameHandler(NickToUserNameHandler n2uHandler);
 }

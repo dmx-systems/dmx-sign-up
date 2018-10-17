@@ -134,6 +134,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     
     @Inject
     private LDAPPluginService ldapService;
+    
+    private NickToUserNameHandler nickToUserNameHandler = null;
 
     @Context
     UriInfo uri;
@@ -204,7 +206,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         JSONObject response = new JSONObject();
         try {
             response.put("isAvailable", true);
-            if (isUsernameTaken(username)) {
+            if (isUsernameTaken(userName(username))) {
                 response.put("isAvailable", false);
             }
             return response.toString();
@@ -349,6 +351,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 
                 String username = input.getString("username");
                 response.put("username", username);
+                response.put("usernick", input.getString("usernick"));
             } else {
                 response.put("state", "error");
             }
@@ -429,6 +432,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
                 response.put("state", "success");
                 response.put("username", newCreds.username);
+                response.put("usernick", entry.getString("usernick"));
                 
             } else {
                 response.put("state", "error");
@@ -472,6 +476,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
+    	String usernick = username;
+    	username = userName(username);
+    	
         JSONObject response = new JSONObject();
         try {
             response.put("state", "error");
@@ -479,18 +486,18 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
                     log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
-                    createSimpleUserAccount(username, password, mailbox);
+                    createSimpleUserAccount(usernick, username, password, mailbox);
                     response.put("email_verification", "skipped");
                 } else {
                     log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
-                    String token = sendUserValidationToken(username, password, mailbox);
+                    String token = sendUserValidationToken(usernick, username, password, mailbox);
                     if (CONFIG_SIGNUP_DEBUG_ENABLED) {
                     	response.put("token", token);
                     }
                     response.put("email_verification", "send");
                 }
             } else {
-                createSimpleUserAccount(username, password, mailbox);
+                createSimpleUserAccount(usernick, username, password, mailbox);
                 response.put("email_verification", "inactive");
             }
             response.put("state", "success");
@@ -515,20 +522,23 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
+    	String usernick = username;
+    	username = userName(username);
+    	
         try {
             if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
                     log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
-                    createSimpleUserAccount(username, password, mailbox);
+                    createSimpleUserAccount(usernick, username, password, mailbox);
                     handleAccountCreatedRedirect(username);
                 } else {
                     log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
-                    sendUserValidationToken(username, password, mailbox);
+                    sendUserValidationToken(usernick, username, password, mailbox);
                     // redirect user to a "token-info" page
                     throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/token-info")).build());
                 }
             } else {
-                createSimpleUserAccount(username, password, mailbox);
+                createSimpleUserAccount(usernick, username, password, mailbox);
                 handleAccountCreatedRedirect(username);
             }
         } catch (URISyntaxException e) {
@@ -587,7 +597,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 	                }
 
 	                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                	createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
+                	createSimpleUserAccount(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
 	            } else {
 		        	response.put("state", "error");
 		        	response.put("reason", "tokenExpired");
@@ -616,6 +626,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 	            return response.toString();
 	        }
 	        response.put("username", username);
+            response.put("usernick", input.getString("usernick"));
+
         	response.put("state", "success");
         	
 	        return response.toString();
@@ -659,7 +671,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             username = input.getString("username");
             if (input.getLong("expiration") > new Date().getTime()) {
                 log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
+                createSimpleUserAccount(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
             } else {
                 viewData("username", null);
                 viewData("message", rb.getString("link_expired"));
@@ -904,7 +916,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     @Override
-    public String createSimpleUserAccount(String username, String password, String mailbox) {
+    public String createSimpleUserAccount(String usernick, String username, String password, String mailbox) {
         DeepaMehtaTransaction tx = dm4.beginTx();
         try {
             if (isUsernameTaken(username)) {
@@ -933,7 +945,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             
             // TODO: Method goes into the credentials and is handled in AccessControlService
             final Topic usernameTopic = createUser(creds);
-            
+
             final String eMailAddressValue = mailbox;
             // 2) create and associate e-mail address topic
             dm4.getAccessControl().runWithoutWorkspaceAssignment(new Callable<Topic>() {
@@ -966,6 +978,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             log.info("Created new user account for user \"" + username + "\" and " + eMailAddressValue);
             // 7) Inform administrations about successfull account creation
             sendNotificationMail(username, mailbox.trim());
+
+            setNick(username, usernick);
+            
             tx.success();
             return username;
         } catch (Exception e) {
@@ -1049,8 +1064,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return false;
     }
 
-    private String sendUserValidationToken(String username, String password, String mailbox) {
-        String tokenKey = createUserValidationToken(username, password, mailbox);
+    private String sendUserValidationToken(String usernick, String username, String password, String mailbox) {
+        String tokenKey = createUserValidationToken(usernick, username, password, mailbox);
         sendConfirmationMail(tokenKey, username, mailbox.trim());
         
         return tokenKey;
@@ -1064,11 +1079,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return tokenKey;
     }
 
-    private String createUserValidationToken(String username, String password, String mailbox) {
+    private String createUserValidationToken(String usernick, String username, String password, String mailbox) {
         try {
             String tokenKey = UUID.randomUUID().toString();
             long valid = new Date().getTime() + 3600000; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
+            		.put("usernick", usernick)
                     .put("username", username.trim())
                     .put("mailbox", mailbox.trim())
                     .put("password", password)
@@ -1482,4 +1498,18 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         super.removeTemplateResourceBundle(bundle);
     }
 
+    @Override
+    public void setNickToUserNameHandler(NickToUserNameHandler handler) {
+    	nickToUserNameHandler = handler;
+    }
+    
+    private String userName(String maybeNick) {
+    	return (nickToUserNameHandler != null) ? nickToUserNameHandler.nickToUserName(maybeNick) : maybeNick;
+    }
+    
+    private void setNick(String userName, String userNick) {
+    	if (nickToUserNameHandler != null) {
+    		nickToUserNameHandler.setNick(userName, userNick);
+    	}
+    }
 }
