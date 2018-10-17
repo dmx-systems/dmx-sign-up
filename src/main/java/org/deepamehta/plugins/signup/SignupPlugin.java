@@ -1271,8 +1271,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             email.setFrom(sender.trim(), projectName.trim());
             // ..) Set Subject of Mail
             email.setSubject(subject);
-            // ..) Set Message Body and append the Host URL
-            message += "\n\n" + CONFIG_SIGNUP_APP_URL + "\n\n";
+            
             email.setTextMsg(message);
             // ..) Set recipient of notification mail
             String recipientValue = recipient.trim();
