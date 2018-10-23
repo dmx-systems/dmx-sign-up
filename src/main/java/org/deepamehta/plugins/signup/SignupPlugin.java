@@ -91,11 +91,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
     
-    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team<br>";
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s,\\nbitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\\n%s\\n\\nViel Spaß beim Klettern wünscht Dir\\nDein tendu Team\\n";
 
     public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE = "Dein tendu Benutzerkonto";
     
-    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s,<br>bitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:<br>%s<br><br>Viel Spaß beim Klettern wünscht Dir<br>Dein tendu Team<br>";
+    public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s,\\nbitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:\\n%s\\n\\nViel Spaß beim Klettern wünscht Dir\\nDein tendu Team\\n";
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
