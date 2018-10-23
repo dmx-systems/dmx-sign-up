@@ -91,7 +91,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
     
-    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo %s,\nbitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team\n";
+    public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo,\nbitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team\n";
 
     public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE = "Dein tendu Benutzerkonto";
     
@@ -1066,7 +1066,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     private String sendUserValidationToken(String usernick, String username, String password, String mailbox) {
         String tokenKey = createUserValidationToken(usernick, username, password, mailbox);
-        sendConfirmationMail(tokenKey, username, mailbox.trim());
+        sendConfirmationMail(tokenKey, usernick, mailbox.trim());
         
         return tokenKey;
     }
@@ -1177,7 +1177,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return activeModuleConfiguration;
     }
 
-    private void sendConfirmationMail(String key, String username, String mailbox) {
+    private void sendConfirmationMail(String key, String usernick, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(CONFIG_SIGNUP_APP_URL);
@@ -1198,7 +1198,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 			url,
                 			confirmSlug);
                 	
-                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, username, link);
+                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, usernick, link);
                 	
                     sendSystemMail(mailSubject, mailBody, mailbox);
                 } else {
@@ -1208,7 +1208,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 			url,
                 			confirmSlug);
                 	
-                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, username, link);
+                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, usernick, link);
                 	
                     sendSystemMail(mailSubject, mailBody, mailbox);
                 }
@@ -1221,7 +1221,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private void sendPasswordResetMail(String key, String username, String mailbox) {
+    private void sendPasswordResetMail(String key, String usernick, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(CONFIG_SIGNUP_APP_URL);
@@ -1237,7 +1237,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             try {
             	String mailSubject = CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE;
             	
-            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE, username, passwordResetUrl);
+            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE, passwordResetUrl);
             	
                 sendSystemMail(mailSubject, mailBody, mailbox);
             } catch (Exception ex) {
