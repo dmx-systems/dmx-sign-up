@@ -351,7 +351,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 
                 String username = input.getString("username");
                 response.put("username", username);
-                response.put("usernick", input.getString("usernick"));
             } else {
                 response.put("state", "error");
             }
@@ -432,7 +431,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
                 response.put("state", "success");
                 response.put("username", newCreds.username);
-                response.put("usernick", entry.getString("usernick"));
                 
             } else {
                 response.put("state", "error");
