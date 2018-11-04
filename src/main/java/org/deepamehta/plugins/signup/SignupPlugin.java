@@ -605,6 +605,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 	            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
 	        	response.put("state", "error");
 	        	response.put("reason", "internalError");
+	        	response.put("exception", ex.getCause().getMessage());
 	            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
 	                new Object[]{ex.getMessage(), ex.getCause().toString()});
 	            return response.toString();
