@@ -6,7 +6,7 @@
 
     <name>DeepaMehta 4 Sign up</name>
     <groupId>org.deepamehta</groupId>
-    <artifactId>dm49-sign-up-climbo</artifactId>
+    <artifactId>dm4-tendu-signup</artifactId>
     <version>1.5.4-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
@@ -21,7 +21,7 @@
         <dm4.deploy.dir>/home/malted/Downloads/deepamehta-4.8.1/bundle-deploy</dm4.deploy.dir>
     </properties-->
     <properties>
-        <dm4.deploy.dir>../climbo-ldap-deepamehta/bundle-deploy</dm4.deploy.dir>
+        <dm4.deploy.dir>../climbo-deepamehta/bundle-deploy</dm4.deploy.dir>
     </properties>
 
     <dependencies>
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>de.deepamehta</groupId>
             <artifactId>dm49-ldap-climbo</artifactId>
-            <version>0.3.1</version>
+            <version>0.3.2</version>
         </dependency>
     </dependencies>
 
