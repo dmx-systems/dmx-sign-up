@@ -6,7 +6,7 @@
 
     <name>DeepaMehta 4 Sign up</name>
     <groupId>org.deepamehta</groupId>
-    <artifactId>dm4-tendu-signup</artifactId>
+    <artifactId>dm49-tendu-signup</artifactId>
     <version>1.5.4-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
@@ -76,8 +76,8 @@
         </dependency>
         <dependency>
             <groupId>de.deepamehta</groupId>
-            <artifactId>dm49-ldap-climbo</artifactId>
-            <version>0.3.2</version>
+            <artifactId>dm49-ldap</artifactId>
+            <version>0.3.5-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
