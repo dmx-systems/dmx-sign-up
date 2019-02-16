@@ -13,7 +13,8 @@
 maven-release-build:
   script:
     - export MAVEN_OPTS='-Xmx128m'
-    - mvn clean install
+    # - mvn clean install
+    - mvn clean install -U
   artifacts:
     paths:
     - target/*.jar
