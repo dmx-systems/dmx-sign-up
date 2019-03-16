@@ -26,34 +26,78 @@
         <meta th:replace="fragments/tracker" />
     </head>
 
-    <body class="log-in-page sign-up">
+    <body class="ui page detail log-in-page sign-up">
 
-        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
-
-        <div id="page-header">
-            <a th:href="${home_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
-                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
-                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
-                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
-            </a>
-        </div>
-        <div id="log-in-view" class="dialog-body">
-            <h2 th:text="${login_title}">Log in</h2>
-            <form class="log-in-form" action="javascript:voidFunction();" onsubmit="javascript:doLogin()">
-                <!-- label for="username">Username</label-->
-                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username" class="log-in sign-up username" />
-                <!-- label for="password">Password</label-->
-                <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
-                <div id="message-view"><span id="message"></span></div>
-                <input type="submit" th:value="${login}" class="log-in sign-up ok" />&nbsp;<span th:text="${or_label}">or</span> <a href="/sign-up/" th:text="${create_account}" >create account</a>.
-                <p class="password-reset">
-                    <span th:text="${label_forgot_password}" title="Forgot your password?">Forgot your password?</span><br/>
-                    <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
-                </p>
-            </form>
+        <div class="navigation">
+            <div class="top-menu" th:include="fragments/navigation :: top-menu (publisher=${is_publisher})"></div>
         </div>
 
-        <div id="page-footer" th:utext="${footer}"></div>
+        <div class="ui vertical left menu sidebar" th:include="fragments/navigation :: vertical (publisher=${is_publisher})"></div>
+
+        <div class="ui pusher">
+
+            <!-- Teaser Area -->
+            <div th:replace="fragments/widgets :: teaser-small" />
+
+            <div class="ui container vertical padded segment first">
+                <h3>Kiezatlas Login</h3>
+            </div>
+
+            <div class="ui vertical padded segment blue2bg">
+                <div class="ui container">
+
+                    <div id="log-in-view" class="dialog-body">
+                        <!--h2 th:text="${login_title}">Log in</h2-->
+                        <form class="log-in-form ui form" id="login-form" action="javascript:voidFunction();" onsubmit="javascript:doLogin()">
+                            <div class="ui input">
+                                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username" class="log-in sign-up username" />
+                                <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
+                            </div>
+                            <div id="message-view"><span id="message"></span></div>
+                            <!-- &nbsp;<span th:text="${or_label}">or</span> <a href="/sign-up/" th:text="${create_account}" >create account</a>. -->
+                            <!--p class="password-reset">
+                                <span th:text="${label_forgot_password}" title="Forgot your password?">Forgot your password?</span><br/>
+                                <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
+                            </p-->
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="ui vertical padded segment">
+
+                <div class="dialog-body ui container">
+
+                    <div class="hints">
+                        <div class="ui input">
+                            <input type="submit" form="login-form" th:value="${login}" class="log-in sign-up ok ui button" />
+                        </div>
+                    </div>
+
+                    <div class="hints">
+                        <p>
+                            <b>Sie haben noch keinen Account?</b><br/>
+                            <a href="/sign-up/" th:text="${create_account}" ></a>
+                        </p>
+                        <p>
+                            <b>Sie haben Ihr Passwort vergessen?</b><br/>
+                            <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
+                        </p>
+                        <p>
+                            <b>Sie sind AnsprechpartnerIn f&uuml;r eine Einrichtung aber haben die Zugangsdaten nicht mehr?</b><br/>
+                            <!--a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a-->
+                            Wenden Sie sich bitte an die AnsprechpartnerIn der entsprechenden Bezirksregion oder an die AnsprechpartnerIn f&uuml;r den Kiezatlas in Ihrem Bezirk.<br/>
+                            <a href="/ansprechpartner-innen-in-den-bezirksregionen">Hier finden Sie eine Liste aller aktuellen AnsprechpartnerInnen</a>
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div th:replace="fragments/footer :: footer-new"></div>
+
+        </div>
 
     </body>
 

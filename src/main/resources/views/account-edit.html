@@ -20,65 +20,96 @@
         <meta th:replace="fragments/tracker" />
     </head>
 
-    <body class="account-page sign-up">
+    <body class="ui page detail account-page sign-up">
 
-        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
-
-        <div id="page-header">
-            <span class="project-title" th:text="${your_account_title}">Your Account</span>
+        <div class="navigation">
+            <div class="top-menu" th:include="fragments/navigation :: top-menu (publisher=${is_publisher})"></div>
         </div>
 
-        <div class="dialog-body">
-            <h2 th:text="${your_account_heading}">Infos associated with your username</h2>
-            <div>
-                <div class="label">Username</div>
-                <div th:text="${username}" class="value username" />
-                <div class="label">Email Address</div>
-                <div th:text="${email}" class="value email" />
+        <div class="ui vertical left menu sidebar" th:include="fragments/navigation :: vertical (publisher=${is_publisher})"></div>
+
+        <div class="ui pusher">
+
+            <!-- Teaser Area -->
+            <div th:replace="fragments/widgets :: teaser-small" />
+
+            <div class="ui container vertical padded segment first">
+                <h3 class="project-title" th:text="${your_account_title}">Kiezatlas Login</h3>
             </div>
-            <div th:if="${!#strings.isEmpty(link)}">
-                <form th:if="${!logged_in}" method="GET" class="login-form" action="/sign-up/login">
-                    <input type="submit" th:value="${login}" class="ok sign-up" />
-                </form>
+
+            <div class="ui vertical padded segment blue2bg">
+                <div class="ui container">
+                    <div class="dialog-body">
+                        <h2 th:text="${your_account_heading}">Infos associated with your username</h2>
+                        <div>
+                            <div class="label">Username</div>
+                            <div th:text="${username}" class="value username" />
+                            <div class="label">Email Address</div>
+                            <div th:text="${email}" class="value email" />
+                        </div>
+                        <p>&nbsp;</p>
+                    </div>
+                </div>
             </div>
-            <form th:if="${logged_in}" class="logout-form" action="javascript:doLogout()">
-                <input type="submit" th:value="${logout}" class="ok sign-up" />
-            </form>
-            <form th:if="${logged_in}" class="launch-form" method="GET" th:action="${start_url}">
-                <input type="submit" th:value="${visit_start_url}" class="ok sign-up" />
-            </form>
-            <form th:if="${logged_in}" class="launch-form" method="GET" th:action="${home_url}">
-                <input type="submit" th:value="${visit_home_url}" class="ok sign-up" />
-            </form>
-        </div>
 
-        <div th:if="${custom_workspace_enabled} and ${logged_in}" id="api-workspace" class="dialog-body">
-            <h2 th:text="${api_option_title}">Aktivierung der API Option</h2>
-            <p th:utext="${api_option_descr}">
-                To be able to use our API access please take your time and read the special <i>Terms of service</i> for the API.
-                If you've understood the following terms of service please confirm through checking the following box.
-            </p>
-            <form name="custom-aggreement" action="javascript:voidFunction();">
-                <input id="api-check" type="checkbox" th:checked="${api_workspace_member}"
-                        onclick="javascript:doCheckCustomWorkspaceAggrement()" class="tos-check"
-                        title="Yes, i accept the special terms of service for this membership"/>
-                <label for="api-check" th:utext="${custom_workspace_description}" title="Yes, i accept the special terms of service for this membership">
-                    I also agree with the custom workspace <i>Terms of use</i>.
-                </label>
-                <a href="javascript:showCustomWorkspaceTermsText()" title="Read Details">Read more</a><br/>
-                <div id="api-info" th:utext="${custom_workspace_details}"></div>
-                <div id="message-view"><span id="message"></span></div>
-            </form>
-            <p th:utext="${api_option_revoke}"></p>
-            <p th:if="${!#strings.isEmpty(api_email_contact)}">
-                <span th:text="${api_contact_revoke}"></span> <a href="'mailto:' + ${api_email_contact}" th:text="${api_email_contact}"></a>
-            </p>
-            <p th:if="${#strings.isEmpty(api_email_contact)}" class="warning">
-                Notice: Please configure the option "System Recipient Mailbox" in your current <em>Sign-up Plugin Configuration</em>.
-            </p>
-        </div>
+            <div class="ui vertical padded segment">
+                <div class="ui container">
+                    <div th:if="${!#strings.isEmpty(link)}">
+                        <form th:if="${!logged_in}" method="GET" class="login-form" action="/sign-up/login">
+                            <div class="ui input">
+                                <input type="submit" th:value="${login}" class="ok ui button sign-up" />
+                            </div>
+                        </form>
+                    </div>
+                    <form th:if="${logged_in}" class="logout-form" action="javascript:doLogout()">
+                        <div class="ui input">
+                            <input type="submit" th:value="${logout}" class="ok ui button sign-up" />
+                        </div>
+                    </form>
+                    <form th:if="${logged_in}" class="launch-form" method="GET" th:action="${start_url}">
+                        <div class="ui input">
+                            <input type="submit" th:value="${visit_start_url}" class="ok ui button sign-up" />
+                        </div>
+                    </form>
+                    <form th:if="${logged_in}" class="launch-form" method="GET" th:action="${home_url}">
+                        <div class="ui input">
+                            <input type="submit" th:value="${visit_home_url}" class="ok ui button sign-up" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="ui vertical padded segment">
+                <div class="ui container">
+                    <div th:if="${custom_workspace_enabled} and ${logged_in}" id="api-workspace" class="dialog-body">
+                        <h2 th:text="${api_option_title}">Aktivierung der API Option</h2>
+                        <p th:utext="${api_option_descr}">
+                            To be able to use our API access please take your time and read the special <i>Terms of service</i> for the API.
+                            If you've understood the following terms of service please confirm through checking the following box.
+                        </p>
+                        <form name="custom-aggreement" action="javascript:voidFunction();">
+                            <input id="api-check" type="checkbox" th:checked="${api_workspace_member}"
+                                    onclick="javascript:doCheckCustomWorkspaceAggrement()" class="tos-check"
+                                    title="Yes, i accept the special terms of service for this membership"/>
+                            <label for="api-check" th:utext="${custom_workspace_description}" title="Yes, i accept the special terms of service for this membership">
+                                I also agree with the custom workspace <i>Terms of use</i>.
+                            </label>
+                            <a href="javascript:showCustomWorkspaceTermsText()" title="Read Details">Read more</a><br/>
+                            <div id="api-info" th:utext="${custom_workspace_details}"></div>
+                            <div id="message-view"><span id="message"></span></div>
+                        </form>
+                        <p th:utext="${api_option_revoke}"></p>
+                        <p th:if="${!#strings.isEmpty(api_email_contact)}">
+                            <span th:text="${api_contact_revoke}"></span> <a href="'mailto:' + ${api_email_contact}" th:text="${api_email_contact}"></a>
+                        </p>
+                        <p th:if="${#strings.isEmpty(api_email_contact)}" class="warning">
+                            Notice: Please configure the option "System Recipient Mailbox" in your current <em>Sign-up Plugin Configuration</em>.
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-        <div id="page-footer" th:utext="${footer}">
+            <div th:replace="fragments/footer :: footer-new"></div>
+
         </div>
 
     </body>

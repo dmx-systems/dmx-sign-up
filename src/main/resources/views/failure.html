@@ -8,23 +8,36 @@
         <link rel="stylesheet" th:href="${css_path}" type="text/css" />
     </head>
 
-    <body class="ok-page sign-up">
-        
-        <div id="page-header">
-            <a th:href="${home_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
-                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
-                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
-                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
-            </a>
+    <body class="ui page detail ok-page sign-up">
+
+        <div class="navigation">
+            <div class="top-menu" th:include="fragments/navigation :: top-menu (publisher=${is_publisher})"></div>
         </div>
-        
-        <div id="receipt-view" class="dialog-body">
-            <h2 th:text="${message}"></h2>
-            <p>
-                <span th:text="${account_failure_message}">Your user account could not be</span>&nbsp;<span th:text="${status_label}">created</span>.
-                <br/><br/>
-                <span th:text="${please_try_1}">Please</span>&nbsp;<a href="/sign-up/" th:text="${please_try_2}">try</a>&nbsp;<span th:text="${please_try_3}">again.</span>
-            </p>
+
+        <div class="ui vertical left menu sidebar" th:include="fragments/navigation :: vertical (publisher=${is_publisher})"></div>
+
+        <div class="ui pusher">
+
+            <!-- Teaser Area -->
+            <div th:replace="fragments/widgets :: teaser-small" />
+
+            <div class="ui container vertical padded segment">
+                <div class="ui container">
+
+                    <div id="receipt-view" class="dialog-body">
+                        <h2 th:text="${message}"></h2>
+                        <p>
+                            <span th:text="${account_failure_message}">Your user account could not be</span>&nbsp;<span th:text="${status_label}">created</span>.
+                            <br/><br/>
+                            <span th:text="${please_try_1}">Please</span>&nbsp;<a href="/sign-up/" th:text="${please_try_2}">try</a>&nbsp;<span th:text="${please_try_3}">again.</span>
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <div th:replace="fragments/footer :: footer-new"></div>
+
         </div>
 
     </body>

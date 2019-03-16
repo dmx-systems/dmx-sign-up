@@ -9,29 +9,40 @@
         <meta th:replace="fragments/tracker" />
     </head>
 
-    <body class="ok-page sign-up">
+    <body class="ui page detail ok-page sign-up">
 
-        <div class="top-menu" th:include="fragments/navigation :: top (publisher=${is_publisher})"></div>
-
-        <div id="page-header">
-            <a th:href="${start_url}" title="Launch DeepaMehta 4 Webclient" th:title="${title}">
-                <img th:src="${logo_path}" src="/org.deepamehta.sign-up/images/deepamehta-logo.png" class="webapp-logo"
-                    th:title="${title} + ' Logo'" th:alt="${title} + ' Logo'" width="160" /><br/>
-                <span class="project-title" th:title="'Click to Launch ' + ${title}" th:text="${title}">DeepaMehta Webclient</span>
-            </a>
+        <div class="navigation">
+            <div class="top-menu" th:include="fragments/navigation :: top-menu (publisher=${is_publisher})"></div>
         </div>
-        
-        <div id="receipt-view" class="dialog-body">
-            <h2 th:text="${created_page_title}">Account creation complete</h2>
-            <p th:text="${created_page_body_1}">
-                We completed your sign-up request and successfully created a new user account for you.
-            </p>
-            <p>
-                <span th:text="${created_page_body_2}">Your username is</span>&nbsp;<em th:text="${requested_username}"></em>&nbsp;<span th:text="${created_page_body_3}">and you can</span>&nbsp;<a href="/sign-up/login" th:text="${log_in_small}">log in</a>&nbsp;<span th:text="${created_page_body_4}">now</span>
-            </p>
-            <!-- p>
-               Do show a configurable href here so we can pint our freshest user to a kind of "starting" page.
-            </p-->
+
+        <div class="ui vertical left menu sidebar" th:include="fragments/navigation :: vertical (publisher=${is_publisher})"></div>
+
+        <div class="ui pusher">
+
+            <!-- Teaser Area -->
+            <div th:replace="fragments/widgets :: teaser-small" />
+
+            <div class="ui container vertical padded segment">
+                <div class="ui container">
+
+                    <div id="receipt-view" class="dialog-body">
+                        <h2 th:text="${created_page_title}">Account creation complete</h2>
+                        <p th:text="${created_page_body_1}">
+                            We completed your sign-up request and successfully created a new user account for you.
+                        </p>
+                        <p>
+                            <span th:text="${created_page_body_2}">Your username is</span>&nbsp;<em th:text="${requested_username}"></em>&nbsp;<span th:text="${created_page_body_3}">and you can</span>&nbsp;<a href="/sign-up/login" th:text="${log_in_small}">log in</a>&nbsp;<span th:text="${created_page_body_4}">now</span>
+                        </p>
+                        <!-- p>
+                           Do show a configurable href here so we can pint our freshest user to a kind of "starting" page.
+                        </p-->
+                    </div>
+
+                </div>
+            </div>
+
+            <div th:replace="fragments/footer :: footer-new"></div>
+
         </div>
 
     </body>

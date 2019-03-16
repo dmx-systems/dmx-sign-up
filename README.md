@@ -77,6 +77,21 @@ GPL v3 - https://www.gnu.org/licenses/gpl.html
 
 ## Version history
 
+**1.7.0** -- UPCOMING
+
+* Integrated new tendu configuration options
+* Integrated dm4-ldap module (optional)
+* ...
+
+**1.6.0** -- Mar 31, 2018
+
+* Minor refactoring of the service API
+* Added Javadocs to the main service calls
+* Couple of bug fixes:<br/>
+  Make confirmation link name configurable<br/>
+  JS compatibility for IE10+
+* Compatible with DeepaMehta 4.9
+
 **1.5.2** -- Feb 12, 2017
 
 * Allows members of the _Administration_ workspace to create accounts w/out confirmation mails

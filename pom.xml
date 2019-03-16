@@ -6,8 +6,8 @@
 
     <name>DeepaMehta 4 Sign up</name>
     <groupId>org.deepamehta</groupId>
-    <artifactId>dm49-tendu-signup</artifactId>
-    <version>1.5.4-SNAPSHOT</version>
+    <artifactId>dm49-sign-up</artifactId>
+    <version>1.7.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <parent>
@@ -20,9 +20,6 @@
         <dm4.deploy.dir>/home/malted/source/mikro/deepamehta/bundle-deploy</dm4.deploy.dir>
         <dm4.deploy.dir>/home/malted/Downloads/deepamehta-4.8.1/bundle-deploy</dm4.deploy.dir>
     </properties-->
-    <properties>
-        <dm4.deploy.dir>../climbo-deepamehta/bundle-deploy</dm4.deploy.dir>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -49,6 +46,11 @@
             <groupId>de.deepamehta</groupId>
             <artifactId>dm49-thymeleaf</artifactId>
             <version>0.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>de.deepamehta</groupId>
+            <artifactId>dm49-ldap</artifactId>
+            <version>0.3.5-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>javax.mail</groupId>
@@ -94,6 +96,7 @@
                         <Import-Package>
                             sun.security.util;resolution:=optional,*
                             de.deepamehta.ldap.service,*
+                            org.thymeleaf.context;version="2.1.3.RELEASE",*
                         </Import-Package>
                         <Bundle-SymbolicName>
                             org.deepamehta.sign-up

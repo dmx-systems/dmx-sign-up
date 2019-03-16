@@ -3,9 +3,7 @@ package org.deepamehta.plugins.signup.service;
 
 import com.sun.jersey.api.view.Viewable;
 import java.net.URISyntaxException;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
-import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.Bundle;
 
 /**
@@ -44,7 +42,7 @@ public interface SignupPluginService {
      * @return  String  username
      */
     Viewable handleSignupRequest(String username, String password, String mailbox);
-    
+
     /** 
      * Handles a sign-up request in regards to whether an Email based confirmation process is configured (true|false)
      * in the resp. <code>Sign-up Configuration</code> topic.
@@ -110,14 +108,16 @@ public interface SignupPluginService {
      */
     Response initiatePasswordReset(String email) throws URISyntaxException;
 
+    String createUser(String username, String password, String mailbox);
+
     /**
-     * Creates a new user account with mailbox. If configured, a custom workspace membership is created automatically.
+     * Creates a new user account with mailbox in either DMX or LDAP. If configured, a custom workspace membership is created automatically.
      * @param username
      * @param password
      * @param mailbox
      * @return 
      */
-    String createSimpleUserAccount(String userNick, String username, String password, String mailbox);
+    String createUser(String usernick, String username, String password, String mailbox);
 
     boolean isValidEmailAddress(String value);
 
@@ -143,15 +143,15 @@ public interface SignupPluginService {
 
     String doProcessSignupRequest(String key);
 
-	Response processSignupRedirectRequest(String key);
+    Response processSignupRedirectRequest(String key);
 
-	String doInitiatePasswordReset(String email);
+    String doInitiatePasswordReset(String email);
 
-	public interface NickToUserNameHandler {
-		String nickToUserName(String nick);
-		
-		void setNick(String userName, String userNick);
-	}
-	
-	public void setNickToUserNameHandler(NickToUserNameHandler n2uHandler);
+    public interface NickToUserNameHandler {
+            String nickToUserName(String nick);
+
+            void setNick(String userName, String userNick);
+    }
+
+    public void setNickToUserNameHandler(NickToUserNameHandler n2uHandler);
 }

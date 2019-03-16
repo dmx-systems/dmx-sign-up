@@ -1,4 +1,7 @@
 /target/
-.classpath
-.project
+.idea/
+.externalToolBuilders/
 .settings
+.project
+.classpath
+commit.txt

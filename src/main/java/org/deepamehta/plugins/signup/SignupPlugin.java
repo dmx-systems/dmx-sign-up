@@ -16,8 +16,8 @@ import de.deepamehta.core.service.accesscontrol.AccessControl;
 import de.deepamehta.core.service.accesscontrol.Credentials;
 import de.deepamehta.core.service.event.PostUpdateTopicListener;
 import de.deepamehta.core.storage.spi.DeepaMehtaTransaction;
-import de.deepamehta.ldap.service.LDAPPluginService;
 import de.deepamehta.accesscontrol.AccessControlService;
+import de.deepamehta.ldap.service.LDAPPluginService;
 import de.deepamehta.thymeleaf.ThymeleafPlugin;
 import de.deepamehta.workspaces.WorkspacesService;
 import java.io.IOException;
@@ -25,8 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,15 +44,16 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import org.apache.commons.mail.HtmlEmail;
 
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.deepamehta.plugins.signup.events.SignupResourceRequestedListener;
 import org.deepamehta.plugins.signup.service.SignupPluginService;
 import org.osgi.framework.Bundle;
+import org.thymeleaf.context.AbstractContext;
 
 /**
  * This plugin enables anonymous users to create themselves a user account in DeepaMehta 4
@@ -68,27 +67,22 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
-    // --- DeepaMehta 4 related URIs --- //
-    public static final String MAILBOX_TYPE_URI = "dm4.contacts.email_address";
+    // Standard Sign-up specific configuration options
+    public static final String DM4_HOST_URL         = System.getProperty("dm4.host.url");
+    public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
+
+    public static final String MAILBOX_TYPE_URI     = "dm4.contacts.email_address";
     public static final boolean DM4_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.security" +
             ".new_accounts_are_enabled"));
     public static final String CONFIG_TOPIC_ACCOUNT_ENABLED = "dm4.accesscontrol.login_enabled";
-    
-    // can be "LDAP" or "Basic"
-    public static final String CONFIG_SIGNUP_AUTHORIZATION_METHOD = System.getProperty("dm4.signup.authorization.method", "Basic");
 
-    public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
-    public static final String CONFIG_SIGNUP_APP_URL = System.getProperty("dm4.signup.app.url", System.getProperty("dm4.host.url"));
+    public static final String CONFIG_SIGNUP_AUTHORIZATION_METHOD = System.getProperty("dm4.signup.authorization.method", "Basic");     // can be "LDAP" or "Basic"
+    public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
+    public static final boolean CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED  = Boolean.parseBoolean(System.getProperty("dm4.signup.email_confirmation.enabled", "false"));
 
     public static final String CONFIG_SIGNUP_CONFIRM_SLUG = "#/confirmation/%s/signup"; //System.getProperty("dm4.signup.confirm.slug", "#/confirmation/%s/signup");
-
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_SLUG = System.getProperty("dm4.signup.password_reset.slug", "#/confirmation/%s/password-reset");
     
-    public static final boolean CONFIG_SIGNUP_DEBUG_ENABLED = Boolean.parseBoolean(System.getProperty("dm4.signup.debug.enabled", "false"));
-
-    public static final String CONFIG_FROM_MAILBOX        = System.getProperty("dm4.signup.from_mailbox", "user@localhost");
-    public static final String CONFIG_ADMIN_MAILBOX       = System.getProperty("dm4.signup.admin_mailbox", "user@localhost");
-
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE = "tendu Passwort zurücksetzen";
     
     public static final String CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE = "Hallo,\nbitte klick auf den folgenden Link, wenn Du Dein tendu Passwort zurücksetzen möchtest:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team\n";
@@ -98,6 +92,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public static final String CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE = "Hallo %s,\nbitte klick auf den folgenden Link, um Dein Benutzerkonto in tendu zu aktivieren:\n%s\n\nViel Spaß beim Klettern wünscht Dir\nDein tendu Team\n";
     
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
+
     private final String SIGN_UP_CONFIG_TYPE_URI    = "org.deepamehta.signup.configuration";
     private final String CONFIG_PROJECT_TITLE       = "org.deepamehta.signup.config_project_title";
     private final String CONFIG_WEBAPP_TITLE        = "org.deepamehta.signup.config_webapp_title";
@@ -113,6 +108,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private final String CONFIG_HOME_PAGE_URL       = "org.deepamehta.signup.home_page_url";
     private final String CONFIG_LOADING_HINT        = "org.deepamehta.signup.loading_app_hint";
     private final String CONFIG_LOGGING_OUT_HINT    = "org.deepamehta.signup.logging_out_hint";
+    private final String CONFIG_FROM_MAILBOX        = System.getProperty("dm4.signup.from_mailbox", "user@localhost");
+    private final String CONFIG_ADMIN_MAILBOX       = System.getProperty("dm4.signup.admin_mailbox", "user@localhost");
     private final String CONFIG_API_ENABLED         = "org.deepamehta.signup.config_api_enabled";
     private final String CONFIG_API_DESCRIPTION     = "org.deepamehta.signup.config_api_description";
     private final String CONFIG_API_DETAILS         = "org.deepamehta.signup.config_api_details";
@@ -131,7 +128,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private AccessControlService acService;
     @Inject
     private WorkspacesService wsService; // Used in migrations
-    
     @Inject
     private LDAPPluginService ldapService;
     
@@ -163,600 +159,15 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     };
 
-
-
-    // --- Plugin Service Implementation --- //
-
-    /** 
-     * Fetch all ui-labels in the language the plugins source code was compiled.
-     * @param language
-     * @return A String containing a JSONObject with key-value pairs of all multilingual labels.
-     */
-    @GET
-    @Path("/translation/{locale}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getTranslationTable(@PathParam("locale") String language) {
-        if (language.isEmpty()) return null;
-        Locale le = new Locale(language);
-        ResourceBundle newRb = ResourceBundle.getBundle("SignupMessages", le);
-        Enumeration bundleKeys = newRb.getKeys();
-        JSONObject response = new JSONObject();
-        while (bundleKeys.hasMoreElements()) {
-            try {
-                String key = (String) bundleKeys.nextElement();
-                response.put(key, newRb.getString(key));
-            } catch (JSONException ex) {
-                Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return response.toString();
-    }
-
     /**
-     * A HTTP resource allowing existence checks for given username strings.
-     * @param username
-     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
-     * If the username is already taken isAvailable is set to false.
-     */
-    @GET
-    @Path("/check/{username}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Override
-    public String getUsernameAvailability(@PathParam("username") String username) {
-        JSONObject response = new JSONObject();
-        try {
-            response.put("isAvailable", true);
-            if (isUsernameTaken(userName(username))) {
-                response.put("isAvailable", false);
-            }
-            return response.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+     * Custom event fired by sign-up module whenever a template resource is requested.
+     **/
+    static DeepaMehtaEvent SIGNUP_RESOURCE_REQUESTED = new DeepaMehtaEvent(SignupResourceRequestedListener.class) {
+        @Override
+        public void dispatch(EventListener listener, Object... params) {
+            ((SignupResourceRequestedListener) listener).signupResourceRequested((AbstractContext) params[0], (String) params[1]);
         }
-    }
-
-    /**
-     * A HTTP resource allowing existence check fors the given email address string.
-     * @param email
-     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
-     * If the email address is already known in the system isAvailable is set to false.
-     */
-    @GET
-    @Path("/check/mailbox/{email}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getMailboxAvailability(@PathParam("email") String email) {
-        JSONObject response = new JSONObject();
-        try {
-            response.put("isAvailable", true);
-            if (isMailboxTaken(email)) {
-                response.put("isAvailable", false);
-            }
-            return response.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * A HTTP Resource to initiate a password-reset sequence. Creates a password-reset token
-     * and sends it out as link via Email. Redirects the request to either the "token info"
-     * or the "error message" page.
-     * @param email
-     * @return A Response.temporaryRedirect to either the "token info"
-     * or the "error message" page.
-     * @throws URISyntaxException 
-     */
-    @GET
-    @Path("/password-token/{email}")
-    @Produces(MediaType.TEXT_HTML)
-    @Override
-    public Response initiatePasswordReset(@PathParam("email") String email) throws URISyntaxException {
-        log.info("Password reset requested for user with Email: \"" + email + "\"");
-        try {
-            String emailAddressValue = email.trim();
-            boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
-            if (emailExists) {
-                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue);
-                return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
-            } else {
-                log.info("Email based password reset workflow not do'able, Email Addresses does not exist.");
-            }
-        } catch (URISyntaxException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return Response.temporaryRedirect(new URI("/sign-up/error")).build();
-    }
-
-    @POST
-    @Path("/do/password-token/{email}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Override
-    public String doInitiatePasswordReset(@PathParam("email") String email) {
-        log.info("Password reset requested for user with Email: \"" + email + "\"");
-        JSONObject response = new JSONObject();
-        try {
-            String emailAddressValue = email.trim();
-            boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
-            if (emailExists) {
-                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                String token = sendPasswordResetToken(emailAddressValue);
-                if (CONFIG_SIGNUP_DEBUG_ENABLED) {
-                	response.put("token", token);
-                }
-                
-                response.put("state", "success");
-            } else {
-                log.info("Email based password reset workflow not do'able, Email Addresses does not exist.");
-                response.put("state", "error");
-            }
-        } catch (JSONException e) {
-		}
-
-        return response.toString();
-    }
-
-    /** 
-     * Checks the given password-reset token for validity and return either the
-     * password-reset dialog or the error message page.
-     * @param token
-     * @return The correct dialog/template for the given password-reset token value.
-     */
-    @GET
-    @Path("/password-reset/{token}")
-    @Produces(MediaType.TEXT_HTML)
-    public Viewable handlePasswordResetRequest(@PathParam("token") String token) {
-        try {
-            // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-            if (!pwToken.containsKey(token)) {
-                viewData("message", rb.getString("link_invalid"));
-            }
-            // 2) Process available token and remove it from stack
-            String username, email;
-            JSONObject input = pwToken.get(token);
-            // 3) Update the user account credentials OR present an error message.
-            viewData("token", token);
-            if (input != null && input.getLong("expiration") > new Date().getTime()) {
-                username = input.getString("username");
-                email = input.getString("mailbox");
-                log.info("Handling password reset request for Email: \"" + email);
-                viewData("requested_username", username);
-                viewData("password_requested_title", rb.getString("password_requested_title"));
-                prepareSignupPage("password-reset");
-                return view("password-reset");
-            } else {
-                log.warning("Sorry the link to reset the password for ... has expired.");
-                viewData("message", rb.getString("reset_link_expired"));
-                return getFailureView("updated");
-            }
-        } catch (JSONException ex) {
-            log.severe("Sorry, an error occured during retriving your token. Please try again. " + ex.getMessage());
-            viewData("message", rb.getString("reset_link_error"));
-            return getFailureView("updated");
-        }
-    }
-
-    @POST
-    @Path("/do/password-reset/check-token/{token}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String doHandlePasswordResetRequest(@PathParam("token") String token) {
-        JSONObject response = new JSONObject();
-
-        try {
-            // 1) Process available token
-            JSONObject input = pwToken.get(token);
-            if (input != null && input.getLong("expiration") > new Date().getTime()) {
-                // 2) Tell that password can be changed
-                response.put("state", "success");
-                
-                String username = input.getString("username");
-                response.put("username", username);
-            } else {
-                response.put("state", "error");
-            }
-        } catch (JSONException ex) {
-        	// Swallow
-        }
-        
-        return response.toString();
-    }
-
-    /**
-     * Updates the user password.
-     * @param token
-     * @param password
-     * @return Returns the correct template for the input.
-     */
-    @GET
-    @Path("/password-reset/{token}/{password}")
-    @Transactional
-    public Viewable processPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
-        log.info("Processing Password Update Request Token... ");
-        try {
-            JSONObject entry = pwToken.get(token);
-            if (entry != null) {
-                    Credentials newCreds = new Credentials("dummy", "pass");
-                    newCreds.username = entry.getString("username");
-                    newCreds.password = password;
-                    dm4.getAccessControl().changePassword(newCreds);
-                    pwToken.remove(token);
-                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
-                    viewData("message", rb.getString("reset_password_ok"));
-                    prepareSignupPage("password-ok");
-                    return view("password-ok");
-            } else {
-                viewData("message", rb.getString("reset_password_error"));
-                return getFailureView("updated");
-            }
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            viewData("message", rb.getString("reset_password_error"));
-            return getFailureView("updated");
-        }
-    }
-
-    /**
-     * Updates the user password.
-     * @param token
-     * @param password
-     * @return Returns the correct template for the input.
-     */
-    @POST
-    @Path("/do/password-reset/update/{token}/{password}")
-    @Transactional
-    public String doProcessPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
-        JSONObject response = new JSONObject();
-        log.info("Processing Password Update Request Token... ");
-        try {
-            JSONObject entry = pwToken.get(token);
-            if (entry != null) {
-                Credentials newCreds = new Credentials("dummy", "pass");
-                newCreds.username = entry.getString("username");
-                newCreds.password = password;
-
-                if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
-                	// LDAP-Plugin expects plaintextPassword to be set correctly
-                	newCreds.plaintextPassword = newCreds.password;
-            		if (ldapService.changePassword(newCreds) == null) {
-                        response.put("state", "succes");
-                        
-            			return response.toString();
-            		}
-            	} else {
-                    dm4.getAccessControl().changePassword(newCreds);
-            		
-            	}
-                pwToken.remove(token);
-                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
-
-                response.put("state", "success");
-                response.put("username", newCreds.username);
-                
-            } else {
-                response.put("state", "error");
-            }
-        } catch (JSONException ex) {
-        	throw new RuntimeException("Unable to handle password change", ex);
-        }
-        
-        return response.toString();
-    }
-
-    /**
-     * A shorter method signature for doSignupRequst(username, password, mailbox, skipConfirmation).
-     * @see doSignupRequest
-     */
-    @GET
-    @Path("/create/{username}/{pass-one}/{mailbox}")
-    @Override
-    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
-                                    @PathParam("mailbox") String mailbox) {
-        return doSignupRequest(username, password, mailbox, false);
-    }
-
-    /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @param skipConfirmation  Flag if "true" skips initiating the email verification process
-     * (useful to allow members of the "Administration" workspace to create new accounts without verifying users).
-     * @return A String containing a JSON Object with the following properties:
-     * {
-     *   "state": "success" | "error",
-     *   "email_verification": "skipped" | "inactive" | "send",
-     *   "accounts_enabled": true | false
-     * }
-     */
-    @GET
-    @Path("/create/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
-    @Override
-    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
-                                        @PathParam("mailbox") String mailbox,
-                                        @PathParam("skipConfirmation") boolean skipConfirmation) {
-    	String usernick = username;
-    	username = userName(username);
-    	
-        JSONObject response = new JSONObject();
-        try {
-            response.put("state", "error");
-            response.put("accounts_enabled", DM4_ACCOUNTS_ENABLED);
-            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
-                if (skipConfirmation && isAdministrationWorkspaceMember()) {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
-                    createSimpleUserAccount(usernick, username, password, mailbox);
-                    response.put("email_verification", "skipped");
-                } else {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
-                    String token = sendUserValidationToken(usernick, username, password, mailbox);
-                    if (CONFIG_SIGNUP_DEBUG_ENABLED) {
-                    	response.put("token", token);
-                    }
-                    response.put("email_verification", "send");
-                }
-            } else {
-                createSimpleUserAccount(usernick, username, password, mailbox);
-                response.put("email_verification", "inactive");
-            }
-            response.put("state", "success");
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return response.toString();
-    }
-
-    /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @param skipConfirmation  Flag if "true" skips intiating the email verification process
-     * (useful to allow admins to create new accounts without verifying users).
-     * @return 
-     */
-    @GET
-    @Path("/handle/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
-    @Override
-    public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
-                                        @PathParam("mailbox") String mailbox,
-                                        @PathParam("skipConfirmation") boolean skipConfirmation) {
-    	String usernick = username;
-    	username = userName(username);
-    	
-        try {
-            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
-                if (skipConfirmation && isAdministrationWorkspaceMember()) {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
-                    createSimpleUserAccount(usernick, username, password, mailbox);
-                    handleAccountCreatedRedirect(username);
-                } else {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
-                    sendUserValidationToken(usernick, username, password, mailbox);
-                    // redirect user to a "token-info" page
-                    throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/token-info")).build());
-                }
-            } else {
-                createSimpleUserAccount(usernick, username, password, mailbox);
-                handleAccountCreatedRedirect(username);
-            }
-        } catch (URISyntaxException e) {
-            log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
-        }
-        return getFailureView("created");
-    }
-
-    /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @return 
-     */
-    @GET
-    @Path("/handle/{username}/{pass-one}/{mailbox}")
-    @Override
-    public Viewable handleSignupRequest(@PathParam("username") String username,
-            @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
-        return handleSignupRequest(username, password, mailbox, false);
-    }
-
-    /**
-     * The HTTP resource to confirm the email address and acutally create an account.
-     * @param key String must be a valid token
-     * @return 
-     */
-    @POST
-    @Path("/do/confirm/{token}")
-    @Override
-    public String doProcessSignupRequest(@PathParam("token") String key) {
-    	JSONObject response = new JSONObject();
-    	try {
-	        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-	        if (!token.containsKey(key)) {
-	        	response.put("state", "error");
-	        	response.put("reason", "tokenInvalid");
-	        	
-	            return response.toString();
-	        }
-	        // 2) Process available token and remove it from stack
-	        String username;
-	        JSONObject input = token.get(key);
-	        token.remove(key);
-	        // 3) Create the user account and show ok OR present an error message.
-	        try {
-	            username = input.getString("username");
-	            if (input.getLong("expiration") > new Date().getTime()) {
-	                if (isUsernameTaken(username)) {
-		            	// Another mail already confirmed and the user was created. Deliver proper result
-	    	        	response.put("state", "error");
-	    	        	response.put("reason", "tokenInvalid");
-	    	        	
-	    	            return response.toString();
-	                }
-
-	                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                	createSimpleUserAccount(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
-	            } else {
-		        	response.put("state", "error");
-		        	response.put("reason", "tokenExpired");
-	                return response.toString();
-	            }
-	        } catch (RuntimeException ex) {
-	            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-	        	response.put("state", "error");
-	        	response.put("reason", "internalError");
-	        	response.put("exception", ex.getCause().getMessage());
-	            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
-	                new Object[]{ex.getMessage(), ex.getCause().toString()});
-	            return response.toString();
-	        } catch (JSONException ex) {
-	            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-	        	response.put("state", "error");
-	        	response.put("reason", "internalError");
-	            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
-	                new Object[]{ex.getMessage(), ex.getCause().toString()});
-	            return response.toString();
-	        }
-	        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
-	        viewData("message", rb.getString("account_created"));
-	        if (!DM4_ACCOUNTS_ENABLED) {
-	            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
-	        	response.put("state", "pending");
-	            return response.toString();
-	        }
-	        response.put("username", username);
-            response.put("usernick", input.getString("usernick"));
-
-        	response.put("state", "success");
-        	
-	        return response.toString();
-    	} catch (JSONException jsone) {
-    		
-    	}
-		return response.toString();
-    }
-
-    @GET
-    @Path("/confirm/redirect/{token}")
-    @Override
-    public Response processSignupRedirectRequest(@PathParam("token") String key) {
-    	try {
-			return Response.temporaryRedirect(new URI(String.format("/sign-up/confirm/%s", key))).build();
-		} catch (URISyntaxException e) {
-			return Response.serverError().build();
-		}
-    }
-
-    /**
-     * The HTTP resource to confirm the email address and acutally create an account.
-     * @param key String must be a valid token
-     * @return 
-     */
-    @GET
-    @Path("/confirm/{token}")
-    public Viewable processSignupRequest(@PathParam("token") String key) {
-        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-        if (!token.containsKey(key)) {
-            viewData("username", null);
-            viewData("message", rb.getString("link_invalid"));
-            return getFailureView("created");
-        }
-        // 2) Process available token and remove it from stack
-        String username;
-        JSONObject input = token.get(key);
-        token.remove(key);
-        // 3) Create the user account and show ok OR present an error message.
-        try {
-            username = input.getString("username");
-            if (input.getLong("expiration") > new Date().getTime()) {
-                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                createSimpleUserAccount(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
-            } else {
-                viewData("username", null);
-                viewData("message", rb.getString("link_expired"));
-                return getFailureView("created");
-            }
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            viewData("message", rb.getString("internal_error"));
-            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
-                new Object[]{ex.getMessage(), ex.getCause().toString()});
-            return getFailureView("created");
-        }
-        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
-        viewData("message", rb.getString("account_created"));
-        if (!DM4_ACCOUNTS_ENABLED) {
-            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
-            return getAccountCreationPendingView();
-        }
-        return getAccountCreationOKView(username);
-    }
-
-    /**
-     * A HTTP resource to associate the requesting username with
-     * the "Custom Membership Request" note topic and to inform the administrators by email.
-     * @return String containing a JSONObject with an "membership_created" r´property representing the relation.
-     */
-    @POST
-    @Path("/confirm/membership/custom")
-    @Transactional
-    @Override
-    public String createAPIWorkspaceMembershipRequest() {
-        Topic apiMembershipRequestNote = dm4.getTopicByUri("org.deepamehta.signup.api_membership_requests");
-        if (apiMembershipRequestNote != null && acService.getUsername() != null) {
-            Topic usernameTopic = acService.getUsernameTopic(acService.getUsername());
-            // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the configured workspace)
-            createApiWorkspaceMembership(usernameTopic); // might fail silently
-            // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
-            Association requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
-            if (requestRelation == null) {
-                // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace cookie
-                // set (at the requesting client) which workspace this assoc will be assigned to
-                createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
-            } else {
-                log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-                sendSystemMailboxNotification("API Usage Revoked", "Hi admin,\n\n"
-                    + usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of Service for API-Usage."
-                            + "\n\nJust wanted to let you know.\nCheers!");
-                // 2.1) fails in all cases where user has no write access to the workspace the association was created in
-                // dm4.deleteAssociation(requestRelation.getId());
-                // For now: API Usage Membership must be revoked per Email but personally and confirmed by the administrator
-                // A respective hint was place in the "API Usage" dialog on the users account (/sign-up/edit) page.
-            }
-            return "{ \"membership_created\" : " + true + "}";
-        } else {
-            return "{ \"membership_created\" : " + false + "}";
-        }
-    }
-
-    @Override
-    public void postUpdateTopic(Topic topic, TopicModel tm, TopicModel tm1) {
-        if (topic.getTypeUri().equals(SIGN_UP_CONFIG_TYPE_URI)) {
-            reloadAssociatedSignupConfiguration();
-        } else if (topic.getTypeUri().equals(CONFIG_TOPIC_ACCOUNT_ENABLED)) {
-            // Account status
-            boolean status = Boolean.parseBoolean(topic.getSimpleValue().toString());
-            // Account involved
-            Topic username = topic.getRelatedTopic("dm4.config.configuration", null,
-                    null, "dm4.accesscontrol.username");
-            // Perform notification
-            if (status && !DM4_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
-                log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
-                //
-                String webAppTitle = activeModuleConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE)
-                        .getSimpleValue().toString();
-                Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, MAILBOX_TYPE_URI);
-                if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
-                    String mailboxValue = mailbox.getSimpleValue().toString();
-                    sendSystemMail("Your account on " + webAppTitle + " is now active",
-                            rb.getString("mail_hello") + " " + username.getSimpleValue()
-                                    + ",\n\nyour account on " + CONFIG_SIGNUP_APP_URL + "" + webAppTitle + "</a> is now " +
-                                    "active.\n\n" + rb.getString("mail_ciao"), mailboxValue);
-                    log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
-                }
-            }
-        }
-    }
+    };
 
     // --- Sign-up Plugin Routes --- //
 
@@ -881,10 +292,618 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return view("account-edit");
     }
 
+    /**
+     * A Servlet to initiate a password-reset sequence. Creates a password-reset token
+     * and sends it out as link via Email. Redirects the request to either the "token info"
+     * or the "error message" page.
+     * ### Slugs
+     * @param email
+     * @return A Response.temporaryRedirect to either the "token info"
+     * or the "error message" page.
+     * @throws URISyntaxException 
+     */
+    @GET
+    @Path("/password-token/{email}")
+    @Produces(MediaType.TEXT_HTML)
+    @Override
+    public Response initiatePasswordReset(@PathParam("email") String email) throws URISyntaxException {
+        log.info("Password reset requested for user with Email: \"" + email + "\"");
+        try {
+            String emailAddressValue = email.trim();
+            boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
+            if (emailExists) {
+                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+                sendPasswordResetToken(emailAddressValue);
+                return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
+            } else {
+                log.info("Email based password reset workflow not do'able, Email Addresses does not exist.");
+            }
+        } catch (URISyntaxException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return Response.temporaryRedirect(new URI("/sign-up/error")).build();
+    }
+    
+    /** 
+     * Servlet endpoint to check the password-reset token for validity and return either the
+     * password-reset dialog or the error message page.
+     * @param token
+     * @return The correct dialog/template for the given password-reset token value.
+     */
+    @GET
+    @Path("/password-reset/{token}")
+    @Produces(MediaType.TEXT_HTML)
+    public Viewable handlePasswordResetRequest(@PathParam("token") String token) {
+        try {
+            // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+            if (!pwToken.containsKey(token)) {
+                viewData("message", rb.getString("link_invalid"));
+            }
+            // 2) Process available token and remove it from stack
+            String username, email;
+            JSONObject input = pwToken.get(token);
+            // 3) Update the user account credentials OR present an error message.
+            viewData("token", token);
+            if (input != null && input.getLong("expiration") > new Date().getTime()) {
+                username = input.getString("username");
+                email = input.getString("mailbox");
+                log.info("Handling password reset request for Email: \"" + email);
+                viewData("requested_username", username);
+                viewData("password_requested_title", rb.getString("password_requested_title"));
+                prepareSignupPage("password-reset");
+                return view("password-reset");
+            } else {
+                log.warning("Sorry the link to reset the password for ... has expired.");
+                viewData("message", rb.getString("reset_link_expired"));
+                return getFailureView("updated");
+            }
+        } catch (JSONException ex) {
+            log.severe("Sorry, an error occured during retriving your token. Please try again. " + ex.getMessage());
+            viewData("message", rb.getString("reset_link_error"));
+            return getFailureView("updated");
+        }
+    }
+    
+    /**
+     * Servlet endpoint to process the user password request.
+     * @param token
+     * @param password
+     * @return Returns the correct template for the input.
+     */
+    @GET
+    @Path("/password-reset/{token}/{password}")
+    @Transactional
+    public Viewable processPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+        log.info("Processing Password Update Request Token... ");
+        try {
+            JSONObject entry = pwToken.get(token);
+            if (entry != null) {
+                Credentials newCreds = new Credentials("dummy", "pass");
+                newCreds.username = entry.getString("username");
+                newCreds.password = password;
+                dm4.getAccessControl().changePassword(newCreds);
+                pwToken.remove(token);
+                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+                viewData("message", rb.getString("reset_password_ok"));
+                prepareSignupPage("password-ok");
+                return view("password-ok");
+            } else {
+                viewData("message", rb.getString("reset_password_error"));
+                return getFailureView("updated");
+            }
+        } catch (JSONException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            viewData("message", rb.getString("reset_password_error"));
+            return getFailureView("updated");
+        }
+    }
+
+    /**
+     * Servlet endpoint to create a new user account.
+     * @param username  String must be unique
+     * @param password  String must be SHA-256 encoded
+     * @param mailbox   String must be unique
+     * @param skipConfirmation  Flag if "true" skips intiating the email verification process
+     * (useful to allow admins to create new accounts without verifying users).
+     * @return 
+     * ### Slugs
+     */
+    @GET
+    @Path("/handle/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
+    @Override
+    public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password, 
+            @PathParam("mailbox") String mailbox, @PathParam("skipConfirmation") boolean skipConfirmation) {
+ 
+        String usernick = username;
+    	username = userName(username);
+    	
+        try {
+            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
+                if (skipConfirmation && isAdministrationWorkspaceMember()) {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
+                    createUser(usernick, username, password, mailbox);
+                    handleAccountCreatedRedirect(username);
+                } else {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
+                    sendUserValidationToken(usernick, username, password, mailbox);
+                    // redirect user to a "token-info" page
+                    throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/token-info")).build());
+                }
+            } else {
+                createUser(usernick, username, password, mailbox);
+                handleAccountCreatedRedirect(username);
+            }
+        } catch (URISyntaxException e) {
+            log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
+        }
+        return getFailureView("created");
+    }
+
+    /**
+     * Sevlet endpoint to create a new user account.
+     * @param username  String must be unique
+     * @param password  String must be SHA-256 encoded
+     * @param mailbox   String must be unique
+     * @return 
+     */
+    @GET
+    @Path("/handle/{username}/{pass-one}/{mailbox}")
+    @Override
+    public Viewable handleSignupRequest(@PathParam("username") String username,
+            @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
+        return handleSignupRequest(username, password, mailbox, false);
+    }
+
+    /** 
+     * Servlet endpoint for confirming the sign-up request.
+     * @param key
+     * @return 
+     * ### Slugs
+     */
+    @GET
+    @Path("/confirm/redirect/{token}")
+    @Override
+    public Response processSignupRedirectRequest(@PathParam("token") String key) {
+    	try {
+            return Response.temporaryRedirect(new URI("/sign-up/confirm/" + key)).build();
+        } catch (URISyntaxException e) {
+            return Response.serverError().build();
+        }
+    }
+
+    /**
+     * Servlet resource to confirm the email address and acutally create an account.
+     * @param key String must be a valid token
+     * @return 
+     */
+    @GET
+    @Path("/confirm/{token}")
+    public Viewable processSignupRequest(@PathParam("token") String key) {
+        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+        if (!token.containsKey(key)) {
+            viewData("username", null);
+            viewData("message", rb.getString("link_invalid"));
+            return getFailureView("created");
+        }
+        // 2) Process available token and remove it from stack
+        String username;
+        JSONObject input = token.get(key);
+        token.remove(key);
+        // 3) Create the user account and show ok OR present an error message.
+        try {
+            username = input.getString("username");
+            if (input.getLong("expiration") > new Date().getTime()) {
+                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
+                createUser(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
+                // createUser(username, input.getString("password"), input.getString("mailbox"));
+            } else {
+                viewData("username", null);
+                viewData("message", rb.getString("link_expired"));
+                return getFailureView("created");
+            }
+        } catch (JSONException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            viewData("message", rb.getString("internal_error"));
+            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
+            new Object[]{ex.getMessage(), ex.getCause().toString()});
+            return getFailureView("created");
+        }
+        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
+        viewData("message", rb.getString("account_created"));
+        if (!DM4_ACCOUNTS_ENABLED) {
+            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
+            return getAccountCreationPendingView();
+        }
+        return getAccountCreationOKView(username);
+    }
+
+    
+    // --- Public JSON Endpoints --- //
+    
+    /** 
+     * JSON endpoint to all ui-labels in the language the plugins source code was compiled.
+     * @param language
+     * @return A String containing a JSONObject with key-value pairs of all multilingual labels.
+     */
+    @GET
+    @Path("/translation/{locale}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getTranslationTable(@PathParam("locale") String language) {
+        if (language.isEmpty()) return null;
+        Locale le = new Locale(language);
+        ResourceBundle newRb = ResourceBundle.getBundle("SignupMessages", le);
+        Enumeration bundleKeys = newRb.getKeys();
+        JSONObject response = new JSONObject();
+        while (bundleKeys.hasMoreElements()) {
+            try {
+                String key = (String) bundleKeys.nextElement();
+                response.put(key, newRb.getString(key));
+            } catch (JSONException ex) {
+                Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return response.toString();
+    }
+
+    /**
+     * JSON resource allowing existence check fors the given email address string.
+     * @param email
+     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
+     * If the email address is already known in the system isAvailable is set to false.
+     */
+    @GET
+    @Path("/check/mailbox/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getMailboxAvailability(@PathParam("email") String email) {
+        JSONObject response = new JSONObject();
+        try {
+            response.put("isAvailable", true);
+            if (isMailboxTaken(email)) {
+                response.put("isAvailable", false);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** 
+     * JSON endpoint to tell if password an be changed.
+     **/
+    @POST
+    @Path("/do/password-reset/check-token/{token}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String doHandlePasswordResetRequest(@PathParam("token") String token) {
+        JSONObject response = new JSONObject();
+        try {
+            // 1) Process available token
+            JSONObject input = pwToken.get(token);
+            if (input != null && input.getLong("expiration") > new Date().getTime()) {
+                // 2) Tell that password can be changed
+                response.put("state", "success");
+                String username = input.getString("username");
+                response.put("username", username);
+            } else {
+                response.put("state", "error");
+            }
+        } catch (JSONException ex) {
+            // ### Swallow
+        }
+        return response.toString();
+    }
+
+    /**
+     * JSON Endpoint to process the user password request.
+     * @param token
+     * @param password
+     * @return Returns the correct template for the input.
+     */
+    @POST
+    @Path("/do/password-reset/update/{token}/{password}")
+    @Transactional
+    public String doProcessPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+        JSONObject response = new JSONObject();
+        log.info("Processing Password Update Request Token... ");
+        try {
+            JSONObject entry = pwToken.get(token);
+            if (entry != null) {
+                Credentials newCreds = new Credentials("dummy", "pass");
+                newCreds.username = entry.getString("username");
+                newCreds.password = password;
+
+                if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
+                	// LDAP-Plugin expects plaintextPassword to be set correctly
+                	newCreds.plaintextPassword = newCreds.password;
+            		if (ldapService.changePassword(newCreds) == null) {
+                        response.put("state", "succes");
+                        
+            			return response.toString();
+            		}
+            	} else {
+                    dm4.getAccessControl().changePassword(newCreds);
+            		
+            	}
+                pwToken.remove(token);
+                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+
+                response.put("state", "success");
+                response.put("username", newCreds.username);
+                
+            } else {
+                response.put("state", "error");
+            }
+        } catch (JSONException ex) {
+        	throw new RuntimeException("Unable to handle password change", ex);
+        }
+        
+        return response.toString();
+    }
+
+
+
+    // --- Service Implementation --- //
+
+    /**
+     * JSON resource allowing existence checks for given username strings.
+     * @param username
+     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
+     * If the username is already taken isAvailable is set to false.
+     */
+    @GET
+    @Path("/check/{username}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public String getUsernameAvailability(@PathParam("username") String username) {
+        JSONObject response = new JSONObject();
+        try {
+            response.put("isAvailable", true);
+            if (isUsernameTaken(username)) {
+                response.put("isAvailable", false);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    /**
+     * JSON endpoint to initiate the password reset token.
+     * @param email
+     * @return 
+     */
+    @POST
+    @Path("/do/password-token/{email}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public String doInitiatePasswordReset(@PathParam("email") String email) {
+        log.info("Password reset requested for user with Email: \"" + email + "\"");
+        JSONObject response = new JSONObject();
+        try {
+            String emailAddressValue = email.trim();
+            boolean emailExists = dm4.getAccessControl().emailAddressExists(emailAddressValue);
+            if (emailExists) {
+                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+                String token = sendPasswordResetToken(emailAddressValue);
+                if (CONFIG_SIGNUP_DEBUG_ENABLED) {
+                    response.put("token", token);
+                }
+                response.put("state", "success");
+            } else {
+                log.info("Email based password reset workflow not do'able, Email Addresses does not exist.");
+                response.put("state", "error");
+            }
+        } catch (JSONException e) {
+            // Fixme: ???
+        }
+        return response.toString();
+    }
+
+    /**
+     * JSON Endpoint to create a new user account.
+     * @param username  String must be unique
+     * @param password  String must be SHA-256 encoded
+     * @param mailbox   String must be unique
+     * @param skipConfirmation  Flag if "true" skips initiating the email verification process
+     * (useful to allow members of the "Administration" workspace to create new accounts without verifying users).
+     * @return A String containing a JSON Object with the following properties:
+     * {
+     *   "state": "success" | "error",
+     *   "email_verification": "skipped" | "inactive" | "send",
+     *   "accounts_enabled": true | false
+     * }
+     */
+    @GET
+    @Path("/create/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
+    @Override
+    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password, 
+            @PathParam("mailbox") String mailbox, @PathParam("skipConfirmation") boolean skipConfirmation) {
+    	String usernick = username;
+    	username = userName(username);
+        JSONObject response = new JSONObject();
+        try {
+            response.put("state", "error");
+            response.put("accounts_enabled", DM4_ACCOUNTS_ENABLED);
+            if (CONFIG_SIGNUP_EMAIL_CONFIRMATION_ENABLED) {
+                if (skipConfirmation && isAdministrationWorkspaceMember()) {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active but Admin decided to skip confirmation mail.");
+                    createUser(usernick, username, password, mailbox);
+                    response.put("email_verification", "skipped");
+                } else {
+                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
+                    String token = sendUserValidationToken(usernick, username, password, mailbox);
+                    if (CONFIG_SIGNUP_DEBUG_ENABLED) {
+                    	response.put("token", token);
+                    }
+                    response.put("email_verification", "send");
+                }
+            } else {
+                createUser(usernick, username, password, mailbox);
+                response.put("email_verification", "inactive");
+            }
+            response.put("state", "success");
+        } catch (JSONException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return response.toString();
+    }
+ 
+   /**
+     * JSON endpoint for doSignupRequst(username, password, mailbox, skipConfirmation).
+     * @see doSignupRequest
+     */
+    @GET
+    @Path("/create/{username}/{pass-one}/{mailbox}")
+    @Override
+    public String doSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password, 
+            @PathParam("mailbox") String mailbox) {
+        return doSignupRequest(username, password, mailbox, false);
+    }
+ 
+    /**
+     * JSON resource to confirm the email address and acutally create an account.
+     * @param key String must be a valid token
+     * @return 
+     */
+    @POST
+    @Path("/do/confirm/{token}")
+    @Override
+    public String doProcessSignupRequest(@PathParam("token") String key) {
+    	JSONObject response = new JSONObject();
+    	try {
+            // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+            if (!token.containsKey(key)) {
+                response.put("state", "error");
+                response.put("reason", "tokenInvalid");
+                return response.toString();
+            }
+            // 2) Process available token and remove it from stack
+            String username;
+            JSONObject input = token.get(key);
+            token.remove(key);
+            // 3) Create the user account and show ok OR present an error message.
+            try {
+                username = input.getString("username");
+                if (input.getLong("expiration") > new Date().getTime()) {
+                    if (isUsernameTaken(username)) {
+                        // Another mail already confirmed and the user was created. Deliver proper result
+                        response.put("state", "error");
+                        response.put("reason", "tokenInvalid");
+                        return response.toString();
+                    }
+                    log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
+                    createUser(input.getString("usernick"), username, input.getString("password"), input.getString("mailbox"));
+                } else {
+                    response.put("state", "error");
+                    response.put("reason", "tokenExpired");
+                    return response.toString();
+                }
+            } catch (RuntimeException ex) {
+                Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+                response.put("state", "error");
+                response.put("reason", "internalError");
+                response.put("exception", ex.getCause().getMessage());
+                log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
+                new Object[]{ex.getMessage(), ex.getCause().toString()});
+                return response.toString();
+            } catch (JSONException ex) {
+                Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+                response.put("state", "error");
+                response.put("reason", "internalError");
+                log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
+                new Object[]{ex.getMessage(), ex.getCause().toString()});
+                return response.toString();
+            }
+            log.log(Level.INFO, "Account succesfully created for username: {0}", username);
+            viewData("message", rb.getString("account_created"));
+            if (!DM4_ACCOUNTS_ENABLED) {
+                log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
+                response.put("state", "pending");
+                return response.toString();
+            }
+            response.put("username", username);
+            response.put("usernick", input.getString("usernick"));
+            response.put("state", "success");
+            return response.toString();
+    	} catch (JSONException jsone) {
+    	    // ### ???
+    	}
+        return response.toString();
+    }
+
+    /**
+     * JSON resource to associate the requesting username with
+     * the "Custom Membership Request" note topic and to inform the administrators by email.
+     * @return String containing a JSONObject with an "membership_created" r´property representing the relation.
+     */
+    @POST
+    @Path("/confirm/membership/custom")
+    @Transactional
+    @Override
+    public String createAPIWorkspaceMembershipRequest() {
+        Topic apiMembershipRequestNote = dm4.getTopicByUri("org.deepamehta.signup.api_membership_requests");
+        if (apiMembershipRequestNote != null && acService.getUsername() != null) {
+            Topic usernameTopic = acService.getUsernameTopic(acService.getUsername());
+            // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the configured workspace)
+            createApiWorkspaceMembership(usernameTopic); // might fail silently
+            // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
+            Association requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
+            if (requestRelation == null) {
+                // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace cookie
+                // set (at the requesting client) which workspace this assoc will be assigned to
+                createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
+            } else {
+                log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
+                sendSystemMailboxNotification("API Usage Revoked", "Hi admin,\n\n"
+                    + usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of Service for API-Usage."
+                            + "\n\nJust wanted to let you know.\nCheers!");
+                // 2.1) fails in all cases where user has no write access to the workspace the association was created in
+                // dm4.deleteAssociation(requestRelation.getId());
+                // For now: API Usage Membership must be revoked per Email but personally and confirmed by the administrator
+                // A respective hint was place in the "API Usage" dialog on the users account (/sign-up/edit) page.
+            }
+            return "{ \"membership_created\" : " + true + "}";
+        } else {
+            return "{ \"membership_created\" : " + false + "}";
+        }
+    }
+
+    @Override
+    public void postUpdateTopic(Topic topic, TopicModel tm, TopicModel tm1) {
+        if (topic.getTypeUri().equals(SIGN_UP_CONFIG_TYPE_URI)) {
+            reloadAssociatedSignupConfiguration();
+        } else if (topic.getTypeUri().equals(CONFIG_TOPIC_ACCOUNT_ENABLED)) {
+            // Account status
+            boolean status = Boolean.parseBoolean(topic.getSimpleValue().toString());
+            // Account involved
+            Topic username = topic.getRelatedTopic("dm4.config.configuration", null,
+                    null, "dm4.accesscontrol.username");
+            // Perform notification
+            if (status && !DM4_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
+                log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
+                //
+                String webAppTitle = activeModuleConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE)
+                        .getSimpleValue().toString();
+                Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, MAILBOX_TYPE_URI);
+                if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
+                    String mailboxValue = mailbox.getSimpleValue().toString();
+                    sendSystemMail("Your account on " + webAppTitle + " is now active",
+                            rb.getString("mail_hello") + " " + username.getSimpleValue()
+                                    + ",\n\nyour account on " + CONFIG_SIGNUP_APP_URL + " " + webAppTitle + " is now " +
+                                    "active.\n\n" + rb.getString("mail_ciao"), mailboxValue);
+                    log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
+                }
+            }
+        }
+    }
+
     @Override
     public void sendSystemMailboxNotification(String subject, String message) {
-        if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
-            String recipient = CONFIG_ADMIN_MAILBOX;
+        String recipient;
+        if (activeModuleConfiguration.getChildTopics().getTopicOrNull(CONFIG_ADMIN_MAILBOX) != null && // 4.8 migration
+            !activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX).isEmpty()) {
+            recipient = activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX);
+        } else if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
+            recipient = CONFIG_ADMIN_MAILBOX;
             try {
                 sendSystemMail(subject, message, recipient);
             } catch (Exception ex) {
@@ -905,17 +924,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     + "we FAILED sending out a notification mail to User \""+mailbox+"\", caused by: " +  ex.getMessage());
         }
     }
-    
-    private Topic createUser(Credentials creds) throws NoSuchAlgorithmException {
-    	if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
-    		return ldapService.createUser(creds);	
-    	} else {
-    		return acService.createUserAccount(creds);
-    	}
-    }
 
     @Override
-    public String createSimpleUserAccount(String usernick, String username, String password, String mailbox) {
+    public String createUser(String usernick, String username, String password, String mailbox) { 
         DeepaMehtaTransaction tx = dm4.beginTx();
         try {
             if (isUsernameTaken(username)) {
@@ -926,13 +937,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             
             Credentials creds = null;
             		
-    		// When the "Basic" method is used the password is already in -SHA256- form for all other
+            // When the "Basic" method is used the password is already in -SHA256- form for all other
             // methods it is simply base64-encoded
             if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("Basic")) {
                 creds = new Credentials(new JSONObject()
-		                .put("username", username.trim())
-		                .put("password", password.trim()));
-            } else {
+                    .put("username", username.trim())
+                    .put("password", password.trim()));
+            } else if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
             	String plaintextPassword = Base64.base64Decode(password);
                 creds = new Credentials(username.trim(), plaintextPassword);
                 
@@ -943,7 +954,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // 1) Create new user (in which workspace), just within the private one, no?
             
             // TODO: Method goes into the credentials and is handled in AccessControlService
-            final Topic usernameTopic = createUser(creds);
+            final Topic usernameTopic = createUserAccount(creds);
 
             final String eMailAddressValue = mailbox;
             // 2) create and associate e-mail address topic
@@ -977,9 +988,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             log.info("Created new user account for user \"" + username + "\" and " + eMailAddressValue);
             // 7) Inform administrations about successfull account creation
             sendNotificationMail(username, mailbox.trim());
-
-            setNick(username, usernick);
-            
+            if (usernick != null) {
+                setNick(username, usernick);
+            }
             tx.success();
             return username;
         } catch (Exception e) {
@@ -987,6 +998,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         } finally {
             tx.finish();
         }
+    }
+
+    @Override
+    public String createUser(String username, String password, String mailbox) {
+        return createUser(null, username, password, mailbox);
     }
 
     @Override
@@ -1018,8 +1034,39 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         return result;
     }
 
+    @Override
+    public void reinitTemplateEngine() {
+        super.initTemplateEngine();
+    }
+
+    @Override
+    public void addTemplateResolverBundle(Bundle bundle) {
+        super.addTemplateResourceBundle(bundle);
+    }
+
+    @Override
+    public void removeTemplateResolverBundle(Bundle bundle) {
+        super.removeTemplateResourceBundle(bundle);
+    }
+
+    @Override
+    public void setNickToUserNameHandler(NickToUserNameHandler handler) {
+    	nickToUserNameHandler = handler;
+    }
+    
+
+
     // --- Private Helpers --- //
 
+    private Topic createUserAccount(Credentials creds) throws NoSuchAlgorithmException {
+    	if (CONFIG_SIGNUP_AUTHORIZATION_METHOD.equals("LDAP")) {
+            return ldapService.createUser(creds);	
+    	} else {
+            return acService.createUserAccount(creds);
+    	}
+    }
+
+    /** Redirect ### Slugs */
     private void handleAccountCreatedRedirect(String username) throws URISyntaxException {
         if (DM4_ACCOUNTS_ENABLED) {
             log.info("DeepaMehta 4 Setting: The new account is now ENABLED, redirecting to OK page.");
@@ -1066,7 +1113,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private String sendUserValidationToken(String usernick, String username, String password, String mailbox) {
         String tokenKey = createUserValidationToken(usernick, username, password, mailbox);
         sendConfirmationMail(tokenKey, usernick, mailbox.trim());
-        
         return tokenKey;
     }
 
@@ -1074,7 +1120,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         String username = dm4.getAccessControl().getUsername(mailbox);
         String tokenKey = createPasswordResetToken(username, mailbox);
         sendPasswordResetMail(tokenKey, username, mailbox.trim());
-        
         return tokenKey;
     }
 
@@ -1083,7 +1128,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String tokenKey = UUID.randomUUID().toString();
             long valid = new Date().getTime() + 3600000; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
-            		.put("usernick", usernick)
+                    .put("usernick", usernick)
                     .put("username", username.trim())
                     .put("mailbox", mailbox.trim())
                     .put("password", password)
@@ -1171,45 +1216,45 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     + customWorkspaceAssignmentTopic.getSimpleValue() + "\"");
         }
         systemEmailContact = CONFIG_ADMIN_MAILBOX;
+        // Prioritize Standard signup ADMIN Mailbox
+        if (activeModuleConfiguration.getChildTopics().getStringOrNull(CONFIG_ADMIN_MAILBOX) != null) {
+            systemEmailContact = activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX);
+        }
         log.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"",
             new Object[]{activeModuleConfiguration.getUri(), activeModuleConfiguration.getSimpleValue()});
         return activeModuleConfiguration;
     }
 
-    private void sendConfirmationMail(String key, String usernick, String mailbox) {
+    private void sendConfirmationMail(String key, String username, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
-            URL url = new URL(CONFIG_SIGNUP_APP_URL);
+            URL url = new URL(DM4_HOST_URL);
             
             // Puts key into slug template
             String confirmSlug = String.format(CONFIG_SIGNUP_CONFIRM_SLUG, key);
-            
+            String confirmationLink = String.format("%s%s", url, confirmSlug);
+            // Todo: ### Introduce Confirmation Slug
             log.info("The confirmation mails token request URL should be:"
                 + "\n" + url + confirmSlug + key);
             // Localize "sentence" structure for german, maybe via Formatter
-            String mailSubject = CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE;
-            
+            String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle; // CONFIG_SIGNUP_CONFIRMATION_EMAIL_SUBJECT_TEMPLATE;
+
             try {
-            	
+                String linkHref = "<a href=\"" + confirmationLink + "\">" + rb.getString("mail_confirmation_link_label") + "</a>";
+                
                 if (DM4_ACCOUNTS_ENABLED) {
-                	String link = String.format(
-                			"%s%s",
-                			url,
-                			confirmSlug);
-                	
-                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, usernick, link);
-                	
-                    sendSystemMail(mailSubject, mailBody, mailbox);
+                    // ### TODO: Integrate Tendu Mail Body mailBox
+                    sendSystemMail(mailSubject,
+                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
+                            +rb.getString("mail_confirmation_active_body")+"<br/><br/>"
+                            + linkHref + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
                 } else {
-                	// TODO: Unused in climbo-context
-                	String link = String.format(
-                			"%s%s",
-                			url,
-                			confirmSlug);
-                	
-                	String mailBody = String.format(CONFIG_SIGNUP_CONFIRMATION_EMAIL_BODY_TEMPLATE, usernick, link);
-                	
-                    sendSystemMail(mailSubject, mailBody, mailbox);
+                    // ### TODO: Integrate Tendu Mail Body mailBox
+                    sendSystemMail(mailSubject,
+                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
+                            + rb.getString("mail_confirmation_proceed_1")+"<br/>"
+                            + linkHref + "<br/><br/>" + rb.getString("mail_confirmation_proceed_2")
+                            + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
                 }
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
@@ -1220,7 +1265,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private void sendPasswordResetMail(String key, String usernick, String mailbox) {
+    private void sendPasswordResetMail(String key, String username, String mailbox) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(CONFIG_SIGNUP_APP_URL);
@@ -1232,12 +1277,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 + "\n" + url + passwordResetSlug);
             
             String passwordResetUrl = String.format("%s%s", url, passwordResetSlug);
-
+            
             try {
-            	String mailSubject = CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE;
-            	
-            	String mailBody = String.format(CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE, passwordResetUrl);
-            	
+                String mailSubject = rb.getString("mail_pw_reset_title") + " " + webAppTitle; // CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_SUBJECT_TEMPLATE;
+            	String mailBody = rb.getString("mail_hello") + " " + username + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                        + "<a href=\""+passwordResetUrl+"\">" + passwordResetUrl + "</a><br/><br/>" + rb.getString("mail_cheers"); // String.format(CONFIG_SIGNUP_PASSWORD_RESET_EMAIL_BODY_TEMPLATE, passwordResetUrl);
+                
                 sendSystemMail(mailSubject, mailBody, mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
@@ -1250,19 +1295,25 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     private void sendNotificationMail(String username, String mailbox) {
         String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
-        //
-        if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
-            String adminMailbox = CONFIG_ADMIN_MAILBOX;
-            try {
-                sendSystemMail("Account registration on " + webAppTitle,
-                        "\nA user has registered.\n\nUsername: " + username + "\nEmail: " + mailbox, adminMailbox);
-            } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                        + "we FAILED notifying the \"system mailbox\" about account creation, caused by: " +  ex.getMessage());
-            }
-        } else {
+        String adminMailbox = null;
+        // Tendu ADMIN Mailbox
+        if (CONFIG_ADMIN_MAILBOX.isEmpty()) {
+            adminMailbox = CONFIG_ADMIN_MAILBOX;
+        }
+        // Prioritize Legacy ADMIN Mailbox
+        if (activeModuleConfiguration.getChildTopics().getTopicOrNull(CONFIG_ADMIN_MAILBOX) != null &&
+            !activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX).isEmpty()) {
+            adminMailbox = activeModuleConfiguration.getChildTopics().getString(CONFIG_ADMIN_MAILBOX);
+        } else if (adminMailbox.isEmpty()) {
             log.info("ADMIN: No \"Admin Mailbox\" configured: A new user account (" + username + ") was created but" +
                     " no notification could be sent.");
+        }
+        try {
+            sendSystemMail("Account registration on " + webAppTitle,
+                    "\nA user has registered.\n\nUsername: " + username + "\nEmail: " + mailbox, adminMailbox);
+        } catch (Exception ex) {
+            log.severe("There seems to be an issue with your mail (SMTP) setup,"
+                    + "we FAILED notifying the \"system mailbox\" about account creation, caused by: " +  ex.getMessage());
         }
     }
 
@@ -1282,11 +1333,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             // ..) Set Senders of Mail
             String projectName = activeModuleConfiguration.getChildTopics().getString(CONFIG_PROJECT_TITLE);
+            // Tendu ADMIN Mailbox From
             String sender = CONFIG_FROM_MAILBOX;
+            // Prioritize Standard Mailbox From
+            if (activeModuleConfiguration.getChildTopics().getString(CONFIG_FROM_MAILBOX) != null && 
+                !activeModuleConfiguration.getChildTopics().getString(CONFIG_FROM_MAILBOX).isEmpty()) {
+                sender = activeModuleConfiguration.getChildTopics().getString(CONFIG_FROM_MAILBOX);
+            }
             email.setFrom(sender.trim(), projectName.trim());
             // ..) Set Subject of Mail
             email.setSubject(subject);
-            
+            // ..) Set Message Body and append the Host URL
+            // ### TODO: Make Optional
+            // message += "\n\n" + DM4_HOST_URL + "\n\n";
             email.setTextMsg(message);
             // ..) Set recipient of notification mail
             String recipientValue = recipient.trim();
@@ -1370,6 +1429,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     private void prepareSignupPage(String templateName) {
         if (activeModuleConfiguration != null) {
+            // Notify 3rd party plugins about template preparation
+            dm4.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
+            // Build up sign-up template variabls
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
             viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
             viewData("logo_path", configuration.getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString());
@@ -1482,33 +1544,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    @Override
-    public void reinitTemplateEngine() {
-        super.initTemplateEngine();
-    }
-
-    @Override
-    public void addTemplateResolverBundle(Bundle bundle) {
-        super.addTemplateResourceBundle(bundle);
-    }
-
-    @Override
-    public void removeTemplateResolverBundle(Bundle bundle) {
-        super.removeTemplateResourceBundle(bundle);
-    }
-
-    @Override
-    public void setNickToUserNameHandler(NickToUserNameHandler handler) {
-    	nickToUserNameHandler = handler;
-    }
-    
     private String userName(String maybeNick) {
     	return (nickToUserNameHandler != null) ? nickToUserNameHandler.nickToUserName(maybeNick) : maybeNick;
     }
     
     private void setNick(String userName, String userNick) {
     	if (nickToUserNameHandler != null) {
-    		nickToUserNameHandler.setNick(userName, userNick);
+            nickToUserNameHandler.setNick(userName, userNick);
     	}
     }
+
 }

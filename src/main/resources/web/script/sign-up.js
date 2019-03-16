@@ -113,6 +113,8 @@
             			? '-SHA256-' + SHA256(document.getElementById("pass-one").value)
     					: window.btoa(document.getElementById("pass-one").value))
     					
+            // ### test var passwordVal = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
+
             // employing the w3school way to go to GET the sign-up resource
             window.document.location.assign("//" +  window.location.host + "/sign-up/handle/" + usernameVal + "/"
                + passwordVal +"/" + mailbox + skipConfirmation)
@@ -260,12 +262,12 @@
     function updatePassword() {
         comparePasswords()
         var token = document.getElementById("token-info").value
-        
         var secret = encodeURIComponent(
         		signupConfig.authorizationMethod == 'Basic'
         			? '-SHA256-' + SHA256(document.getElementById("pass-one").value)
 					: window.btoa(document.getElementById("pass-one").value))
 					
+        // var secret = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
         document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
         /** xhr = new XMLHttpRequest()
         xhr.onload = function(e) {
