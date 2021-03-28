@@ -40,6 +40,7 @@ import static systems.dmx.core.Constants.PARENT;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
+import systems.dmx.core.service.ChangeReport;
 import systems.dmx.core.service.DMXEvent;
 import systems.dmx.core.service.EventListener;
 import systems.dmx.core.service.Inject;
@@ -447,7 +448,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     @Override
-    public void postUpdateTopic(Topic topic, TopicModel tm, TopicModel tm1) {
+    public void postUpdateTopic(Topic topic, ChangeReport report, TopicModel updateModel)  {
         if (topic.getTypeUri().equals(SIGN_UP_CONFIG_TYPE_URI)) {
             reloadAssociatedSignupConfiguration();
         } else if (topic.getTypeUri().equals(LOGIN_ENABLED)) {
