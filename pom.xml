@@ -13,24 +13,24 @@
     <parent>
 	<groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.1</version>
+        <version>5.2-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-workspaces</artifactId>
-            <version>5.1</version>
+            <version>5.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-contacts</artifactId>
-            <version>5.1</version>
+            <version>5.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-accesscontrol</artifactId>
-            <version>5.1</version>
+            <version>5.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
