@@ -48,7 +48,6 @@ export default {
     font-size: 12px !important;
     padding: 4px 8px !important;
     position: relative;
-    top: -1px;
 }
 .dmx-sign-up button .el-link {
     font-size: 12px;
