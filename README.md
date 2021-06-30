@@ -1,7 +1,7 @@
 
 # DMX Sign-up
 
-This plugin introduces a configurable user registration process for DMX _User Accounts_.
+This plugin introduces a configurable user registration process for DMX _User Accounts_. The plugin can be configured so users need to opt-in, utilizing confirmation emails (active for 60mins).
 
 Most (if not all) user facing message are translatable by now. A german language version of this bundle can be build from source after setting the language option to `de` using the `plugin.properties` file.
 
@@ -51,11 +51,14 @@ To be able to install this module you first and additionally have to install the
 
 ## Download & Installation
 
-You can find the latest stable version of this plugin bundled for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
+You can find the latest stable version of this plugin and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
 
-As mentioned above, you currently need to download and install the aditonally required `dmx-thymeleaf-0.9.1+`-Bundle, too.
+As mentioned above, you currently need to download and install additionally the required plugins
 
-After downloading the two bundle-files, place them in the `bundle-deploy` folder of your DMX installation and restart DMX.
+- `dmx-thymeleaf-0.9.3+` and
+- `dmx-sendmail-2.0.2+`
+
+After downloading all bundle-files, place them in the `bundle-deploy` folder of your DMX installation and restart DMX.
 
 ## Plugin Configuration
 
@@ -73,6 +76,12 @@ Legacy wise, the rest of the plugin options are stored in DB. The central topic 
 The sign-up configuration is associated with the "Plugin" topic representing this plugin ("DMX Sign up"). It can be revealed by all members of the `Administration` workspace.
 
 Note: If you want to use the "Password reset" functionality without allowing users to self-register you must make sure "User Account" topics are equipped with a "User Mailbox". To set this up, see instructions here: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2
+
+## Usage Hints
+
+If you only want to use the password-reset functionality and/or equip existing user accounts with an email address topic, please read the following hints: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2#note_17729
+
+If you don't want to allow users to self-register accounts but want to make use of the sign-up plugin features, you find more [hints here](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/26#note_17855). Basically you need to log in as "admin" ("or Administration workspace member) first and then browse (manually) to `/sign-up` and use the form to create new accounts.
 
 ### Setup Custom Workspace Assignment
 
@@ -93,6 +102,12 @@ INFORMATION: Sign-up Configuration Loaded (URI="dmx.signup.default_configuration
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+
+**2.0.1** -- Jun 30, 2021
+
+* Compatible with DMX 5.2
+* Migrates existing 'User Mailbox' edges into new platform association type 
+* Log config settings on bundle activation
 
 **2.0.0** -- Jan 15, 2021
 

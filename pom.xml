@@ -7,40 +7,40 @@
     <name>DMX Sign up</name>
     <groupId>systems.dmx</groupId>
     <artifactId>dmx-sign-up</artifactId>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.1</version>
     <packaging>bundle</packaging>
 
     <parent>
 	<groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.2-SNAPSHOT</version>
+        <version>5.2</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-workspaces</artifactId>
-            <version>5.2-SNAPSHOT</version>
+	    <version>5.2</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-contacts</artifactId>
-            <version>5.2-SNAPSHOT</version>
+            <version>5.2</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-accesscontrol</artifactId>
-            <version>5.2-SNAPSHOT</version>
+            <version>5.2</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-thymeleaf</artifactId>
-            <version>0.9.1</version>
+            <version>0.9.3</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-sendmail</artifactId>
-            <version>2.0.1</version>
+            <version>2.0.2</version>
         </dependency>
     </dependencies>
 
