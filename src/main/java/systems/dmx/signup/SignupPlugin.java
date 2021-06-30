@@ -99,6 +99,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         initTemplateEngine();
         loadPluginLanguageProperty();
         reloadAssociatedSignupConfiguration();
+        // Log configuration settings
+        log.info("\n\tdmx.signup.self_registration: " + CONFIG_SELF_REGISTRATION + "\n"
+            + "\tdmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
+            + "\tdmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
+            + "\tdmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX);
     }
 
     /**
@@ -324,7 +329,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
-                                        @PathParam("skip-confirmation") boolean skipConfirmation) {
+                                        @PathParam("skipConfirmation") boolean skipConfirmation) {
         if (!CONFIG_SELF_REGISTRATION & !isAdministrationWorkspaceMember()) {
             throw new WebApplicationException(Response.noContent().build());
         }
