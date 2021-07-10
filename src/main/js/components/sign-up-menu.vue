@@ -40,7 +40,6 @@ export default {
 }
 </script>
 
-
 <style>
 .dmx-sign-up button {
     margin-left: .75em;
@@ -51,9 +50,5 @@ export default {
 }
 .dmx-sign-up button .el-link {
     font-size: 12px;
-}
-.dmx-sign-up button .el-link span {
-    position: relative;
-    top: -1px;
 }
 </style>
