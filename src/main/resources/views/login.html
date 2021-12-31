@@ -20,6 +20,7 @@
             signupConfig.emailInvalid = /*[[${email_invalid_hint}]]*/ "This Email Address would be invalid.";
             signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
+            signupConfig.authorizationMethods = /*[[${authorization_methods}]]*/ "["Basic"]";
         /*]]>*/
         </script>
         <meta th:replace="fragments/tracker" />
@@ -58,6 +59,10 @@
                                 <span th:text="${label_forgot_password}" title="Forgot your password?">Forgot your password?</span><br/>
                                 <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
                             </p-->
+                            <select id="auth-method"><!-- Todo: Generate -->
+                                <option value="LDAP" selected="true" label="LDAP"></option>
+                                <option value="Basic" label="Basic"></option>
+                            </select>
                         </form>
 
                         <div class="ui input">

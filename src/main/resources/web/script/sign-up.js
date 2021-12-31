@@ -68,7 +68,8 @@
             function authorization() {
                 try {
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
-                    return "Basic " + window.btoa(id + ":" + secret) // IE >= 10 compatible
+                    // ### Auth method selector
+                    return "LDAP " + window.btoa(id + ":" + secret) // IE >= 10 compatible
                 } catch (error) {
                     console.error("Error encoding Auth-Header", error)
                 }

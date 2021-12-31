@@ -6,9 +6,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -71,6 +73,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     // --- DMX Platform Type URIs --- //
     public static final String MAILBOX_TYPE_URI = "dmx.contacts.email_address";
     public static final String DMX_HOST_URL = System.getProperty("dmx.host.url");
+    public static final String CREATE_LDAP_ACCOUNTS = System.getProperty("dmx.signup.ldap_account_creation");
 
     // --- DMX Platform Configuration Option
     public static final boolean DMX_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dmx.security" +
@@ -844,6 +847,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      * @see postUpdateTopic()
      */
     private Topic reloadAssociatedSignupConfiguration() {
+        // load module configuration
         activeModuleConfiguration = getCurrentSignupConfiguration();
         if (activeModuleConfiguration == null) {
             log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
@@ -1006,7 +1010,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         if (activeModuleConfiguration != null) {
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
-            // Build up sign-up template variabls
+            // Build up sign-up template variables
+            viewData("authorization_methods", acService.getAuthorizationMethods());
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
             viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
             viewData("logo_path", configuration.getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString());
