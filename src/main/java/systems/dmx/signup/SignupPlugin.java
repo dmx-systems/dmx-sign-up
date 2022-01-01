@@ -1,60 +1,48 @@
 package systems.dmx.signup;
 
 import com.sun.jersey.api.view.Viewable;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Properties;
-import java.util.ResourceBundle;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
+import com.sun.jersey.core.util.Base64;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.Bundle;
 import org.thymeleaf.context.AbstractContext;
 import systems.dmx.accesscontrol.AccessControlService;
-import static systems.dmx.accesscontrol.Constants.LOGIN_ENABLED;
-import static systems.dmx.accesscontrol.Constants.MEMBERSHIP;
-import static systems.dmx.accesscontrol.Constants.USERNAME;
 import systems.dmx.core.Assoc;
 import systems.dmx.core.ChildTopics;
-import static systems.dmx.core.Constants.ASSOCIATION;
-import static systems.dmx.core.Constants.CHILD;
-import static systems.dmx.core.Constants.DEFAULT;
-import static systems.dmx.core.Constants.PARENT;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
-import systems.dmx.core.service.ChangeReport;
-import systems.dmx.core.service.DMXEvent;
 import systems.dmx.core.service.EventListener;
-import systems.dmx.core.service.Inject;
-import systems.dmx.core.service.Transactional;
+import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.core.storage.spi.DMXTransaction;
+import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
-import static systems.dmx.signup.Constants.*;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
 import systems.dmx.signup.service.SignupPluginService;
 import systems.dmx.thymeleaf.ThymeleafPlugin;
-import static systems.dmx.workspaces.Constants.WORKSPACE;
 import systems.dmx.workspaces.WorkspacesService;
+
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static systems.dmx.accesscontrol.Constants.*;
+import static systems.dmx.core.Constants.*;
+import static systems.dmx.signup.Constants.*;
+import static systems.dmx.workspaces.Constants.WORKSPACE;
 
 /**
  * This plugin enables anonymous users to create themselves a user account in DMX
@@ -87,6 +75,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private SendmailService sendmail;
     @Inject
     private WorkspacesService wsService; // Used in migrations
+    @Inject
+    private LDAPPluginService ldapPluginService;
 
     @Context
     UriInfo uri;
@@ -632,6 +622,18 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
+    private boolean authorizationMethodIsLdap() {
+        return CONFIG_SIGNUP_AUTHORIZATION_METHOD_IS_LDAP;
+    }
+
+    private Topic createUser(Credentials credentials) throws Exception {
+        if (authorizationMethodIsLdap()) {
+            return ldapPluginService.createUser(credentials);
+        } else {
+            return acService._createUserAccount(credentials);
+        }
+    }
+
     @Override
     public String createSimpleUserAccount(String username, String password, String mailbox) {
         DMXTransaction tx = dmx.beginTx();
@@ -641,11 +643,24 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 // within the same 60 minutes (tokens validity timespan). First confirming, wins.
                 throw new RuntimeException("Username was already registered and confirmed!");
             }
-            Credentials creds = new Credentials(new JSONObject()
-                .put("username", username.trim())
-                .put("password", password.trim()));
+
+            Credentials creds;
+            // When the "Basic" method is used the password is already in -SHA256- form for all other
+            // methods it is simply base64-encoded
+            if (!authorizationMethodIsLdap()) {
+                creds = new Credentials(new JSONObject()
+                        .put("username", username.trim())
+                        .put("password", password.trim()));
+            } else {
+                String plaintextPassword = Base64.base64Decode(password);
+                creds = new Credentials(username.trim(), plaintextPassword);
+
+                // Retroactively provides plaintext password in credentials
+                creds.plaintextPassword = plaintextPassword;
+            }
+
             // 1) Create new user (in which workspace), just within the private one, no?
-            final Topic usernameTopic = acService._createUserAccount(creds);
+            final Topic usernameTopic = createUser(creds);
             final String eMailAddressValue = mailbox;
             // 2) create and associate e-mail address topic in "Administration" Workspace
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
@@ -1088,6 +1103,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("username", username);
             viewData("template", templateName);
             viewData("hostUrl", DMX_HOST_URL);
+            viewData("authorization_method_is_ldap", authorizationMethodIsLdap());
         } else {
             log.severe("Could not load module configuration of sign-up plugin during page preparation!");
         }

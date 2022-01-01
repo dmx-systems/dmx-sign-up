@@ -11,6 +11,8 @@ public class Constants {
     public static final String CONFIG_ADMIN_MAILBOX = System.getProperty("dmx.signup.admin_mailbox");
     public static final String CONFIG_FROM_MAILBOX = System.getProperty("dmx.signup.system_mailbox");
 
+    public static final boolean CONFIG_SIGNUP_AUTHORIZATION_METHOD_IS_LDAP = Boolean.parseBoolean(System.getProperty("dmx.signup.authorization_method.is_ldap", "false"));
+
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     public static final String SIGN_UP_CONFIG_TYPE_URI    = "dmx.signup.configuration";
     public static final String CONFIG_PROJECT_TITLE       = "dmx.signup.config_project_title";
