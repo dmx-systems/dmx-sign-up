@@ -101,16 +101,14 @@ INFORMATION: Sign-up Configuration Loaded (URI="dmx.signup.default_configuration
 ```
 
 ### Account creation through LDAP plugin
-The plugin can be configured to use the dmx-ldap plugin for account creation. When enabled the username and
-password are stored in LDAP instead of DMX itself. The option is disabled by default and is switched on by
-setting the property:
+
+The plugin can be configured to use the dmx-ldap plugin for account creation. When enabled the username and password are stored in LDAP instead of DMX itself. The option is disabled by default and is switched on by setting the property:
 
 ```
-dmx.signup.authorization_method.is_ldap = true
+dmx.signup.ldap_account_creation = true
 ```
 
-Keep in mind that the dmx-ldap plugin also has a configuration option that controls the availability of
-the account creation which must be enabled as well. Refer to its documentation on how to set it up. 
+Keep in mind that the dmx-ldap plugin also has a configuration option that controls account creation functionality. This  must be enabled as well. Refer to the [plugins README](https://git.dmx.systems/dmx-plugins/dmx-ldap/-/blob/master/README.md) for more information on its configuration. 
 
 ## License
 
@@ -118,8 +116,10 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 
-** Upcoming release
+**2.0.2-SNAPSHOT** -- Upcoming
+
 * Account creation through LDAP plugin
+* Hardcoded dependency on `dmx-ldap-0.5.4+` plugin
 
 **2.0.1** -- Jun 30, 2021
 
