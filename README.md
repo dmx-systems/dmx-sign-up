@@ -31,6 +31,7 @@ The **special logic** of this plugin is comprised of:
 *   Optionally: Send notifications to system administrator if a new user account was created
 *   Optionally: If `dmx.security.new_accounts_are_enabled` (platform configuration option) is set to `true` an account activation notice is sent
 *   Optionally: If a `User Mailbox` exists a "Passwort reset"-workflow is available
+*   Optionally: User accounts can be created through the LDAP plugin.
 
 **Note:** If `Email Confirmation Required` is set to _true_ the confirmation tokens the system sends out are **not persisted** and get lost after a bundle/system restart. Once a token was send out the link containing it is valid for sixty minutes.
 
@@ -56,7 +57,8 @@ You can find the latest stable version of this plugin and its dependencies for d
 As mentioned above, you currently need to download and install additionally the required plugins
 
 - `dmx-thymeleaf-0.9.3+` and
-- `dmx-sendmail-2.0.2+`
+- `dmx-sendmail-2.0.2+` and
+- `dmx-ldap-0.5.4+`
 
 After downloading all bundle-files, place them in the `bundle-deploy` folder of your DMX installation and restart DMX.
 
@@ -98,11 +100,26 @@ Jan 15, 2021 01:28:37 AM systems.dmx.signup.SignupPlugin reloadAssociatedSignupC
 INFORMATION: Sign-up Configuration Loaded (URI="dmx.signup.default_configuration"), Name="My DMX"
 ```
 
+### Account creation through LDAP plugin
+The plugin can be configured to use the dmx-ldap plugin for account creation. When enabled the username and
+password are stored in LDAP instead of DMX itself. The option is disabled by default and is switched on by
+setting the property:
+
+```
+dmx.signup.authorization_method.is_ldap = true
+```
+
+Keep in mind that the dmx-ldap plugin also has a configuration option that controls the availability of
+the account creation which must be enabled as well. Refer to its documentation on how to set it up. 
+
 ## License
 
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+
+** Upcoming release
+* Account creation through LDAP plugin
 
 **2.0.1** -- Jun 30, 2021
 

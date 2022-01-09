@@ -10,7 +10,7 @@ import systems.dmx.core.RelatedTopic;
 import systems.dmx.core.Topic;
 import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Migration;
-import static systems.dmx.signup.SignupPlugin.MAILBOX_TYPE_URI;
+import static systems.dmx.signup.Constants.USER_MAILBOX_TYPE_URI;
 import systems.dmx.workspaces.WorkspacesService;
 
 public class Migration13 extends Migration {
@@ -25,7 +25,7 @@ public class Migration13 extends Migration {
         logger.info("###### Migrating \"User Mailbox\" edges...");
         List<Topic> users = dmx.getTopicsByType(USERNAME);
         for (Topic user : users) {
-            RelatedTopic emailAddress = user.getRelatedTopic("org.deepamehta.signup.user_mailbox", PARENT, CHILD, MAILBOX_TYPE_URI);
+            RelatedTopic emailAddress = user.getRelatedTopic("org.deepamehta.signup.user_mailbox", PARENT, CHILD, USER_MAILBOX_TYPE_URI);
             if (emailAddress != null) {
                 logger.info("###### Creating new \"User Mailbox\" edge for existing email address");
                 Assoc newMailEdge = dmx.createAssoc(mf.newAssocModel("dmx.base.user_mailbox",

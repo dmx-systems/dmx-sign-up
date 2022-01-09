@@ -5,6 +5,7 @@
 
     // Sign-up Configuration Object Initialized via Thymeleaf
     var signupConfig = {
+        "authorizationMethodIsLdap" : false,
         "customWorkspaceEnabled" : false,
         "customWorkspaceURI" : "",
         "appLoadingMessage" : "Loading Webclient",
@@ -68,8 +69,9 @@
             function authorization() {
                 try {
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
-                    // ### Auth method selector
-                    return "LDAP " + window.btoa(id + ":" + secret) // IE >= 10 compatible
+                    var authMethod = signupConfig["authorizationMethodIsLdap"] ? "Basic" : "LDAP"
+                    return authMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
+                    // ### Todo: Auth method selector
                 } catch (error) {
                     console.error("Error encoding Auth-Header", error)
                 }
@@ -109,7 +111,13 @@
             if (skipField && skipField.value === "on") {
                 skipConfirmation = "/true"
             }
-            var passwordVal = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
+
+            // With Basic auth hash the password with SHA256 with ldap only "btoa" it
+            var passwordVal = encodeURIComponent(
+                        		signupConfig["authorizationMethodIsLdap"] ?
+                        		 window.btoa(document.getElementById("pass-one").value) :
+                                 '-SHA256-' + SHA256(document.getElementById("pass-one").value))
+
             // employing the w3school way to go to GET the sign-up resource
             window.document.location.assign("//" +  window.location.host + "/sign-up/handle/" + usernameVal + "/"
                + passwordVal +"/" + mailbox + skipConfirmation)
@@ -257,7 +265,11 @@
     function updatePassword() {
         comparePasswords()
         var token = document.getElementById("token-info").value
-        var secret = encodeURIComponent('-SHA256-' + SHA256(document.getElementById("pass-one").value))
+        var secret = encodeURIComponent(
+                        signupConfig["authorizationMethodIsLdap"] ?
+                         window.btoa(document.getElementById("pass-one").value) :
+                         '-SHA256-' + SHA256(document.getElementById("pass-one").value))
+
         document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
         /** xhr = new XMLHttpRequest()
         xhr.onload = function(e) {

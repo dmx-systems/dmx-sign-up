@@ -6,3 +6,4 @@ target/
 .classpath
 commit.txt
 commit-message.txt
+node_modules
