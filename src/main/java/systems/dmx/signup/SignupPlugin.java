@@ -55,14 +55,6 @@ import static systems.dmx.workspaces.Constants.WORKSPACE;
 public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService, PostUpdateTopic {
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
-
-    // --- DMX Platform Type URIs --- //
-    public static final String MAILBOX_TYPE_URI = "dmx.contacts.email_address";
-    public static final String DMX_HOST_URL = System.getProperty("dmx.host.url");
-
-    // --- DMX Platform Configuration Option
-    public static final boolean DMX_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dmx.security" +
-            ".new_accounts_are_enabled"));
  
     private Topic activeModuleConfiguration = null;
     private Topic customWorkspaceAssignmentTopic = null;
@@ -93,7 +85,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         log.info("\n\tdmx.signup.self_registration: " + CONFIG_SELF_REGISTRATION + "\n"
             + "\tdmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
             + "\tdmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
-            + "\tdmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX);
+            + "\tdmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
+            + "\tdmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS);
     }
 
     /**
@@ -458,7 +451,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 //
                 String webAppTitle = activeModuleConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE)
                         .getSimpleValue().toString();
-                Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, MAILBOX_TYPE_URI);
+                Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     sendSystemMail("Your account on " + webAppTitle + " is now active",
@@ -622,12 +615,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private boolean authorizationMethodIsLdap() {
-        return CONFIG_SIGNUP_AUTHORIZATION_METHOD_IS_LDAP;
+    private boolean ldapAccountCreationConfigured() {
+        return CONFIG_CREATE_LDAP_ACCOUNTS;
     }
 
-    private Topic createUser(Credentials credentials) throws Exception {
-        if (authorizationMethodIsLdap()) {
+    private Topic createUsername(Credentials credentials) throws Exception {
+        if (ldapAccountCreationConfigured()) {
             return ldapPluginService.createUser(credentials);
         } else {
             return acService._createUserAccount(credentials);
@@ -643,31 +636,28 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 // within the same 60 minutes (tokens validity timespan). First confirming, wins.
                 throw new RuntimeException("Username was already registered and confirmed!");
             }
-
             Credentials creds;
             // When the "Basic" method is used the password is already in -SHA256- form for all other
             // methods it is simply base64-encoded
-            if (!authorizationMethodIsLdap()) {
+            if (!ldapAccountCreationConfigured()) {
                 creds = new Credentials(new JSONObject()
                         .put("username", username.trim())
                         .put("password", password.trim()));
             } else {
                 String plaintextPassword = Base64.base64Decode(password);
                 creds = new Credentials(username.trim(), plaintextPassword);
-
                 // Retroactively provides plaintext password in credentials
                 creds.plaintextPassword = plaintextPassword;
             }
-
-            // 1) Create new user (in which workspace), just within the private one, no?
-            final Topic usernameTopic = createUser(creds);
+            // 1) Creates a new username topic (in LDAP and/or DMX)
+            final Topic usernameTopic = createUsername(creds);
             final String eMailAddressValue = mailbox;
             // 2) create and associate e-mail address topic in "Administration" Workspace
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
                     long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
-                    Topic eMailAddress = dmx.createTopic(mf.newTopicModel(MAILBOX_TYPE_URI,
+                    Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
                         new SimpleValue(eMailAddressValue)));
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
                     dmx.fireEvent(USER_ACCOUNT_CREATE_LISTENER, usernameTopic);
@@ -859,6 +849,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      * @see postUpdateTopic()
      */
     private Topic reloadAssociatedSignupConfiguration() {
+        // load module configuration
         activeModuleConfiguration = getCurrentSignupConfiguration();
         if (activeModuleConfiguration == null) {
             log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
@@ -1021,7 +1012,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         if (activeModuleConfiguration != null) {
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
-            // Build up sign-up template variabls
+            // Build up sign-up template variables
+            viewData("authorization_methods", acService.getAuthorizationMethods());
+            viewData("authorization_method_is_ldap", ldapAccountCreationConfigured());
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
             viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
             viewData("logo_path", configuration.getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString());
@@ -1103,7 +1096,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("username", username);
             viewData("template", templateName);
             viewData("hostUrl", DMX_HOST_URL);
-            viewData("authorization_method_is_ldap", authorizationMethodIsLdap());
         } else {
             log.severe("Could not load module configuration of sign-up plugin during page preparation!");
         }

@@ -57,7 +57,8 @@ You can find the latest stable version of this plugin and its dependencies for d
 As mentioned above, you currently need to download and install additionally the required plugins
 
 - `dmx-thymeleaf-0.9.3+` and
-- `dmx-sendmail-2.0.2+`
+- `dmx-sendmail-2.0.2+` and
+- `dmx-ldap-0.5.4+`
 
 After downloading all bundle-files, place them in the `bundle-deploy` folder of your DMX installation and restart DMX.
 
@@ -70,6 +71,7 @@ dmx.signup.confirm_email_address = true
 dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.self_registration = false
+dmx.signup.ldap_account_creation = false
 ```
 
 Legacy wise, the rest of the plugin options are stored in DB. The central topic for configuring the sign-up plugin is of type `Sign-up Configuration`. Editing this topic via the DMX Webclient allows you to interactively configure the appearance of the custom login and self-registration dialogs.

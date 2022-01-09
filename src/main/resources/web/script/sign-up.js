@@ -71,6 +71,7 @@
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
                     var authMethod = signupConfig["authorizationMethodIsLdap"] ? "Basic" : "LDAP"
                     return authMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
+                    // ### Todo: Auth method selector
                 } catch (error) {
                     console.error("Error encoding Auth-Header", error)
                 }
