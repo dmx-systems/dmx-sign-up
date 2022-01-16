@@ -22,6 +22,7 @@
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
             signupConfig.authorizationMethodIsLdap = /*[[${authorization_method_is_ldap}]]*/ false;
             signupConfig.authorizationMethods = /*[[${authorization_methods}]]*/ "["Basic"]";
+            signupConfig.selfRegistrationEnabled = /*[[${self_registration_enabled}]]*/ true;
         /*]]>*/
         </script>
         <meta th:replace="fragments/tracker" />
@@ -55,15 +56,10 @@
                                 <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
-                            <!-- &nbsp;<span th:text="${or_label}">or</span> <a href="/sign-up/" th:text="${create_account}" >create account</a>. -->
-                            <!--p class="password-reset">
-                                <span th:text="${label_forgot_password}" title="Forgot your password?">Forgot your password?</span><br/>
-                                <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
-                            </p-->
-                            <select id="auth-method"><!-- Todo: Generate -->
+                            <!--Todo: Generate select id="auth-method">
                                 <option value="LDAP" selected="true" label="LDAP"></option>
                                 <option value="Basic" label="Basic"></option>
-                            </select>
+                            </select-->
                         </form>
 
                         <div class="ui input">
@@ -82,7 +78,7 @@
                     <div class="hints">
 
                         <div class="hints">
-                          <p>
+                          <p th:if="${self_registration_enabled}">
                             <b th:text="${signup_title}">Sie haben noch keinen Account</b><b>?</b><br/>
                               <a href="/sign-up/" th:text="${create_account}" ></a>
                           </p>

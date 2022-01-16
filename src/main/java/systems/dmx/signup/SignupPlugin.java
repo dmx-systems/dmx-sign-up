@@ -1015,6 +1015,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // Build up sign-up template variables
             viewData("authorization_methods", acService.getAuthorizationMethods());
             viewData("authorization_method_is_ldap", ldapAccountCreationConfigured());
+            viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
             viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
             viewData("logo_path", configuration.getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString());
