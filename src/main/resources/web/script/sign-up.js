@@ -6,6 +6,7 @@
     // Sign-up Configuration Object Initialized via Thymeleaf
     var signupConfig = {
         "authorizationMethodIsLdap" : false,
+        "authorizationMethods": ["Basic"],
         "customWorkspaceEnabled" : false,
         "customWorkspaceURI" : "",
         "appLoadingMessage" : "Loading Webclient",
@@ -69,7 +70,7 @@
             function authorization() {
                 try {
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
-                    var authMethod = signupConfig["authorizationMethodIsLdap"] ? "Basic" : "LDAP"
+                    var authMethod = signupConfig["authorizationMethodIsLdap"] ? "LDAP" : "Basic"
                     return authMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
                     // ### Todo: Auth method selector
                 } catch (error) {
