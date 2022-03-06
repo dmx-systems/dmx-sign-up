@@ -387,8 +387,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         String username = createSimpleUserAccount(mailbox, password, mailbox);
         // 2) create and assign displayname topic to "System" workspace
         final String displayNameValue = displayName;
-        // unauthenticated/not-logged in user has no permission to fetch username (despite it should be, as it reside in System ws))?
+        // the next line does not fail as long as this request is send by logged in users
         final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
+        // final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         final long usernameTopicId = usernameTopic.getId();
         DMXTransaction tx = dmx.beginTx();
         try {
@@ -978,7 +979,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String href = url + "sign-up/password-reset/" + key;
             try {
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + getDisplayName(username) + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                    rb.getString("mail_hello") + " " + username + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers"), mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
