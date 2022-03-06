@@ -23,7 +23,7 @@
                 {
                     "typeUri": "dmx.webclient.view_config",
                     "children": {
-                        "dmx.webclient.color": "#4BC3C3"
+                        "dmx.webclient.color": "#4B87C3"
                     }
                 }
             ]

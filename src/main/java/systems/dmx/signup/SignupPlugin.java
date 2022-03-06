@@ -288,15 +288,23 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         try {
             JSONObject entry = pwToken.get(token);
             if (entry != null) {
-                    Credentials newCreds = new Credentials("dummy", "pass");
-                    newCreds.username = entry.getString("username");
-                    newCreds.password = password;
+                Credentials newCreds = new Credentials("dummy", "pass");
+                newCreds.username = entry.getString("username").trim();
+                newCreds.password = password;
+                if (!ldapAccountCreationConfigured()) {
                     dmx.getPrivilegedAccess().changePassword(newCreds);
-                    pwToken.remove(token);
-                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
-                    viewData("message", rb.getString("reset_password_ok"));
-                    prepareSignupPage("password-ok");
-                    return view("password-ok");
+                } else {
+                    // LDAP requires plaintext password in credentials
+                    String plaintextPassword = Base64.base64Decode(password);
+                    newCreds.plaintextPassword = plaintextPassword;
+                    newCreds.password = plaintextPassword;
+                    ldapPluginService.changePassword(newCreds);
+                }
+                pwToken.remove(token);
+                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+                viewData("message", rb.getString("reset_password_ok"));
+                prepareSignupPage("password-ok");
+                return view("password-ok");
             } else {
                 viewData("message", rb.getString("reset_password_error"));
                 return getFailureView("updated");
