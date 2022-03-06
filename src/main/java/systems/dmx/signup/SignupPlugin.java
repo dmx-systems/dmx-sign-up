@@ -164,9 +164,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    @GET
-    @Path("/displayname/{username}")
-    @Produces(MediaType.APPLICATION_JSON)
     @Override
     public String getDisplayName(@PathParam("username") String username) {
         // Todo: Drop HTTP exposure
@@ -291,14 +288,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             if (entry != null) {
                 Credentials newCreds = new Credentials("dummy", "pass");
                 newCreds.username = entry.getString("username").trim();
-                newCreds.password = password;
                 if (!ldapAccountCreationConfigured()) {
+                    newCreds.password = password;
                     // Change password stored in "User Account" topic
                     dmx.getPrivilegedAccess().changePassword(newCreds);
                 } else {
                     // LDAP requires plaintext password in credentials
                     String plaintextPassword = Base64.base64Decode(password);
-                    newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = plaintextPassword;
                     ldapPluginService.changePassword(newCreds);
                 }
