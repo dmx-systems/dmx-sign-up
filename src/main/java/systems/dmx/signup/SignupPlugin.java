@@ -169,7 +169,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Produces(MediaType.APPLICATION_JSON)
     @Override
     public String getDisplayName(@PathParam("username") String username) {
-        Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
+        // Todo: Drop HTTP exposure
+        Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         Topic displayName = usernameTopic.getRelatedTopic(SIGNUP_DISPLAY_NAME_EDGE, DEFAULT, DEFAULT, SIGNUP_NAME);
         return (displayName != null) ? displayName.getSimpleValue().toString() : username;
     }
