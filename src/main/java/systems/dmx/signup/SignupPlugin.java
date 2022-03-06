@@ -82,11 +82,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         loadPluginLanguageProperty();
         reloadAssociatedSignupConfiguration();
         // Log configuration settings
-        log.info("\n\tdmx.signup.self_registration: " + CONFIG_SELF_REGISTRATION + "\n"
-            + "\tdmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
-            + "\tdmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
-            + "\tdmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
-            + "\tdmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS);
+        log.info("\n  dmx.signup.self_registration: " + CONFIG_SELF_REGISTRATION + "\n"
+            + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
+            + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
+            + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
+            + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS);
     }
 
     /**
@@ -162,6 +162,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @GET
+    @Path("/displayname/{username}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public String getDisplayName(@PathParam("username") String username) {
+        Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
+        Topic displayName = usernameTopic.getRelatedTopic(SIGNUP_DISPLAY_NAME_EDGE, DEFAULT, DEFAULT, SIGNUP_NAME);
+        return (displayName != null) ? displayName.getSimpleValue().toString() : username;
     }
 
     /**
@@ -351,6 +361,56 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     public Viewable handleSignupRequest(@PathParam("username") String username,
             @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
         return handleSignupRequest(username, password, mailbox, false);
+    }
+
+    /**
+     * A HTTP resource to create a new user account with a display name, email address as username and some random password.
+     * @param mailbox  String must be unique
+     * @param displayName String
+     * @return
+     */
+    @GET
+    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
+            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException {
+        // 1) Todo: ### generate random password
+        String username = createSimpleUserAccount(mailbox, password, mailbox);
+        // 2) create and assign displayname topic to "System" workspace
+        final String displayNameValue = displayName;
+        // unauthenticated/not-logged in user has no permission to fetch username (despite it should be, as it reside in System ws))?
+        final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
+        final long usernameTopicId = usernameTopic.getId();
+        DMXTransaction tx = dmx.beginTx();
+        try {
+            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
+                @Override
+                public Topic call() {
+                    long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
+                    Topic displayName = dmx.createTopic(mf.newTopicModel(SIGNUP_NAME, new SimpleValue(displayNameValue)));
+                    dmx.getPrivilegedAccess().assignToWorkspace(displayName, systemWorkspaceId);
+                    Assoc assoc = dmx.createAssoc(mf.newAssocModel(SIGNUP_DISPLAY_NAME_EDGE,
+                        mf.newTopicPlayerModel(displayName.getId(), DEFAULT),
+                        mf.newTopicPlayerModel(usernameTopicId, DEFAULT)));
+                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspaceId);
+                    if (customWorkspaceAssignmentTopic != null) {
+                        acService.createMembership(usernameTopic.getSimpleValue().toString(),
+                                customWorkspaceAssignmentTopic.getId());
+                        log.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
+                                "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
+                    }
+                    return displayName;
+                }
+            });
+            tx.success();
+        } catch (Exception e) {
+            tx.failure();
+            throw new RuntimeException("Creating simple user account FAILED!", e);
+        } finally {
+            tx.finish();
+        }
+        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+        handleAccountCreatedRedirect(username); // hrows WebAppException to issue a redirect (thus method not @Transactional)
+        return getFailureView("created");
     }
 
     /**
@@ -1057,6 +1117,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("logout", rb.getString("logout"));
             viewData("logged_in_as", rb.getString("logged_in_as"));
             viewData("label_username", rb.getString("label_username"));
+            viewData("label_name", rb.getString("label_name"));
             viewData("label_email", rb.getString("label_email"));
             viewData("label_password", rb.getString("label_password"));
             viewData("label_password_repeat", rb.getString("label_password_repeat"));

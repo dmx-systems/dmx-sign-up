@@ -21,6 +21,7 @@
             signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
             signupConfig.authorizationMethodIsLdap = /*[[${authorization_method_is_ldap}]]*/ false;
+            console.log("authMethodLDAP", signupConfig.authorizationMethodIsLdap)
         /*]]>*/
         </script>
         <meta th:replace="fragments/tracker" />
@@ -40,49 +41,20 @@
           <div th:replace="fragments/widgets :: teaser-small" />
           
           <div class="ui container vertical padded segment first dialog-header">
-                <h2>Create Account</h2>
+                <h2>Register new user account</h2>
             </div>
 
-            <div id="preamble" class="ui container vertical padded segment">
-                <div class="ui container">
-                    <form name="aggreement" class="ui form">
-                        <div class="part">
-                            <input id="toscheck" type="checkbox" onclick="javascript:checkAgreements()" class="ui checkbox tos-check"></input>
-                            <label for="toscheck" th:text="${tos_label}">I agree with the projects Terms of use.</label>
-                            <a href="javascript:showLabsTermsText()" title="Read Details" th:text="${read_more}">Read more</a>
-                            <div id="tos-details" th:utext="${tos_details}"></div>
-                        </div>
-                        <div class="part">
-                            <input id="privateinfo" type="checkbox" onclick="javascript:checkAgreements()" class="ui checkbox private-info-check"></input>
-                            <label for="privateinfo" th:text="${pd_label}">I understand that any private information I give to this site may be made publicly available.</label>
-                            <a href="javascript:showLabsPrivateText()" title="Read Details" th:text="${read_more}">Read more</a>
-                            <div id="private-details" th:utext="${pd_details}"></div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <form class="sign-up-form ui form" action="javascript:voidFunction();" onsubmit="javascript:createAccount();">
+            <form class="sign-up-form ui form" action="javascript:voidFunction();" onsubmit="javascript:createCustomAccount();">
 
                 <div id="sign-up-view" class="dialog-body ui padded segment vertical blue2bg">
                     <div class="ui container">
                         <!--h2 th:text="${signup_title}">Sign up</h2-->
                             <div class="ui input">
-                                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username"
+                                <input id="displayname" type="text" name="displayname" th:placeholder="${label_name}" title="Name" class="sign-up displayname" />
+                            </div>
+                            <div class="ui input">
+                                <input id="username" type="text" name="username" th:placeholder="${label_email}" title="Username"
                                    onblur="checkUserNameAvailability()" class="sign-up username" />
-                            </div>
-                            <div class="ui input">
-                                <input type="password" id="pass-one" name="pass-one" th:placeholder="${label_password}" title="Password"
-                                       onblur="checkPassword()" class="sign-up password" />
-                            </div>
-                            <div class="ui input">
-                                <!-- label for="pass-two">Password (Repeat)</label-->
-                                <input type="password" id="pass-two" name="pass-two" th:placeholder="${label_password_repeat}" title="Password (Repeat)"
-                                       onblur="comparePasswords()" class="sign-up password" />
-                            </div>
-                            <div class="ui input">
-                                <input type="text" id="mailbox" name="mailbox" th:placeholder="${label_email}" title="Email Address"
-                                       onblur="checkMailboxAvailability()" class="sign-up mailbox" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
                     </div>

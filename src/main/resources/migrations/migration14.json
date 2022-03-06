@@ -1,53 +1,29 @@
 {
     "topic_types": [
         {
-            "value": "Sign-up Config: API Description",
-            "uri": "dmx.signup.config_api_description",
-            "dataTypeUri": "dmx.core.html",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: API Details",
-            "uri": "dmx.signup.config_api_details",
-            "dataTypeUri": "dmx.core.html",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: API Enabled",
-            "uri": "dmx.signup.config_api_enabled",
-            "dataTypeUri": "dmx.core.boolean",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: API Workspace URI",
-            "uri": "dmx.signup.config_api_workspace_uri",
+            "value": "Name",
+            "uri": "dmx.signup.name",
             "dataTypeUri": "dmx.core.text",
             "viewConfigTopics": [
                 {
                     "typeUri": "dmx.webclient.view_config",
                     "children": {
                         "dmx.webclient.add_to_create_menu": false
+                    }
+                }
+            ]
+        }
+    ],
+    "assoc_types": [
+        {
+            "uri": "dmx.signup.display_name",
+            "dataTypeUri": "dmx.core.text",
+            "value": "Display Name",
+            "viewConfigTopics": [
+                {
+                    "typeUri": "dmx.webclient.view_config",
+                    "children": {
+                        "dmx.webclient.color": "#4BC3C3"
                     }
                 }
             ]

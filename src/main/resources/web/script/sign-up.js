@@ -142,6 +142,36 @@
         }
     }
 
+    // This is the form.onsubmit() implementation.
+    function createCustomAccount() {
+
+        function doCreateRequest() {
+            var mailbox = encodeURIComponent(document.getElementById("username").value)
+            var displayName = encodeURIComponent(document.getElementById("displayname").value)
+            var passwordVal = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
+                      window.btoa("test1234") :
+                      '-SHA256-' + SHA256("test1234"))
+            // send a GET to handle the account creation request (SignupPlugin.java@handleCustomSignupRequest)
+            window.document.location.assign("//" +  window.location.host + "/sign-up/custom-handle/"
+                    + mailbox + "/" + displayName + "/" + passwordVal)
+        }
+        // any of these should prevent submission of form
+        if (!isValidMailboxUsername()) return false
+        doCreateRequest()
+    }
+
+    function isValidMailboxUsername() {
+        var mailboxField = document.getElementById("username") // fixme: maybe its better to acces the form element
+        if (mailboxField.value.indexOf("@") === -1 || mailboxField.value.indexOf(".") === -1) {
+            renderWarning(signupConfig.emailInvalid)
+            disableSignupForm()
+            return null
+        }
+        enableSignupForm()
+        renderWarning(EMPTY_STRING)
+        return OK_STRING
+    }
+
     function isValidUsername() {
         var usernameInput = document.getElementById("username") // fixme: maybe its better to acces the form element
         var userInput = usernameInput.value
@@ -162,7 +192,7 @@
             xhr.onload = function(e) {
                 var response = JSON.parse(xhr.response)
                 if (!response.isAvailable) {
-                    renderWarning(signupConfig.usernameTaken)
+                    renderWarning(signupConfig.emailTaken)
                     disableSignupForm()
                     inputInvalidated = true
                     if (handler) handler(false)

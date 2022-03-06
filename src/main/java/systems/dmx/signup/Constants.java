@@ -40,6 +40,8 @@ public class Constants {
     public static final String CONFIG_API_DETAILS         = "dmx.signup.config_api_details";
     public static final String CONFIG_API_WORKSPACE_URI   = "dmx.signup.config_api_workspace_uri";
 
+    public static final String SIGNUP_NAME                = "dmx.signup.name";
+    public static final String SIGNUP_DISPLAY_NAME_EDGE   = "dmx.signup.display_name";
     public static final String USER_MAILBOX_EDGE_TYPE     = "dmx.base.user_mailbox";
     public static final String SIGN_UP_LANGUAGE_PROPERTY  = "dmx.signup.language";
 

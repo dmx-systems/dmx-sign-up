@@ -23,6 +23,13 @@ public interface SignupPluginService {
     String getUsernameAvailability(String username);
 
     /**
+     * Retrieves the associated display name topic value for the given username.
+     *
+     * @return  String  Text representation of the user's chosen display name.
+     */
+    String getDisplayName(String username);
+
+    /**
      *
      * @return  String  Workspace Topic ID
      */

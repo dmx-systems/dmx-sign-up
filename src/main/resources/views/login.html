@@ -23,6 +23,7 @@
             signupConfig.authorizationMethodIsLdap = /*[[${authorization_method_is_ldap}]]*/ false;
             signupConfig.authorizationMethods = /*[[${authorization_methods}]]*/ "["Basic"]";
             signupConfig.selfRegistrationEnabled = /*[[${self_registration_enabled}]]*/ true;
+            console.log("authMethodLDAP", signupConfig.authorizationMethodIsLdap)
         /*]]>*/
         </script>
         <meta th:replace="fragments/tracker" />
@@ -52,7 +53,7 @@
                         <!--h2 th:text="${login_title}">Log in</h2-->
                         <form class="log-in-form ui form" id="login-form" action="javascript:voidFunction();" onsubmit="javascript:doLogin()">
                             <div class="ui input">
-                                <input id="username" type="text" name="username" th:placeholder="${label_username}" title="Username" class="log-in sign-up username" />
+                                <input id="username" type="text" name="username" th:placeholder="${label_email}" title="Username" class="log-in sign-up username" />
                                 <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
