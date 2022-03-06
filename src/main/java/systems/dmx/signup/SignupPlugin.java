@@ -297,6 +297,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 } else {
                     // LDAP requires plaintext password in credentials
                     String plaintextPassword = Base64.base64Decode(password);
+                    newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = plaintextPassword;
                     ldapPluginService.changePassword(newCreds);
                 }
