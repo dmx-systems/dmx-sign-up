@@ -977,7 +977,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             String href = url + "sign-up/password-reset/" + key;
             try {
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + username + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                    rb.getString("mail_hello") + " " + getDisplayName(username) + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers"), mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"

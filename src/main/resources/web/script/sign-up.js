@@ -296,12 +296,10 @@
     function updatePassword() {
         comparePasswords()
         var token = document.getElementById("token-info").value
-        var secret = encodeURIComponent(
-                        signupConfig["authorizationMethodIsLdap"] ?
+        var secret = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
                          window.btoa(document.getElementById("pass-one").value) :
                          '-SHA256-' + SHA256(document.getElementById("pass-one").value))
-
-        document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
+        window.document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
         /** xhr = new XMLHttpRequest()
         xhr.onload = function(e) {
             console.log("Updated Password for ", token, "to", document.getElementById("pass-one").value)
