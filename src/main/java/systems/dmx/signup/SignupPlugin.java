@@ -295,10 +295,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 } else {
                     // LDAP requires plaintext password in credentials
                     String plaintextPassword = Base64.base64Decode(password);
-                    // the following line has no effect (despite being in use during ldap account creation (see @ldap.createAccount)
-                    // newCreds.plaintextPassword = plaintextPassword;
-                    // the following line has the following effect: updated password works only until next bundle/system restart!
-                    newCreds.password = plaintextPassword;
+                    newCreds.plaintextPassword = plaintextPassword;
+                    newCreds.password = password;
                     // now we try this (hand over btoa encoded password to ldap, contrary to @ldap.createACcount)
                     // newCreds.password = password; // does not work at all
                     ldapPluginService.changePassword(newCreds);
