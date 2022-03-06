@@ -656,17 +656,17 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    long adminWorkspaceId = dmx.getPrivilegedAccess().getAdminWorkspaceId();
+                    long systemWorkspace = dmx.getPrivilegedAccess().getSystemWorkspaceId();
                     Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
                         new SimpleValue(eMailAddressValue)));
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
                     dmx.fireEvent(USER_ACCOUNT_CREATE_LISTENER, usernameTopic);
-                    dmx.getPrivilegedAccess().assignToWorkspace(eMailAddress, adminWorkspaceId);
+                    dmx.getPrivilegedAccess().assignToWorkspace(eMailAddress, systemWorkspace);
                     // 4) associate email address to "username" topic too
                     Assoc assoc = dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
                         mf.newTopicPlayerModel(eMailAddress.getId(), CHILD),
                         mf.newTopicPlayerModel(usernameTopic.getId(), PARENT)));
-                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, adminWorkspaceId);
+                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspace);
                     // 5) create membership to custom workspace topic
                     if (customWorkspaceAssignmentTopic != null) {
                         acService.createMembership(usernameTopic.getSimpleValue().toString(),
