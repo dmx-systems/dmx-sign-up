@@ -292,15 +292,22 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     newCreds.password = password;
                     // Change password stored in "User Account" topic
                     dmx.getPrivilegedAccess().changePassword(newCreds);
+                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
                 } else {
-                    // LDAP requires plaintext password in credentials
-                    String plaintextPassword = Base64.base64Decode(password);
-                    newCreds.plaintextPassword = plaintextPassword;
+                    // The tendu-way - Use (btoa?) encoded password provided by UI as plaintextPassword (does not apply Base64.decode)
+                    // provides the same value twice (as .password AND as .plaintextPassword)
+                    // see https://git.dmx.systems/dmx-projects/econauten/dm4-tendu-signup/-/blob/master/src/main/java/org/deepamehta/plugins/signup/SignupPlugin.java
+                    newCreds.password = password;
+                    newCreds.plaintextPassword = password;
+                    // The sign-up way: LDAP requires plaintext password in credentials (applies Base64.decode)
+                    // String plaintextPassword = Base64.base64Decode(password);
+                    // newCreds.plaintextPassword = plaintextPassword;
                     // newCreds.password = plaintextPassword;
-                    ldapPluginService.changePassword(newCreds);
+                    if (ldapPluginService.changePassword(newCreds) == null) {
+                        log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+                    }
                 }
                 pwToken.remove(token);
-                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
                 viewData("message", rb.getString("reset_password_ok"));
                 prepareSignupPage("password-ok");
                 return view("password-ok");
