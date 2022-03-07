@@ -300,7 +300,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                     newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
-                    if (ldapPluginService.changePassword(newCreds) == null) {
+                    if (ldapPluginService.changePassword(newCreds) != null) {
                         log.info("If no previous errors are reported here or in the LDAP-service log, the credentials for "
                                 + "user " + newCreds.username + " should now have been changed succesfully.");
                     } else {
