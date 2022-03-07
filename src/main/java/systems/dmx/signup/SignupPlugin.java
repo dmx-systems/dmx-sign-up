@@ -294,17 +294,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     dmx.getPrivilegedAccess().changePassword(newCreds);
                     log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
                 } else {
-                    // The tendu-way - Use (btoa?) encoded password provided by UI as plaintextPassword (does not apply Base64.decode)
-                    // provides the same value twice (as .password AND as .plaintextPassword)
-                    // see https://git.dmx.systems/dmx-projects/econauten/dm4-tendu-signup/-/blob/master/src/main/java/org/deepamehta/plugins/signup/SignupPlugin.java
-                    newCreds.password = password;
-                    newCreds.plaintextPassword = password;
-                    // The sign-up way: LDAP requires plaintext password in credentials (applies Base64.decode)
-                    // String plaintextPassword = Base64.base64Decode(password);
-                    // newCreds.plaintextPassword = plaintextPassword;
-                    // newCreds.password = plaintextPassword;
+                    String plaintextPassword = Base64.base64Decode(password);
+                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string provided by client \""+password
+                            + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                    // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
+                    newCreds.plaintextPassword = plaintextPassword;
+                    newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
                     if (ldapPluginService.changePassword(newCreds) == null) {
-                        log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+                        log.info("If no previous errors are reported here or in the LDAP-service log, the credentials for "
+                                + "user " + newCreds.username + " should now have been changed succesfully.");
+                    } else {
+                        log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
+                        viewData("message", rb.getString("reset_password_error"));
+                        return getFailureView("updated");
                     }
                 }
                 pwToken.remove(token);
@@ -720,6 +722,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                         .put("password", password.trim()));
             } else {
                 String plaintextPassword = Base64.base64Decode(password);
+                log.info("Create user account request for \"" + username + "\". password-value string provided by client \""+password
+                            + "\", plaintextPassword: \"" + plaintextPassword + "\"");
                 creds = new Credentials(username.trim(), plaintextPassword);
                 // Retroactively provides plaintext password in credentials
                 creds.plaintextPassword = plaintextPassword;
