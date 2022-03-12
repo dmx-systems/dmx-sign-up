@@ -13,24 +13,29 @@
     <parent>
 	<groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.2</version>
+        <version>5.3-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-workspaces</artifactId>
-	    <version>5.2</version>
+	    <version>5.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-contacts</artifactId>
-            <version>5.2</version>
+            <version>5.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-accesscontrol</artifactId>
-            <version>5.2</version>
+            <version>5.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>systems.dmx</groupId>
+            <artifactId>dmx-facets</artifactId>
+            <version>5.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
@@ -46,7 +51,7 @@
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-ldap</artifactId>
             <version>0.5.4-SNAPSHOT</version>
-<!--            <optional>true</optional>-->
+            <!--optional>true</optional-->
         </dependency>
     </dependencies>
 
