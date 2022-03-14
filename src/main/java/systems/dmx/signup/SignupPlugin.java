@@ -167,11 +167,15 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    @Override
-    @Path("/display-name/{username}")
+    /**
+     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace.
+     * @param username
+     * @return
+     */
     @GET
+    @Path("/display-name/{username}")
+    @Override
     public String getDisplayName(@PathParam("username") String username) {
-        // Only works for logged in users and members of "Display Names" workspace
         Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
         return (displayName != null) ? displayName.getSimpleValue().toString() : username;
@@ -243,25 +247,21 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Path("/password-token/{email}/{redirectUrl}")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
-    public Response initiateRedirectPasswordReset(@PathParam("email") String email, @PathParam("redirectUrl") String redirectUrl) throws URISyntaxException {
+    public Response initiateRedirectPasswordReset(@PathParam("email") String email,
+            @PathParam("redirectUrl") String redirectUrl) throws URISyntaxException {
         log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \""+redirectUrl+"\"");
-        try {
-            String emailAddressValue = email.trim();
-            boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
-            if (emailExists) {
-                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                // ### Todo: Add/include return Url to token (!)
-                // Note: Here system can't know "display name" (anonymous has
-                // no read permission on it) and thus can't pass it on
-                sendPasswordResetToken(emailAddressValue, redirectUrl);
-                return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
-            } else {
-                log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
-            }
-        } catch (URISyntaxException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+        String emailAddressValue = email.trim();
+        boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
+        if (emailExists) {
+            log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+            // ### Todo: Add/include return Url to token (!)
+            // Note: Here system can't know "display name" (anonymous has
+            // no read permission on it) and thus can't pass it on
+            sendPasswordResetToken(emailAddressValue, redirectUrl);
+            return Response.ok().build();
         }
-        return Response.temporaryRedirect(new URI("/sign-up/error")).build();
+        log.warning("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
+        return Response.serverError().build();
     }
 
     @GET
@@ -297,9 +297,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 log.info("Handling password reset request for Email: \"" + email);
                 viewData("requested_username", username);
                 viewData("password_requested_title", rb.getString("password_requested_title"));
-                // Pass "redirectUrl" to password-update dialog
-                String redirectUrl = input.getString("redirectUrl");
-                viewData("redirectUrl", redirectUrl);
+                // Pass "redirectUrl" to password-update dialog (if initially given)
+                if (input.has("redirectUrl")) {
+                    String redirectUrl = input.getString("redirectUrl");
+                    viewData("redirectUrl", redirectUrl);
+                }
                 prepareSignupPage("password-reset");
                 return view("password-reset");
             } else {
@@ -415,6 +417,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      */
     @GET
     @Path("/handle/{username}/{pass-one}/{mailbox}")
+    @Produces(MediaType.TEXT_HTML)
     @Override
     public Viewable handleSignupRequest(@PathParam("username") String username,
             @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
@@ -431,7 +434,32 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException {
+            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+        createCustomUserAccount(mailbox, displayName, password);
+        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+        handleAccountCreatedRedirect(mailbox); // throws WebAppException
+        return getFailureView("created");
+    }
+
+    /**
+     * A HTTP resource for JS clients to create a new user account with a display name, email address as username and password.
+     * @param mailbox       String must be unique
+     * @param displayName   String
+     * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
+     * @return
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    public Response handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
+            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+        Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
+        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+        handleAccountCreatedRedirect(username.getSimpleValue().toString()); // throws WebAppException
+        return Response.ok().build();
+    }
+
+    private Topic createCustomUserAccount(String mailbox, String displayName, String password) throws RuntimeException {
         // 1) Custom sign-up request means "mailbox" = "username"
         String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
         // 2) create and assign displayname topic to "System" workspace
@@ -467,9 +495,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         } finally {
             tx.finish();
         }
-        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
-        handleAccountCreatedRedirect(username); // throws WebAppException
-        return getFailureView("created");
+        return null;
     }
 
     public long getDisplayNamesWorkspaceId() {
@@ -778,21 +804,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // 1) Creates a new username topic (in LDAP and/or DMX)
             final Topic usernameTopic = createUsername(creds);
             final String eMailAddressValue = mailbox;
-            // 2) create and associate e-mail address topic in "Administration" Workspace
-            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
+            // 2) create and associate e-mail address topic in "System" Workspace
+            long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
+            dmx.getPrivilegedAccess().runInWorkspaceContext(systemWorkspaceId, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    long systemWorkspace = dmx.getPrivilegedAccess().getSystemWorkspaceId();
                     Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
                         new SimpleValue(eMailAddressValue)));
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
                     dmx.fireEvent(USER_ACCOUNT_CREATE_LISTENER, usernameTopic);
-                    dmx.getPrivilegedAccess().assignToWorkspace(eMailAddress, systemWorkspace);
                     // 4) associate email address to "username" topic too
-                    Assoc assoc = dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
+                    dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
                         mf.newTopicPlayerModel(eMailAddress.getId(), CHILD),
                         mf.newTopicPlayerModel(usernameTopic.getId(), PARENT)));
-                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspace);
                     // 5) create membership to custom workspace topic
                     if (customWorkspaceAssignmentTopic != null) {
                         accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
