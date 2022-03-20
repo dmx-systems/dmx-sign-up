@@ -77,6 +77,13 @@ public interface SignupPluginService {
     /**
      * Sends out a valid password-reset token (if the email address is known to the system).
      * @throws URISyntaxException
+     * @param email
+     * @param redirectUrl
+     * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
+     */
+    Response initiateRedirectPasswordReset(String email, String redirectUrl) throws URISyntaxException;
+
+    /**
      * @param name
      * @param email
      * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.

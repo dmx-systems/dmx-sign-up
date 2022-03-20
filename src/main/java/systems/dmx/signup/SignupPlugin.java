@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 
 import static systems.dmx.accesscontrol.Constants.*;
 import static systems.dmx.core.Constants.*;
+import systems.dmx.facets.FacetsService;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.workspaces.Constants.WORKSPACE;
 
@@ -62,11 +63,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private ResourceBundle rb = null;
 
     @Inject
-    private AccessControlService acService;
+    private AccessControlService accesscontrol;
+    @Inject
+    private FacetsService facets;
     @Inject
     private SendmailService sendmail;
     @Inject
-    private WorkspacesService wsService; // Used in migrations
+    private WorkspacesService workspaces;
     @Inject
     private LDAPPluginService ldapPluginService;
 
@@ -159,16 +162,22 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 response.put("isAvailable", false);
             }
             return response.toString();
-        } catch (Exception e) {
+        } catch (JSONException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace.
+     * @param username
+     * @return
+     */
+    @GET
+    @Path("/display-name/{username}")
     @Override
     public String getDisplayName(@PathParam("username") String username) {
-        // Todo: Drop HTTP exposure
         Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
-        Topic displayName = usernameTopic.getRelatedTopic(SIGNUP_DISPLAY_NAME_EDGE, DEFAULT, DEFAULT, SIGNUP_NAME);
+        Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
         return (displayName != null) ? displayName.getSimpleValue().toString() : username;
     }
 
@@ -233,7 +242,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue, name);
+                sendPasswordResetToken(emailAddressValue, name, null);
                 return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
@@ -242,6 +251,36 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
         }
         return Response.temporaryRedirect(new URI("/sign-up/error")).build();
+    }
+
+    /**
+     * A HTTP Resource to initiate a password-reset sequence. Creates a password-reset token
+     * and sends it out as link via Email. Redirects the request to either the "token info"
+     * or the "error message" page.
+     * @param email
+     * @return A Response.temporaryRedirect to either the "token info"
+     * or the "error message" page.
+     * @throws URISyntaxException
+     */
+    @GET
+    @Path("/password-token/{email}/{redirectUrl}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public Response initiateRedirectPasswordReset(@PathParam("email") String email,
+            @PathParam("redirectUrl") String redirectUrl) throws URISyntaxException {
+        log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \""+redirectUrl+"\"");
+        String emailAddressValue = email.trim();
+        boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
+        if (emailExists) {
+            log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+            // ### Todo: Add/include return Url to token (!)
+            // Note: Here system can't know "display name" (anonymous has
+            // no read permission on it) and thus can't pass it on
+            sendPasswordResetToken(emailAddressValue, null, redirectUrl);
+            return Response.ok().build();
+        }
+        log.warning("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
+        return Response.serverError().build();
     }
 
     @GET
@@ -274,13 +313,18 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             if (input != null && input.getLong("expiration") > new Date().getTime()) {
                 username = input.getString("username");
                 email = input.getString("mailbox");
-                String displayName = (input.has("name")) ? input.getString("name") : "";
                 log.info("Handling password reset request for Email: \"" + email);
                 viewData("mailbox", email);
                 viewData("requested_username", username);
+                String displayName = (input.has("name")) ? input.getString("name") : "";
                 viewData("requested_display_name", displayName);
                 viewData("password_requested_title", rb.getString("password_requested_title"));
                 viewData("password_requested_button", rb.getString("password_requested_button"));
+                // Pass "redirectUrl" to password-update dialog (if initially given)
+                if (input.has("redirectUrl")) {
+                    String redirectUrl = input.getString("redirectUrl");
+                    viewData("redirect_url", redirectUrl);
+                }
                 prepareSignupPage("password-reset");
                 return view("password-reset");
             } else {
@@ -396,6 +440,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
      */
     @GET
     @Path("/handle/{username}/{pass-one}/{mailbox}")
+    @Produces(MediaType.TEXT_HTML)
     @Override
     public Viewable handleSignupRequest(@PathParam("username") String username,
             @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
@@ -404,6 +449,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
 
     /**
      * A HTTP resource to create a new user account with a display name, email address as username and some random password.
+     * throws WebAppException to issue a redirect (thus method is not @Transactional)
      * @param mailbox  String must be unique
      * @param displayName String
      * @return
@@ -411,46 +457,73 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException {
-        // 1) Todo: ### generate random password
-        String username = createSimpleUserAccount(mailbox, password, mailbox);
+            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+        createCustomUserAccount(mailbox, displayName, password);
+        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+        handleAccountCreatedRedirect(mailbox); // throws WebAppException
+        return getFailureView("created");
+    }
+
+    /**
+     * A HTTP resource for JS clients to create a new user account with a display name, email address as username and password.
+     * @param mailbox       String must be unique
+     * @param displayName   String
+     * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
+     * @return
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    public Response handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
+            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+        Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
+        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+        handleAccountCreatedRedirect(username.getSimpleValue().toString()); // throws WebAppException
+        return Response.ok().build();
+    }
+
+    private Topic createCustomUserAccount(String mailbox, String displayName, String password) throws RuntimeException {
+        // 1) Custom sign-up request means "mailbox" = "username"
+        String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
         // 2) create and assign displayname topic to "System" workspace
-        final String displayNameValue = displayName;
+        final String displayNameValue = displayName.trim();
         // the next line does not fail as long as this request is send by logged in users
         final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
         // final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         final long usernameTopicId = usernameTopic.getId();
+        long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
         DMXTransaction tx = dmx.beginTx();
         try {
-            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
+            dmx.getPrivilegedAccess().runInWorkspaceContext(displayNamesWorkspaceId, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
-                    Topic displayName = dmx.createTopic(mf.newTopicModel(SIGNUP_NAME, new SimpleValue(displayNameValue)));
-                    dmx.getPrivilegedAccess().assignToWorkspace(displayName, systemWorkspaceId);
-                    Assoc assoc = dmx.createAssoc(mf.newAssocModel(SIGNUP_DISPLAY_NAME_EDGE,
-                        mf.newTopicPlayerModel(displayName.getId(), DEFAULT),
-                        mf.newTopicPlayerModel(usernameTopicId, DEFAULT)));
-                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspaceId);
-                    if (customWorkspaceAssignmentTopic != null) {
-                        acService.createMembership(usernameTopic.getSimpleValue().toString(),
-                                customWorkspaceAssignmentTopic.getId());
-                        log.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
-                                "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
-                    }
-                    return displayName;
+                    // create display name facet for username topic
+                    facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
+                    facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET,
+                            mf.newFacetValueModel(DISPLAY_NAME)
+                                    .set(displayNameValue));
+                    // automatically make users member in "Display Names" workspace
+                    accesscontrol.createMembership(username, displayNamesWorkspaceId);
+                    log.info("Created membership for new user account in \"Display Names\" "
+                            + "workspace (SharingMode.Collaborative)");
+                    // Account creator should be member of "Display Names" ..
+                    // or is "runInWorkspacecContext privileged to GET?
+                    return facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
                 }
             });
             tx.success();
         } catch (Exception e) {
             tx.failure();
-            throw new RuntimeException("Creating simple user account FAILED!", e);
+            throw new RuntimeException("Creating custom user account FAILED!", e);
         } finally {
             tx.finish();
         }
-        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
-        handleAccountCreatedRedirect(username); // hrows WebAppException to issue a redirect (thus method not @Transactional)
-        return getFailureView("created");
+        return null;
+    }
+
+    public long getDisplayNamesWorkspaceId() {
+        Topic ws = workspaces.getWorkspace(DISPLAY_NAME_WS_URI);
+        return (ws != null) ? ws.getId() : -1;
     }
 
     /**
@@ -509,8 +582,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public String createAPIWorkspaceMembershipRequest() {
         Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
-        if (apiMembershipRequestNote != null && acService.getUsername() != null) {
-            Topic usernameTopic = acService.getUsernameTopic(acService.getUsername());
+        if (apiMembershipRequestNote != null && accesscontrol.getUsername() != null) {
+            Topic usernameTopic = accesscontrol.getUsernameTopic(accesscontrol.getUsername());
             // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the configured workspace)
             createApiWorkspaceMembership(usernameTopic); // might fail silently
             // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
@@ -576,7 +649,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         if (!CONFIG_SELF_REGISTRATION && !isAdministrationWorkspaceMember()) {
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
         }
-        if (acService.getUsername() != null && !isAdministrationWorkspaceMember()) {
+        if (accesscontrol.getUsername() != null && !isAdministrationWorkspaceMember()) {
             prepareSignupPage("logout");
             return view("logout");
         }
@@ -592,7 +665,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Path("/login")
     @Produces(MediaType.TEXT_HTML)
     public Viewable getLoginView() {
-        if (acService.getUsername() != null) {
+        if (accesscontrol.getUsername() != null) {
             prepareSignupPage("logout");
             return view("logout");
         }
@@ -723,7 +796,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         if (ldapAccountCreationConfigured()) {
             return ldapPluginService.createUser(credentials);
         } else {
-            return acService._createUserAccount(credentials);
+            return accesscontrol._createUserAccount(credentials);
         }
     }
 
@@ -754,24 +827,22 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // 1) Creates a new username topic (in LDAP and/or DMX)
             final Topic usernameTopic = createUsername(creds);
             final String eMailAddressValue = mailbox;
-            // 2) create and associate e-mail address topic in "Administration" Workspace
-            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
+            // 2) create and associate e-mail address topic in "System" Workspace
+            long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
+            dmx.getPrivilegedAccess().runInWorkspaceContext(systemWorkspaceId, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    long systemWorkspace = dmx.getPrivilegedAccess().getSystemWorkspaceId();
                     Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
                         new SimpleValue(eMailAddressValue)));
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
                     dmx.fireEvent(USER_ACCOUNT_CREATE_LISTENER, usernameTopic);
-                    dmx.getPrivilegedAccess().assignToWorkspace(eMailAddress, systemWorkspace);
                     // 4) associate email address to "username" topic too
-                    Assoc assoc = dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
+                    dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
                         mf.newTopicPlayerModel(eMailAddress.getId(), CHILD),
                         mf.newTopicPlayerModel(usernameTopic.getId(), PARENT)));
-                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspace);
                     // 5) create membership to custom workspace topic
                     if (customWorkspaceAssignmentTopic != null) {
-                        acService.createMembership(usernameTopic.getSimpleValue().toString(),
+                        accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
                                 customWorkspaceAssignmentTopic.getId());
                         log.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
                                 "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
@@ -800,7 +871,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public boolean isUsernameTaken(String username) {
         String value = username.trim();
-        Topic userNameTopic = acService.getUsernameTopic(value);
+        Topic userNameTopic = accesscontrol.getUsernameTopic(value);
         return (userNameTopic != null);
     }
 
@@ -827,11 +898,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     private boolean isAdministrationWorkspaceMember() {
-        String username = acService.getUsername();
+        String username = accesscontrol.getUsername();
         if (username != null) {
             long administrationWorkspaceId = dmx.getPrivilegedAccess().getAdminWorkspaceId();
-            if (acService.isMember(username, administrationWorkspaceId)
-                || acService.getWorkspaceOwner(administrationWorkspaceId).equals(username)) {
+            if (accesscontrol.isMember(username, administrationWorkspaceId)
+                || accesscontrol.getWorkspaceOwner(administrationWorkspaceId).equals(username)) {
                 return true;
             }
         }
@@ -839,16 +910,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     private boolean isApiWorkspaceMember() {
-        String username = acService.getUsername();
+        String username = accesscontrol.getUsername();
         if (username != null) {
             String apiWorkspaceUri = activeModuleConfiguration.getChildTopics().getString(CONFIG_API_WORKSPACE_URI);
             if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) {
                 Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
                 if (apiWorkspace != null) {
-                    return acService.isMember(username, apiWorkspace.getId());
+                    return accesscontrol.isMember(username, apiWorkspace.getId());
                 }
             } else {
-                Topic usernameTopic = acService.getUsernameTopic();
+                Topic usernameTopic = accesscontrol.getUsernameTopic();
                 Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
                 Assoc requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
                 if (requestRelation != null) return true;
@@ -862,9 +933,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         sendConfirmationMail(tokenKey, username, mailbox.trim());
     }
 
-    private void sendPasswordResetToken(String mailbox, String displayName) {
+    private void sendPasswordResetToken(String mailbox, String displayName, String redirectUrl) {
         String username = dmx.getPrivilegedAccess().getUsername(mailbox);
-        String tokenKey = createPasswordResetToken(username, mailbox, displayName);
+        // Todo: Would need privileged access to "Display Name" to display it in password-update dialog
+        String tokenKey = createPasswordResetToken(username, mailbox, displayName, redirectUrl);
         sendPasswordResetMail(tokenKey, username, mailbox.trim(), displayName);
     }
 
@@ -889,7 +961,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private String createPasswordResetToken(String username, String mailbox, String name) {
+    private String createPasswordResetToken(String username, String mailbox, String name, String redirectUrl) {
         try {
             String tokenKey = UUID.randomUUID().toString();
             long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
@@ -897,7 +969,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                     .put("username", username.trim())
                     .put("mailbox", mailbox.trim())
                     .put("name", (name != null) ? name.trim() : "")
-                    .put("expiration", valid);
+                    .put("expiration", valid)
+                    .put("redirectUrl", redirectUrl);
             pwToken.put(tokenKey, tokenValue);
             log.log(Level.INFO, "Set up pwToken {0} for {1} send passwort reset mail valid till {3}",
                     new Object[]{tokenKey, mailbox, new Date(valid).toString()});
@@ -927,10 +1000,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 log.info("Request for new custom API Workspace Membership by user \""
                         + usernameTopic.getSimpleValue().toString() + "\"");
                 // Attempt to create a Workspace membership for this Assocation/Relation
-                acService.createMembership(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId());
+                accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId());
             } else {
                 log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-                if (acService.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
+                if (accesscontrol.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
                     Assoc assoc = getMembershipAssociation(usernameTopic.getId(), apiWorkspace.getId());
                     dmx.deleteAssoc(assoc.getId());
                 } else {
@@ -1029,7 +1102,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     private void sendNotificationMail(String username, String mailbox) {
         String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
         //
-        if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
+        if (CONFIG_ADMIN_MAILBOX != null && !CONFIG_ADMIN_MAILBOX.isEmpty()) {
             String adminMailbox = CONFIG_ADMIN_MAILBOX;
             try {
                 sendSystemMail("Account registration on " + webAppTitle,
@@ -1120,7 +1193,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
-            viewData("authorization_methods", acService.getAuthorizationMethods());
+            viewData("authorization_methods", accesscontrol.getAuthorizationMethods());
             viewData("authorization_method_is_ldap", ldapAccountCreationConfigured());
             viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
@@ -1198,7 +1271,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("requested_page_2", rb.getString("page_account_requested_2"));
             viewData("requested_page_3", rb.getString("page_account_requested_3"));
             // Generics
-            String username = acService.getUsername();
+            String username = accesscontrol.getUsername();
             // ### viewData("administration_workspace_member", isAdministrationWorkspaceMember());
             viewData("skip_confirmation_mail_label", rb.getString("admin_skip_email_confirmation_mail"));
             viewData("administration_workspace_member", isAdministrationWorkspaceMember());
@@ -1212,7 +1285,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     private void prepareAccountEditPage() {
-        String username = acService.getUsername();
+        String username = accesscontrol.getUsername();
         if (username != null) {
             // Make use of the new privileged getEmailAddress call for users to see their own
             String eMailAddressValue = "None";
@@ -1223,6 +1296,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             }
             viewData("logged_in", true);
             viewData("username", username);
+            viewData("display_name", getDisplayName(username));
             viewData("email", eMailAddressValue);
             viewData("link", "");
             // ### viewData("confirmed", true); // Check if user already has confirmed for a membership

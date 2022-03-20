@@ -42,10 +42,12 @@
                     <div class="dialog-body">
                         <h2 th:text="${your_account_heading}">Infos associated with your username</h2>
                         <div>
-                            <div class="label">Username</div>
+                            <div class="label" th:text="${label_email}">Username</div>
                             <div th:text="${username}" class="value username" />
-                            <div class="label">Email Address</div>
-                            <div th:text="${email}" class="value email" />
+                            <!--div class="label">Email</div-->
+                            <!--div th:text="${email}" class="value email" /-->
+                            <div class="label" th:text="${label_name}">Display Name</div>
+                            <div th:text="${display_name}" class="value name" />
                         </div>
                         <p>&nbsp;</p>
                     </div>

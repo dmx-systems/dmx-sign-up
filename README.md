@@ -44,21 +44,14 @@ https://github.com/dmx-systems/dmx-platform
 
 To be able to install this module you first and additionally have to install the following DMX Plugins.
 
-*    `dmx-thymeleaf-0.9.1+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-thymeleaf)
-*    `dmx-sendmail-2.0.0+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
+*    `dmx-thymeleaf-0.9.3+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-thymeleaf)
+*    `dmx-sendmail-2.0.2+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
+*    `dmx-ldap-0.5.4-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
+
+You can find the respective plugin version and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
 
 **Operations:** For the plugins mailbox validation process to run you must install these plugins with DMX on a web server with a 
 `postfix` -> `Internet Site` like mail send functionality.
-
-## Download & Installation
-
-You can find the latest stable version of this plugin and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
-
-As mentioned above, you currently need to download and install additionally the required plugins
-
-- `dmx-thymeleaf-0.9.3+` and
-- `dmx-sendmail-2.0.2+` and
-- `dmx-ldap-0.5.4+`
 
 After downloading all bundle-files, place them in the `bundle-deploy` folder of your DMX installation and restart DMX.
 
