@@ -75,6 +75,15 @@ public interface SignupPluginService {
     Response initiatePasswordReset(String email) throws URISyntaxException;
 
     /**
+     * Sends out a valid password-reset token (if the email address is known to the system).
+     * @throws URISyntaxException
+     * @param name
+     * @param email
+     * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
+     */
+    Response initiatePasswordResetWithName(String email, String name) throws URISyntaxException;
+
+    /**
      * Creates a new user account with mailbox. If configured, a custom workspace membership is created automatically.
      * @param username
      * @param password

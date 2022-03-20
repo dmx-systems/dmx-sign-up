@@ -43,17 +43,19 @@
             <div th:replace="fragments/widgets :: teaser-small" />
 
             <div class="ui container vertical padded segment first  dialog-header">
-                <h3>Login</h3>
+                <!--h2>Login</h2-->
             </div>
 
             <div class="ui vertical padded segment blue2bg">
                 <div class="ui container">
 
                     <div id="log-in-view" class="dialog-body">
-                        <!--h2 th:text="${login_title}">Log in</h2-->
+                        <h2 th:text="${login_title}">Log in</h2>
                         <form class="log-in-form ui form" id="login-form" action="javascript:voidFunction();" onsubmit="javascript:doLogin()">
                             <div class="ui input">
+                                <label th:text="${label_email}" for="username"></label>
                                 <input id="username" type="text" name="username" th:placeholder="${label_email}" title="Username" class="log-in sign-up username" />
+                                <label th:text="${label_password}" for="password"></label>
                                 <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
@@ -64,7 +66,7 @@
                         </form>
 
                         <div class="ui input">
-                            <input type="submit" form="login-form" th:value="${login}" class="log-in sign-up ok ui button" />
+                            <input type="submit" form="login-form" th:value="${login} + ' &#x2794;'" class="log-in sign-up ok ui button" />
                         </div>
 
                     </div>
@@ -84,7 +86,7 @@
                               <a href="/sign-up/" th:text="${create_account}" ></a>
                           </p>
                           <p>
-                              <b th:text="${label_forgot_password}">Sie haben Ihr Passwort vergessen?</b><br/>
+                              <!--b th:text="${label_forgot_password}">Sie haben Ihr Passwort vergessen?</b><br/-->
                               <a href="/sign-up/request-password" title="Reset password" th:text="${label_reset_password}">Password reset</a>
                           </p>
                       </div>
@@ -98,6 +100,8 @@
             <!--div th:replace="fragments/footer :: footer-new"></div-->
 
         </div>
+
+        <div class="footer"></div>
 
     </body>
 

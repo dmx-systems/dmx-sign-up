@@ -1,24 +1,32 @@
+/* blue: #0063f7; red: ff000c; grey: #808080; creme: #faf8f6 **/
+
 body {
-    background-color: #333;
+    background-color: #000;
+    color: #ffd100;
+    /** background-position: bottom right; **/
+}
+
+.sign-up .footer {
+    width: 400px;
+    height: 291px;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    background-image: url('/systems.dmx.sign-up/style/images/Big-snake-graphic-400.png');
+    background-repeat: no-repeat;
 }
 
 body.sign-up {
     margin: 20px;
-    font-family: -apple-system, "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
-    color: rgb(64, 158, 255);
+    font-family: -apple-system, system-ui, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
+/**     color: rgb(64, 158, 255); **/
     font-size: 14px;
     line-height: 1.4em;
 }
 
 body.sign-up a {
-    color: rgb(64, 158, 255);
+    color: #0063f7;
     margin: 0px;
-}
-
-body.sign-up p {
-    margin-left: 5px;
-    color: #a9a9a9;
-    padding-left: 5px;
 }
 
 .sign-up .logo {
@@ -31,13 +39,16 @@ body.sign-up p {
 
 .sign-up .teaser-small,
 .sign-up .dialog-header {
-    text-align: center;
+    width: 320px;
+    margin-left: 80px;
 }
 
 .sign-up label,
 .sign-up .label {
     color: #a9a9a9;
     font-size: 14px;
+    position: relative;
+    bottom: 5px;
 }
 
 .sign-up .value {
@@ -71,7 +82,6 @@ body.sign-up p {
 }
 
 .sign-up #page-header {
-    text-align: center;
     margin-top: 4em;
 }
 
@@ -86,7 +96,6 @@ body.sign-up p {
     margin-top: 40px;
     font-size: small;
     color: #a9a9a9;
-    text-align: center;
     position: relative;
 }
 
@@ -122,13 +131,11 @@ body.sign-up p {
 .sign-up #sign-up-view,
 .sign-up #log-in-view {
     border-radius: 3px;
-    text-align: center;
 }
 
 .sign-up #account-view form,
 .sign-up #sign-up-view form,
 .sign-up #log-in-view form {
-    padding: 15px;
     position: relative;
 }
 
@@ -148,7 +155,7 @@ body.sign-up p {
 }
 
 .sign-up .dialog-body.login-view .hints {
-    padding-left: .5em;
+    padding-left: 2px;
 }
 
 .reset-page #sign-up-view p {
@@ -166,13 +173,12 @@ body.sign-up p {
 .sign-up #api-workspace,
 .sign-up #account-view {
     max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 80px;
     line-height: 1.5em;
 }
 
 .sign-up #sign-up-view {
-    max-width: 380px;
+    max-width: 600px;
 }
 
 .sign-up #log-in-view form input[type="text"],
@@ -198,20 +204,22 @@ body.sign-up p {
 .sign-up #receipt-view h2,
 .sign-up #sign-up-view h2,
 .sign-up #log-in-view h2 {
-    text-align: center;
-    color: #666;
-    margin: 0 0 15px 0;
+    margin: 30px 0 30px 0;
+    font-size: 36px;
+    font-weight: normal;
     /** font: normal 26px/1 Verdana, Helvetica; **/
     position: relative;
+    line-height: 1.5em;
 }
 
 .sign-up input {
-    font-size: 16px;
+    /** font-size: 16px; **/
     padding: 10px 15px 10px 15px;
     margin: 0 0 15px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    color: #555;
+    border: 1px solid #fff;
+    border-radius: 10px;
+    color: #000;
+    font-weight: bold;
     -moz-box-shadow: 0 1px 1px #ccc inset, 0 1px 0 #fff;
     -webkit-box-shadow: 0 1px 1px #ccc inset, 0 1px 0 #fff;
     box-shadow: 0 1px 1px #ccc inset, 0 1px 0 #fff;
@@ -223,10 +231,11 @@ body.sign-up p {
 }
 
 .sign-up input.ok {
-    background-color: rgb(64, 158, 255);
-    color: rgba(255, 255, 255, 1.0);
+    background-color: #ffd100;
+    color: #000;
     cursor: pointer;
     display: inline-block;
+    border: 0px;
 }
 
 .sign-up input[disabled] {
@@ -248,15 +257,11 @@ body.sign-up p {
 .sign-up #message-view {
     padding: 5px;
     margin-bottom: 10px;
-    color: rgb(64, 158, 255);
+    color: #ffd100;
 }
 
 .sign-up .warning {
     color: rgba(198, 0, 0, 1.0);
-}
-
-.logout-page .logout {
-    text-align: center;
 }
 
 /** Webclient specific styles */
@@ -272,5 +277,5 @@ body.sign-up p {
 }
 
 .ui-dialog .ui-dialog-content .password-reset a {
-    color: rgb(64, 158, 255);
+    color: #0063f7;
 }

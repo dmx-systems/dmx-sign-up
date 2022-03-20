@@ -38,7 +38,7 @@
                             <span th:text="${logged_in_as}">Eingelogged als </span>&nbsp;<span th:text="${username}" id="message"></span>
                         </div>
                         <form class="logout-form" action="javascript:doLogout()">
-                            <input type="submit" th:value="${logout}" class="ok ui button red sign-up" />
+                            <input type="submit" th:value="${logout} + '&nbsp;&#x2794;'" class="ok ui button red sign-up" />
                         </form>
                     </div>
 
@@ -48,6 +48,8 @@
             <!--div th:replace="fragments/footer :: footer-new"></div-->
 
         </div>
+
+        <div class="footer"></div>
 
     </body>
 

@@ -283,6 +283,7 @@
     }
 
     function resetPassword() {
+        // var name = document.getElementById("name").value.trim()
         var emailAddress = document.getElementById("mailbox").value.trim()
         xhr = new XMLHttpRequest()
         xhr.onload = function(e) {

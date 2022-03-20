@@ -209,12 +209,31 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public Response initiatePasswordReset(@PathParam("email") String email) throws URISyntaxException {
         log.info("Password reset requested for user with Email: \"" + email + "\"");
+        return initiatePasswordResetWithName(email, null);
+    }
+
+    /**
+     * A HTTP Resource to initiate a password-reset sequence. Creates a password-reset token
+     * and sends it out as link via Email. Redirects the request to either the "token info"
+     * or the "error message" page.
+     * @param name
+     * @param email
+     * @return A Response.temporaryRedirect to either the "token info"
+     * or the "error message" page.
+     * @throws URISyntaxException 
+     */
+    @GET
+    @Path("/password-token/{email}/{name}")
+    @Produces(MediaType.TEXT_HTML)
+    @Override
+    public Response initiatePasswordResetWithName(@PathParam("email") String email, @PathParam("name") String name) throws URISyntaxException {
+        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+name+"\"");
         try {
             String emailAddressValue = email.trim();
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue);
+                sendPasswordResetToken(emailAddressValue, name);
                 return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
@@ -255,9 +274,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             if (input != null && input.getLong("expiration") > new Date().getTime()) {
                 username = input.getString("username");
                 email = input.getString("mailbox");
+                String displayName = (input.has("name")) ? input.getString("name") : "";
                 log.info("Handling password reset request for Email: \"" + email);
+                viewData("mailbox", email);
                 viewData("requested_username", username);
+                viewData("requested_display_name", displayName);
                 viewData("password_requested_title", rb.getString("password_requested_title"));
+                viewData("password_requested_button", rb.getString("password_requested_button"));
                 prepareSignupPage("password-reset");
                 return view("password-reset");
             } else {
@@ -839,16 +862,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         sendConfirmationMail(tokenKey, username, mailbox.trim());
     }
 
-    private void sendPasswordResetToken(String mailbox) {
+    private void sendPasswordResetToken(String mailbox, String displayName) {
         String username = dmx.getPrivilegedAccess().getUsername(mailbox);
-        String tokenKey = createPasswordResetToken(username, mailbox);
-        sendPasswordResetMail(tokenKey, username, mailbox.trim());
+        String tokenKey = createPasswordResetToken(username, mailbox, displayName);
+        sendPasswordResetMail(tokenKey, username, mailbox.trim(), displayName);
     }
 
     private String createUserValidationToken(String username, String password, String mailbox) {
         try {
             String tokenKey = UUID.randomUUID().toString();
-            long valid = new Date().getTime() + 3600000; // Token is valid fo 60 min
+            long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
                     .put("username", username.trim())
                     .put("mailbox", mailbox.trim())
@@ -866,13 +889,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private String createPasswordResetToken(String username, String mailbox) {
+    private String createPasswordResetToken(String username, String mailbox, String name) {
         try {
             String tokenKey = UUID.randomUUID().toString();
-            long valid = new Date().getTime() + 3600000; // Token is valid fo 60 min
+            long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
                     .put("username", username.trim())
                     .put("mailbox", mailbox.trim())
+                    .put("name", (name != null) ? name.trim() : "")
                     .put("expiration", valid);
             pwToken.put(tokenKey, tokenValue);
             log.log(Level.INFO, "Set up pwToken {0} for {1} send passwort reset mail valid till {3}",
@@ -978,7 +1002,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         }
     }
 
-    private void sendPasswordResetMail(String key, String username, String mailbox) {
+    private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(DMX_HOST_URL);
@@ -986,8 +1010,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 + "\n" + url + "sign-up/password-reset/" + key);
             String href = url + "sign-up/password-reset/" + key;
             try {
+                String addressee = username;
+                if (displayName != null && !displayName.isEmpty()) {
+                    addressee = displayName;
+                }
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + username + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                    rb.getString("mail_hello") + " " + addressee + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers"), mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
@@ -1143,6 +1171,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
             viewData("read_more", rb.getString("read_more"));
             viewData("label_forgot_password", rb.getString("forgot_password"));
             viewData("label_reset_password", rb.getString("reset_password"));
+            viewData("label_reset_password_submit", rb.getString("reset_password_submit"));
             viewData("info_reset_password", rb.getString("reset_password_hint"));
             viewData("password_reset_ok_message", rb.getString("password_reset_success_1"));
             //

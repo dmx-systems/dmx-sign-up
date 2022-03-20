@@ -41,18 +41,20 @@
           <div th:replace="fragments/widgets :: teaser-small" />
           
           <div class="ui container vertical padded segment first dialog-header">
-                <h2>Register new user account</h2>
-            </div>
+                <!--h2>Register new user account</h2-->
+          </div>
 
             <form class="sign-up-form ui form" action="javascript:voidFunction();" onsubmit="javascript:createCustomAccount();">
 
                 <div id="sign-up-view" class="dialog-body ui padded segment vertical blue2bg">
                     <div class="ui container">
-                        <!--h2 th:text="${signup_title}">Sign up</h2-->
+                        <h2 th:text="${signup_title}">Sign up</h2>
                             <div class="ui input">
+                              <label for="displayname" th:text="${label_name}"></label>
                                 <input id="displayname" type="text" name="displayname" th:placeholder="${label_name}" title="Name" class="sign-up displayname" />
                             </div>
                             <div class="ui input">
+                                <label for="username"  th:text="${label_email}"></label>
                                 <input id="username" type="text" name="username" th:placeholder="${label_email}" title="Username"
                                    onblur="checkUserNameAvailability()" class="sign-up username" />
                             </div>
@@ -77,9 +79,11 @@
 
             </form>
 
-            <!--div th:replace="fragments/footer :: footer-new"></div-->
+          <!--div th:replace="fragments/footer :: footer-new"></div-->
 
         </div>
+
+        <div class="footer"></div>
 
     </body>
 
