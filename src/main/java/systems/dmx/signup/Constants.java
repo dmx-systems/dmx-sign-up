@@ -21,6 +21,7 @@ public class Constants {
 
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     public static final int SIGN_UP_TOKEN_TTL             = 3600000; // 60min token livetime
+    public static final String UNKNOWN_DISPLAY_NAME       = "Unknown contributor";
     public static final String SIGN_UP_CONFIG_TYPE_URI    = "dmx.signup.configuration";
     public static final String CONFIG_PROJECT_TITLE       = "dmx.signup.config_project_title";
     public static final String CONFIG_WEBAPP_TITLE        = "dmx.signup.config_webapp_title";

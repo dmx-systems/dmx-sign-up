@@ -168,7 +168,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     /**
-     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace.
+     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace. Otherweise "Unknown contributor" is returned.
      * @param username
      * @return
      */
@@ -177,8 +177,15 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Override
     public String getDisplayName(@PathParam("username") String username) {
         Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
-        Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
-        return (displayName != null) ? displayName.getSimpleValue().toString() : username;
+        String defaultValue = UNKNOWN_DISPLAY_NAME;
+        try {
+            Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
+            return displayName.getSimpleValue().toString();
+        } catch (Exception ex) {
+            log.warning("Display name access by users without access permission on display names."
+                    + "Caused by: " + ex.getCause().toString());
+        }
+        return defaultValue;
     }
 
     /**
