@@ -168,7 +168,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     /**
-     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace. Otherweise "Unknown contributor" is returned.
+     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace. Otherwise "Unknown contributor" is returned.
      * @param username
      * @return
      */
@@ -176,14 +176,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Path("/display-name/{username}")
     @Override
     public String getDisplayName(@PathParam("username") String username) {
-        Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         String defaultValue = UNKNOWN_DISPLAY_NAME;
         try {
+            Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
             Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
             return displayName.getSimpleValue().toString();
         } catch (Exception ex) {
-            log.warning("Display name access by users without access permission on display names."
-                    + "Caused by: " + ex.getCause().toString());
+            log.warning("Display name access by users without \"Display Names\" workspace membership.");
         }
         return defaultValue;
     }
@@ -486,7 +485,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
         Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         handleAccountCreatedRedirect(username.getSimpleValue().toString()); // throws WebAppException
-        return Response.ok().build();
+        return Response.ok(username).build();
     }
 
     private Topic createCustomUserAccount(String mailbox, String displayName, String password) throws RuntimeException {
