@@ -297,19 +297,18 @@
     function updatePassword() {
         comparePasswords()
         var token = document.getElementById("token-info").value
+        var username = document.getElementById("username").value
         var secret = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
                          window.btoa(document.getElementById("pass-one").value) :
                          '-SHA256-' + SHA256(document.getElementById("pass-one").value))
-        window.document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
-        /** xhr = new XMLHttpRequest()
+        // window.document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
+        xhr = new XMLHttpRequest()
         xhr.onload = function(e) {
             console.log("Updated Password for ", token, "to", document.getElementById("pass-one").value)
         }
         xhr.open("GET", "/sign-up/password-reset/" + token + "/" + secret, true)
-        // xhr.setRequestHeader('Content-Type', 'application/json');
-        // var creds = { username: username, password: secret }
-        // console.log("Credentials", creds)
-        xhr.send() // JSON.stringify(creds) **/
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send()
     }
 
     function voidFunction() {

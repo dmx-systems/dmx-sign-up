@@ -398,6 +398,54 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     }
 
     /**
+     * Updates the user password.
+     * @param token
+     * @param password
+     * @return Returns the correct template for the input.
+     */
+    @GET
+    @Path("/password-reset/{token}/{password}")
+    @Transactional
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response processAjaxPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+        log.info("Processing Password Update Request Token... ");
+        try {
+            JSONObject entry = pwToken.get(token);
+            if (entry != null) {
+                Credentials newCreds = new Credentials("dummy", "pass");
+                newCreds.username = entry.getString("username").trim();
+                if (!ldapAccountCreationConfigured()) {
+                    newCreds.password = password;
+                    // Change password stored in "User Account" topic
+                    dmx.getPrivilegedAccess().changePassword(newCreds);
+                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
+                } else {
+                    String plaintextPassword = Base64.base64Decode(password);
+                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string provided by client \""+password
+                            + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                    // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
+                    newCreds.plaintextPassword = plaintextPassword;
+                    newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
+                    if (ldapPluginService.changePassword(newCreds) != null) {
+                        log.info("If no previous errors are reported here or in the LDAP-service log, the credentials for "
+                                + "user " + newCreds.username + " should now have been changed succesfully.");
+                    } else {
+                        log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
+                        return Response.serverError().build();
+                    }
+                }
+                pwToken.remove(token);
+                return Response.ok().build();
+            } else {
+                return Response.serverError().build();
+            }
+        } catch (JSONException ex) {
+            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            return Response.serverError().build();
+        }
+    }
+
+    /**
      * A HTTP resource to create a new user account.
      * @param username  String must be unique
      * @param password  String must be SHA-256 encoded
