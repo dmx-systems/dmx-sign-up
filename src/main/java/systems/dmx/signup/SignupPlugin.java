@@ -518,13 +518,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
                 }
             });
             tx.success();
+            return usernameTopic;
         } catch (Exception e) {
             tx.failure();
             throw new RuntimeException("Creating custom user account FAILED!", e);
         } finally {
             tx.finish();
         }
-        return null;
     }
 
     public long getDisplayNamesWorkspaceId() {
