@@ -20,7 +20,7 @@ public class Constants {
     public static final boolean CONFIG_CREATE_LDAP_ACCOUNTS = Boolean.parseBoolean(System.getProperty("dmx.signup.ldap_account_creation", "false"));
 
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
-    public static final int SIGN_UP_TOKEN_TTL             = 3600000; // 60min token livetime
+    public static final int SIGN_UP_TOKEN_TTL             = 86400000; // 24h token livetime
     public static final String UNKNOWN_DISPLAY_NAME       = "Unknown contributor";
     public static final String SIGN_UP_CONFIG_TYPE_URI    = "dmx.signup.configuration";
     public static final String CONFIG_PROJECT_TITLE       = "dmx.signup.config_project_title";

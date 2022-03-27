@@ -40,10 +40,14 @@
         xhr.send()
     }
 
-    function doLogin() {
+    function doLogin(username, pass, success) {
 
-        var id = document.getElementById("username").value
-        var secret = document.getElementById("password").value
+        var id = (typeof username === "undefined") ? document.getElementById("username").value : username
+        // when ldap account creation is configured, we make the user-id is always authorized in lower-case
+        if (signupConfig["authorizationMethodIsLdap"]) {
+          id = id.toLowerCase()
+        }
+        var secret = (typeof pass === "undefined") ? document.getElementById("password").value : pass
 
         checkAuthorization(id, secret)
 
@@ -54,13 +58,19 @@
 
             xhr = new XMLHttpRequest()
             xhr.onload = function(e) {
-                console.log("Auth response", e, "XHR", xhr)
-                if (xhr.response === "") {
-                    renderFriendlyMessage(signupConfig.appLoadingMessage)
-                    redirectToStartPageURL()
-                } else {
-                    renderWarning(signupConfig.notAuthorized)
-                }
+                  if (xhr.response === "") { // login success
+                      if (typeof success !== "undefined") {
+                        console.log("Login successfull triggering callback", success)
+                        success()
+                      } else {
+                        console.log("Login successfull standard redirect")
+                        renderFriendlyMessage(signupConfig.appLoadingMessage)
+                        redirectToStartPageURL()
+                      }
+                  } else {
+                      console.log("Login unsuccessfull", xhr.response)
+                      renderWarning(signupConfig.notAuthorized)
+                  }
             }
             xhr.open("POST", "/access-control/login", false)
             xhr.setRequestHeader("Authorization", authorization)
@@ -147,6 +157,10 @@
 
         function doCreateRequest() {
             var mailbox = encodeURIComponent(document.getElementById("username").value)
+            // when sign-up creates ldap accounts, make sure, these are always in lower-case
+            if (signupConfig["authorizationMethodIsLdap"]) {
+              mailbox = mailbox.toLowerCase()
+            }
             var displayName = encodeURIComponent(document.getElementById("displayname").value)
             var passwordVal = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
                       window.btoa("test1234") :
@@ -298,13 +312,26 @@
         comparePasswords()
         var token = document.getElementById("token-info").value
         var username = document.getElementById("username").value
+        var pwInput = document.getElementById("pass-one").value
         var secret = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
-                         window.btoa(document.getElementById("pass-one").value) :
-                         '-SHA256-' + SHA256(document.getElementById("pass-one").value))
+                         window.btoa(pwInput) : '-SHA256-' + SHA256(pwInput))
+        // a) Form-based way
         // window.document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
+        // b) Custom ajax-way 
         xhr = new XMLHttpRequest()
         xhr.onload = function(e) {
-            console.log("Updated Password for ", token, "to", document.getElementById("pass-one").value)
+            console.log("Updated Password for ", username, "start auto-login sequence in 1sec")
+            setTimeout(function (e) {
+              doLogin(username, pwInput, function(e) {
+                console.log("Autologin successfull")
+                if (!signupConfig.redirectUrl) {
+                  renderFriendlyMessage(signupConfig.appLoadingMessage)
+                  redirectToStartPageURL()
+                } else {
+                  console.log("Redirect URL", signupConfig.redirectUrl)
+                }
+              }, 1000)
+            })
         }
         xhr.open("GET", "/sign-up/password-reset/" + token + "/" + secret, true)
         xhr.setRequestHeader('Content-Type', 'application/json');

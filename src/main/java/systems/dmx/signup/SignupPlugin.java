@@ -532,9 +532,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     public Response handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
             @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
-        if (!isAdministrationWorkspaceMember()) {
-            return Response.status(401).build();
-        }
         Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         handleAccountCreatedRedirect(username.getSimpleValue().toString()); // throws WebAppException
