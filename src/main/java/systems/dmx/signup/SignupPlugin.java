@@ -20,7 +20,6 @@ import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
-import systems.dmx.signup.service.SignupPluginService;
 import systems.dmx.thymeleaf.ThymeleafPlugin;
 import systems.dmx.workspaces.WorkspacesService;
 
@@ -53,7 +52,7 @@ import static systems.dmx.workspaces.Constants.WORKSPACE;
  * @author Malte Rei&szlig;
 **/
 @Path("/sign-up")
-public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService, PostUpdateTopic {
+public class SignupPlugin extends ThymeleafPlugin implements SignupService, PostUpdateTopic {
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
  
@@ -176,15 +175,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupPluginService
     @Path("/display-name/{username}")
     @Override
     public String getDisplayName(@PathParam("username") String username) {
-        String defaultValue = UNKNOWN_DISPLAY_NAME;
         try {
             Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
             Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
             return displayName.getSimpleValue().toString();
         } catch (Exception ex) {
             log.warning("Display name access by users without \"Display Names\" workspace membership.");
+            return null;
         }
-        return defaultValue;
     }
 
     /**

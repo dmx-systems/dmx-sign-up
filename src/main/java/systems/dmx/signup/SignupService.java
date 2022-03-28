@@ -1,4 +1,4 @@
-package systems.dmx.signup.service;
+package systems.dmx.signup;
 
 
 import com.sun.jersey.api.view.Viewable;
@@ -13,7 +13,7 @@ import org.osgi.framework.Bundle;
  * @author Malte Rei&szlig;
  */
 
-public interface SignupPluginService {
+public interface SignupService {
 
     /** 
      * Checks for a Topic with the exact "username" value. 
