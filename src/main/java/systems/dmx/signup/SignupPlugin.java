@@ -508,6 +508,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    @Produces(MediaType.TEXT_HTML)
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
             @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
         if (isAdministrationWorkspaceMember()) {
