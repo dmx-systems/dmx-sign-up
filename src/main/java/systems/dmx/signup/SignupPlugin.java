@@ -531,6 +531,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
             @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+        // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS, DisplayNames WS Id)
         Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         return username;
