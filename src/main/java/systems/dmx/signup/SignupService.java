@@ -23,9 +23,12 @@ public interface SignupService {
     String getUsernameAvailability(String username);
 
     /**
-     * Retrieves the associated display name topic value for the given username.
+     * Returns the display name of the given user.
      *
-     * @return  String  Text representation of the user's chosen display name.
+     * @return      the user's display name, or null if no display name is stored (or is not readable),
+     *              or if the given username is unknown.
+     *
+     * @throws      RuntimeException    if an error occurs
      */
     String getDisplayName(String username);
 

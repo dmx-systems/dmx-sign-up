@@ -166,14 +166,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
-    /**
-     * Returns the display name of the given user.
-     *
-     * @return      the user's display name, or null if no display name is stored (or is not readable),
-     *              or if the given username is unknown.
-     *
-     * @throws      RuntimeException    if an error occurs
-     */
     @GET
     @Path("/display-name/{username}")
     @Override
