@@ -167,21 +167,28 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     /**
-     * Only works for logged-in users if these members of "Display Names" (Collaborative) workspace. Otherwise "Unknown contributor" is returned.
-     * @param username
-     * @return
+     * Returns the display name of the given user.
+     *
+     * @return      the user's display name, or null if no display name is stored (or is not readable),
+     *              or if the given username is unknown.
+     *
+     * @throws      RuntimeException    if an error occurs
      */
     @GET
     @Path("/display-name/{username}")
     @Override
     public String getDisplayName(@PathParam("username") String username) {
         try {
-            Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
-            Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
-            return displayName.getSimpleValue().toString();
-        } catch (Exception ex) {
-            log.warning("Display name access by users without \"Display Names\" workspace membership.");
+            Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+            if (usernameTopic != null) {
+                Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
+                if (displayName != null) {
+                    return displayName.getSimpleValue().toString();
+                }
+            }
             return null;
+        } catch (Exception e) {
+            throw new RuntimeException("Fetching display name of user \"" + username + "\" failed", e);
         }
     }
 
