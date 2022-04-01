@@ -162,9 +162,9 @@
               mailbox = mailbox.toLowerCase()
             }
             var displayName = encodeURIComponent(document.getElementById("displayname").value)
+            var dummyPassword = generateRandomString(23)
             var passwordVal = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
-                      window.btoa("test1234") :
-                      '-SHA256-' + SHA256("test1234"))
+                      window.btoa(dummyPassword) : '-SHA256-' + SHA256(dummyPassword))
             // send a GET to handle the account creation request (SignupPlugin.java@handleCustomSignupRequest)
             window.document.location.assign("//" +  window.location.host + "/sign-up/custom-handle/"
                     + mailbox + "/" + displayName + "/" + passwordVal)
@@ -172,6 +172,18 @@
         // any of these should prevent submission of form
         if (!isValidMailboxUsername()) return false
         doCreateRequest()
+    }
+
+    function generateRandomString(length) {
+        var characterSeed = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "0123456789!?#-_abcdefghijklmnopqrstuvxyz";
+        var value = "";
+        for (var i = 0; i < length; i++) {
+            // generate a random number between 0 and seed length
+            var index = Math.round((characterSeed.length * Math.random()));
+            value = value + "" +  characterSeed[index];
+        }
+        return value;
     }
 
     function isValidMailboxUsername() {
