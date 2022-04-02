@@ -1326,6 +1326,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             // Generics
             String username = accesscontrol.getUsername();
             // ### viewData("administration_workspace_member", isAdministrationWorkspaceMember());
+            viewData("email_confirmation_active", CONFIG_EMAIL_CONFIRMATION);
             viewData("skip_confirmation_mail_label", rb.getString("admin_skip_email_confirmation_mail"));
             viewData("administration_workspace_member", isAdministrationWorkspaceMember());
             viewData("authenticated", (username != null));
