@@ -3,5 +3,6 @@
 
   <img class="logo" th:title="${title} + ' Frontpage'"
        th:if="${not #strings.isEmpty(logo_path)}" th:src="${logo_path}" />
+  <h3 th:text="${project_name}">Project name</h3>
 
 </div>
