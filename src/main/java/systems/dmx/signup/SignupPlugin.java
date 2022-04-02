@@ -783,6 +783,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         } else {
             viewData("status_label", rb.getString("status_label_updated"));
         }
+        // ### Monlingual split sentence can't be easily translated
         viewData("account_failure_message", rb.getString("account_failure_message"));
         viewData("please_try_1", rb.getString("please_try_1"));
         viewData("please_try_2", rb.getString("please_try_2"));
