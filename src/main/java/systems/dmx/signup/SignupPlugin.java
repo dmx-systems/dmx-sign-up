@@ -1141,7 +1141,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     addressee = displayName;
                 }
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                    rb.getString("mail_hello") + "!<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers") + "<br/>"
                                 + "Deutsch-französisches Zukunftswerk / Forum pour l'avenir franco-allemand" , mailbox);
             } catch (Exception ex) {
