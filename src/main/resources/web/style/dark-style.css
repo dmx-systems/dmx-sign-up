@@ -37,9 +37,19 @@ body.sign-up a {
     margin-top: 8%;
 }
 
+.sign-up .imprint-links {
+    left: 104px;
+    position: fixed;
+    bottom: 10px;
+}
+
+.sign-up .imprint-links a {
+    margin-right: 20px;
+}
+
 .sign-up .teaser-small,
 .sign-up .dialog-header {
-    width: 320px;
+    width: 600px;
     margin-left: 80px;
 }
 
@@ -149,10 +159,10 @@ body.sign-up a {
     text-align: left;
 }
 
-.sign-up .dialog-body.login-view,
+/** .sign-up .dialog-body.login-view,
 .sign-up #log-in-view {
     max-width: 320px;
-}
+} **/
 
 .sign-up .dialog-body.login-view .hints {
     padding-left: 2px;

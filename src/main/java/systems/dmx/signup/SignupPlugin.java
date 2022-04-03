@@ -1141,7 +1141,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     addressee = displayName;
                 }
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + " " + addressee + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
+                    rb.getString("mail_hello") + ",<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers") + "<br/>"
                                 + "Deutsch-französisches Zukunftswerk / Forum pour l'avenir franco-allemand" , mailbox);
             } catch (Exception ex) {
@@ -1180,7 +1180,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     private void sendSystemMail(String subject, String message, String recipientValues) {
         String projectName = activeModuleConfiguration.getChildTopics().getString(CONFIG_PROJECT_TITLE);
         String sender = CONFIG_FROM_MAILBOX;
-        String mailBody = message + "\n\n" + DMX_HOST_URL + "\n\n";
+        String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
         sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, recipientValues);
     }
 
