@@ -1143,7 +1143,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
                     rb.getString("mail_hello") + "!<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
                         + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers") + "<br/>"
-                                + "Deutsch-französisches Zukunftswerk / Forum pour l'avenir franco-allemand" , mailbox);
+                                + "Deutsch-franzoesisches Zukunftswerk / Forum pour l'avenir franco-allemand" , mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup,"
                         + "we FAILED sending out the \"Password Reset\" mail, caused by: " +  ex.getMessage());
