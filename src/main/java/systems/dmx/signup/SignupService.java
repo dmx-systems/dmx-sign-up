@@ -32,6 +32,8 @@ public interface SignupService {
      */
     String getDisplayName(String username);
 
+    void updateDisplayName(String username, String displayName);
+
     /**
      *
      * @return  String  Workspace Topic ID

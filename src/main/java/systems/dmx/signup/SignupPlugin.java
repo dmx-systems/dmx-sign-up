@@ -184,6 +184,24 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
+    @PUT
+    @Path("/display-name/{username}")
+    @Transactional
+    @Override
+    public void updateDisplayName(@PathParam("username") String username,
+                                  @QueryParam("displayName") String displayName) {
+        try {
+            Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+            if (usernameTopic != null) {
+                facets.updateFacet(usernameTopic, DISPLAY_NAME_FACET,
+                    mf.newFacetValueModel(DISPLAY_NAME).set(displayName)
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Updating display name of user \"" + username + "\" failed", e);
+        }
+    }
+
     /**
      * A HTTP resource allowing existence check fors the given email address string.
      * @param email
