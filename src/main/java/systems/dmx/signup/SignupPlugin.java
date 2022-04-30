@@ -191,14 +191,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public void updateDisplayName(@PathParam("username") String username,
                                   @QueryParam("displayName") String displayName) {
         try {
-            Topic usernameTopic = accesscontrol.getUsernameTopic(username);
-            if (usernameTopic != null) {
-                facets.updateFacet(usernameTopic, DISPLAY_NAME_FACET,
-                    mf.newFacetValueModel(DISPLAY_NAME).set(displayName)
-                );
-            }
+            long workspaceId = getDisplayNamesWorkspaceId();
+            dmx.getPrivilegedAccess().runInWorkspaceContext(workspaceId, () -> {
+                Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+                if (usernameTopic != null) {
+                    facets.updateFacet(usernameTopic, DISPLAY_NAME_FACET,
+                        mf.newFacetValueModel(DISPLAY_NAME).set(displayName)
+                    );
+                }
+                return null;
+            });
         } catch (Exception e) {
-            throw new RuntimeException("Updating display name of user \"" + username + "\" failed", e);
+            throw new RuntimeException("Updating display name of user \"" + username + "\" failed, displayName=\"" +
+                displayName + "\"", e);
         }
     }
 
