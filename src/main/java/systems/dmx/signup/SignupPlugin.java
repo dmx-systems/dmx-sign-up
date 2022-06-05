@@ -12,8 +12,11 @@ import systems.dmx.core.ChildTopics;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
+import systems.dmx.core.service.ChangeReport;
+import systems.dmx.core.service.DMXEvent;
 import systems.dmx.core.service.EventListener;
-import systems.dmx.core.service.*;
+import systems.dmx.core.service.Inject;
+import systems.dmx.core.service.Transactional;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.core.storage.spi.DMXTransaction;
@@ -476,6 +479,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/handle/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
+    @Transactional
     @Override
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
@@ -531,6 +535,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     @Produces(MediaType.TEXT_HTML)
+    @Transactional
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
             @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
         if (isAdministrationWorkspaceMember()) {
@@ -551,6 +556,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    @Transactional
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
             @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
         // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS, DisplayNames WS Id)
@@ -560,17 +566,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     private Topic createCustomUserAccount(String mailbox, String displayName, String password) throws RuntimeException {
-        // 1) Custom sign-up request means "mailbox" = "username"
-        String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
-        // 2) create and assign displayname topic to "System" workspace
-        final String displayNameValue = displayName.trim();
-        // the next line does not fail as long as this request is send by logged in users
-        final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
-        // final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
-        final long usernameTopicId = usernameTopic.getId();
-        long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
-        DMXTransaction tx = dmx.beginTx();
         try {
+            // 1) Custom sign-up request means "mailbox" = "username"
+            String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
+            // 2) create and assign displayname topic to "System" workspace
+            final String displayNameValue = displayName.trim();
+            // the next line does not fail as long as this request is send by logged in users
+            final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
+            // final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
+            final long usernameTopicId = usernameTopic.getId();
+            long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
             dmx.getPrivilegedAccess().runInWorkspaceContext(displayNamesWorkspaceId, new Callable<Topic>() {
                 @Override
                 public Topic call() {
@@ -588,13 +593,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     return facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
                 }
             });
-            tx.success();
             return usernameTopic;
         } catch (Exception e) {
-            tx.failure();
-            throw new RuntimeException("Creating custom user account FAILED!", e);
-        } finally {
-            tx.finish();
+            throw new RuntimeException("Creating custom user account failed, mailbox=\"" + mailbox +
+                "\", displayName=\"" + displayName + "\"", e);
         }
     }
 
@@ -610,6 +612,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/confirm/{token}")
+    @Transactional
     public Viewable processSignupRequest(@PathParam("token") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
         if (!token.containsKey(key)) {
@@ -693,8 +696,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             // Account status
             boolean status = Boolean.parseBoolean(topic.getSimpleValue().toString());
             // Account involved
-            Topic username = topic.getRelatedTopic("dmx.config.configuration", null,
-                    null, USERNAME);
+            Topic username = topic.getRelatedTopic("dmx.config.configuration", null, null, USERNAME);
             // Perform notification
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
                 log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
@@ -880,7 +882,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     @Override
     public String createSimpleUserAccount(String username, String password, String mailbox) {
-        DMXTransaction tx = dmx.beginTx();
         try {
             if (isUsernameTaken(username)) {
                 // Might be thrown if two users compete for registration (of the same username)
@@ -929,12 +930,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             log.info("Created new user account for user \"" + username + "\" and " + eMailAddressValue);
             // 6) Inform administrations about successfull account creation
             sendNotificationMail(username, mailbox.trim());
-            tx.success();
             return username;
         } catch (Exception e) {
-            throw new RuntimeException("Creating simple user account FAILED!", e);
-        } finally {
-            tx.finish();
+            throw new RuntimeException("Creating simple user account failed, username=\"" + username +
+                "\", mailbox=\"" + mailbox + "\"", e);
         }
     }
 
