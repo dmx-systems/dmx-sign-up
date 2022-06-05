@@ -571,9 +571,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
             // 2) create and assign displayname topic to "System" workspace
             final String displayNameValue = displayName.trim();
-            // the next line does not fail as long as this request is send by logged in users
-            final Topic usernameTopic = dmx.getTopicByValue(USERNAME, new SimpleValue(username));
-            // final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
+            final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
             final long usernameTopicId = usernameTopic.getId();
             long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
             dmx.getPrivilegedAccess().runInWorkspaceContext(displayNamesWorkspaceId, new Callable<Topic>() {
@@ -663,7 +661,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public String createAPIWorkspaceMembershipRequest() {
         Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
         if (apiMembershipRequestNote != null && accesscontrol.getUsername() != null) {
-            Topic usernameTopic = accesscontrol.getUsernameTopic(accesscontrol.getUsername());
+            Topic usernameTopic = accesscontrol.getUsernameTopic();
             // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the configured workspace)
             createApiWorkspaceMembership(usernameTopic); // might fail silently
             // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
