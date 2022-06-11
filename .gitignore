@@ -5,6 +5,7 @@ src/main/resources/web/
 .settings
 .project
 .classpath
+.DS_Store
 commit.txt
 commit-message.txt
 node_modules
