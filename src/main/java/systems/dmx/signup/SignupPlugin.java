@@ -550,8 +550,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Produces(MediaType.TEXT_HTML)
     @Transactional
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName,
-            @PathParam("password") String password) throws URISyntaxException, WebApplicationException {
+                                              @PathParam("displayname") String displayName,
+                                              @PathParam("password") String password) throws URISyntaxException {
         if (isAdministrationWorkspaceMember()) {
             createCustomUserAccount(mailbox, displayName, password);
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
@@ -573,8 +573,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     @Transactional
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName,
-            @PathParam("password") String password) throws URISyntaxException, WebApplicationException {
+                                               @PathParam("displayname") String displayName,
+                                               @PathParam("password") String password) throws URISyntaxException {
         // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS,
         // DisplayNames WS Id)
         Topic username = createCustomUserAccount(mailbox, displayName, password); // throws if account creation fails
@@ -867,8 +867,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             try {
                 sendSystemMail(subject, message, recipient);
             } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                        + "we FAILED sending out a notification mail to the \"System Mailbox\", caused by: " +  ex.getMessage());
+                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
+                    "notification mail to the \"System Mailbox\", caused by: " +  ex.getMessage());
             }
         } else {
             log.info("Did not send notification mail to System Mailbox - Admin Mailbox Empty");
@@ -880,8 +880,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         try {
             sendSystemMail(subject, message, mailbox);
         } catch (Exception ex) {
-            log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                    + "we FAILED sending out a notification mail to User \""+mailbox+"\", caused by: " +  ex.getMessage());
+            log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
+                "notification mail to User \""+mailbox+"\", caused by: " +  ex.getMessage());
         }
     }
 
@@ -910,8 +910,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             // methods it is simply base64-encoded
             if (!ldapAccountCreationConfigured()) {
                 creds = new Credentials(new JSONObject()
-                        .put("username", username.trim())
-                        .put("password", password.trim()));
+                    .put("username", username.trim())
+                    .put("password", password.trim()));
             } else {
                 String plaintextPassword = Base64.base64Decode(password);
                 creds = new Credentials(username.trim(), plaintextPassword);
@@ -937,9 +937,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     // 5) create membership to custom workspace topic
                     if (customWorkspaceAssignmentTopic != null) {
                         accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
-                                customWorkspaceAssignmentTopic.getId());
+                            customWorkspaceAssignmentTopic.getId());
                         log.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
-                                "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
+                            "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
                     }
                     return eMailAddress;
                 }
@@ -1014,7 +1014,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 Topic usernameTopic = accesscontrol.getUsernameTopic();
                 Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
                 Assoc requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
-                if (requestRelation != null) return true;
+                if (requestRelation != null) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1037,10 +1039,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String tokenKey = UUID.randomUUID().toString();
             long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
-                    .put("username", username.trim())
-                    .put("mailbox", mailbox.trim())
-                    .put("password", password)
-                    .put("expiration", valid);
+                .put("username", username.trim())
+                .put("mailbox", mailbox.trim())
+                .put("password", password)
+                .put("expiration", valid);
             token.put(tokenKey, tokenValue);
             log.log(Level.INFO, "Set up key {0} for {1} sending confirmation mail valid till {3}",
                     new Object[]{tokenKey, mailbox, new Date(valid).toString()});
@@ -1058,14 +1060,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String tokenKey = UUID.randomUUID().toString();
             long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
             JSONObject tokenValue = new JSONObject()
-                    .put("username", username.trim())
-                    .put("mailbox", mailbox.trim())
-                    .put("name", (name != null) ? name.trim() : "")
-                    .put("expiration", valid)
-                    .put("redirectUrl", redirectUrl);
+                .put("username", username.trim())
+                .put("mailbox", mailbox.trim())
+                .put("name", (name != null) ? name.trim() : "")
+                .put("expiration", valid)
+                .put("redirectUrl", redirectUrl);
             pwToken.put(tokenKey, tokenValue);
             log.log(Level.INFO, "Set up pwToken {0} for {1} send passwort reset mail valid till {3}",
-                    new Object[]{tokenKey, mailbox, new Date(valid).toString()});
+                new Object[]{tokenKey, mailbox, new Date(valid).toString()});
             return tokenKey;
         } catch (JSONException ex) {
             Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
@@ -1075,8 +1077,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     private void createApiMembershipRequestNoteAssociation(Topic usernameTopic, Topic membershipNote) {
         Assoc apiRequest = dmx.createAssoc(mf.newAssocModel(ASSOCIATION,
-                mf.newTopicPlayerModel(usernameTopic.getId(), DEFAULT),
-                mf.newTopicPlayerModel(membershipNote.getId(), DEFAULT)));
+            mf.newTopicPlayerModel(usernameTopic.getId(), DEFAULT),
+            mf.newTopicPlayerModel(membershipNote.getId(), DEFAULT)));
         dmx.getPrivilegedAccess().assignToWorkspace(apiRequest, dmx.getPrivilegedAccess().getSystemWorkspaceId());
         log.info("Request for new custom API Workspace Membership by user \"" +
             usernameTopic.getSimpleValue().toString() + "\"");
@@ -1129,8 +1131,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         // check for custom workspace assignment
         customWorkspaceAssignmentTopic = getCustomWorkspaceAssignmentTopic();
         if (customWorkspaceAssignmentTopic != null) {
-            log.info("Configured Custom Sign-up Workspace => \""
-                    + customWorkspaceAssignmentTopic.getSimpleValue() + "\"");
+            log.info("Configured Custom Sign-up Workspace => \"" + customWorkspaceAssignmentTopic.getSimpleValue() +
+                "\"");
         }
         log.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"",
             new Object[]{activeModuleConfiguration.getUri(), activeModuleConfiguration.getSimpleValue()});
@@ -1418,5 +1420,4 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public void removeTemplateResolverBundle(Bundle bundle) {
         super.removeTemplateResourceBundle(bundle);
     }
-
 }
