@@ -48,11 +48,12 @@ import static systems.dmx.signup.Constants.*;
 import static systems.dmx.workspaces.Constants.WORKSPACE;
 
 /**
- * This plugin enables anonymous users to create themselves a user account in DMX
- * through an (optional) Email based confirmation workflow and thus it depends on the dmx-sendmail plugin and e.g. postfix
- * like "internet" installation for "localhost". Source code available at: https://git.dmx.systems/dmx-plugins/dmx-sign-up
+ * This plugin enables anonymous users to create themselves a user account in DMX through an (optional) Email based
+ * confirmation workflow and thus it depends on the dmx-sendmail plugin and e.g. postfix like "internet" installation
+ * for "localhost". Source code available at: https://git.dmx.systems/dmx-plugins/dmx-sign-up
+ *
  * @version 2.0.0-SNAPSHOT
- * @author Malte Rei&szlig;
+ * @author Malte Rei&szlig;ig et al
 **/
 @Path("/sign-up")
 public class SignupPlugin extends ThymeleafPlugin implements SignupService, PostUpdateTopic {
@@ -113,7 +114,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     static DMXEvent SIGNUP_RESOURCE_REQUESTED = new DMXEvent(SignupResourceRequestedListener.class) {
         @Override
         public void dispatch(EventListener listener, Object... params) {
-            ((SignupResourceRequestedListener) listener).signupResourceRequested((AbstractContext) params[0], (String) params[1]);
+            ((SignupResourceRequestedListener) listener).signupResourceRequested(
+                (AbstractContext) params[0], (String) params[1]
+            );
         }
     };
 
@@ -264,7 +267,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/password-token/{email}/{name}")
     @Produces(MediaType.TEXT_HTML)
     @Override
-    public Response initiatePasswordResetWithName(@PathParam("email") String email, @PathParam("name") String name) throws URISyntaxException {
+    public Response initiatePasswordResetWithName(@PathParam("email") String email,
+                                                  @PathParam("name") String name) throws URISyntaxException {
         log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+name+"\"");
         try {
             String emailAddressValue = email.trim();
@@ -274,7 +278,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 sendPasswordResetToken(emailAddressValue, name, null);
                 return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
             } else {
-                log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
+                log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
+                    email.trim());
             }
         } catch (URISyntaxException ex) {
             Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
@@ -297,7 +302,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Override
     public Response initiateRedirectPasswordReset(@PathParam("email") String email,
             @PathParam("redirectUrl") String redirectUrl) throws URISyntaxException {
-        log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \""+redirectUrl+"\"");
+        log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \"" +
+            redirectUrl + "\"");
         String emailAddressValue = email.trim();
         boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
         if (emailExists) {
@@ -377,7 +383,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/password-reset/{token}/{password}")
     @Transactional
-    public Viewable processPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+    public Viewable processPasswordUpdateRequest(@PathParam("token") String token,
+                                                 @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
         try {
             JSONObject entry = pwToken.get(token);
@@ -391,14 +398,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
                 } else {
                     String plaintextPassword = Base64.base64Decode(password);
-                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string provided by client \""+password
-                            + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
+                        "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
                     // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                     newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
                     if (ldapPluginService.changePassword(newCreds) != null) {
-                        log.info("If no previous errors are reported here or in the LDAP-service log, the credentials for "
-                                + "user " + newCreds.username + " should now have been changed succesfully.");
+                        log.info("If no previous errors are reported here or in the LDAP-service log, the " +
+                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                     } else {
                         log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
                         viewData("message", rb.getString("reset_password_error"));
@@ -430,7 +437,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/password-reset/{token}/{password}")
     @Transactional
     @Produces(MediaType.APPLICATION_JSON)
-    public Response processAjaxPasswordUpdateRequest(@PathParam("token") String token, @PathParam("password") String password) {
+    public Response processAjaxPasswordUpdateRequest(@PathParam("token") String token,
+                                                     @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
         try {
             JSONObject entry = pwToken.get(token);
@@ -444,14 +452,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
                 } else {
                     String plaintextPassword = Base64.base64Decode(password);
-                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string provided by client \""+password
-                            + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
+                        "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
                     // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                     newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
                     if (ldapPluginService.changePassword(newCreds) != null) {
-                        log.info("If no previous errors are reported here or in the LDAP-service log, the credentials for "
-                                + "user " + newCreds.username + " should now have been changed succesfully.");
+                        log.info("If no previous errors are reported here or in the LDAP-service log, the " +
+                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                     } else {
                         log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
                         return Response.serverError().build();
@@ -490,14 +498,18 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         try {
             if (CONFIG_EMAIL_CONFIRMATION) {
                 if (skipConfirmation && isAdministrationWorkspaceMember()) {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator skipping confirmation mail.");
+                    log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
+                        "skipping confirmation mail.");
                     createSimpleUserAccount(username, password, mailbox);
                     handleAccountCreatedRedirect(username);
                 } else {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out confirmation mail.");
+                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
+                        "confirmation mail.");
                     sendUserValidationToken(username, password, mailbox);
                     // redirect user to a "token-info" page
-                    throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/token-info")).build());
+                    throw new WebApplicationException(
+                        Response.temporaryRedirect(new URI("/sign-up/token-info")).build()
+                    );
                 }
             } else {
                 createSimpleUserAccount(username, password, mailbox);
@@ -526,8 +538,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     /**
-     * A HTTP resource to create a new user account with a display name, email address as username and some random password.
-     * throws WebAppException to issue a redirect (thus method is not @Transactional)
+     * A HTTP resource to create a new user account with a display name, email address as username and some random
+     * password.
+     * @throws WebAppException to issue a redirect (thus method is not @Transactional)
      * @param mailbox  String must be unique
      * @param displayName String
      * @return
@@ -537,7 +550,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Produces(MediaType.TEXT_HTML)
     @Transactional
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
+            @PathParam("displayname") String displayName,
+            @PathParam("password") String password) throws URISyntaxException, WebApplicationException {
         if (isAdministrationWorkspaceMember()) {
             createCustomUserAccount(mailbox, displayName, password);
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
@@ -547,7 +561,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     /**
-     * A HTTP resource for JS clients to create a new user account with a display name, email address as username and password.
+     * A HTTP resource for JS clients to create a new user account with a display name, email address as username and
+     * password.
      * @param mailbox       String must be unique
      * @param displayName   String
      * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
@@ -558,14 +573,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     @Transactional
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
-            @PathParam("displayname") String displayName, @PathParam("password") String password) throws URISyntaxException, WebApplicationException, RuntimeException {
-        // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS, DisplayNames WS Id)
-        Topic username = createCustomUserAccount(mailbox, displayName, password); // throws Exception if user account creation fails
+            @PathParam("displayname") String displayName,
+            @PathParam("password") String password) throws URISyntaxException, WebApplicationException {
+        // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS,
+        // DisplayNames WS Id)
+        Topic username = createCustomUserAccount(mailbox, displayName, password); // throws if account creation fails
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         return username;
     }
 
-    private Topic createCustomUserAccount(String mailbox, String displayName, String password) throws RuntimeException {
+    private Topic createCustomUserAccount(String mailbox, String displayName, String password) {
         try {
             // 1) Custom sign-up request means "mailbox" = "username"
             String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
@@ -662,23 +679,26 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
         if (apiMembershipRequestNote != null && accesscontrol.getUsername() != null) {
             Topic usernameTopic = accesscontrol.getUsernameTopic();
-            // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the configured workspace)
+            // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the
+            // configured workspace)
             createApiWorkspaceMembership(usernameTopic); // might fail silently
             // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
             Assoc requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
             if (requestRelation == null) {
-                // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace cookie
-                // set (at the requesting client) which workspace this assoc will be assigned to
+                // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace
+                // cookie set (at the requesting client) which workspace this assoc will be assigned to
                 createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
             } else {
-                log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-                sendSystemMailboxNotification("API Usage Revoked", "<br/>Hi admin,<br/><br/>"
-                    + usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of Service for API-Usage."
-                            + "<br/><br/>Just wanted to let you know.<br/>Cheers!");
-                // 2.1) fails in all cases where user has no write access to the workspace the association was created in
-                // dmx.deleteAssociation(requestRelation.getId());
-                // For now: API Usage Membership must be revoked per Email but personally and confirmed by the administrator
-                // A respective hint was place in the "API Usage" dialog on the users account (/sign-up/edit) page.
+                log.info("Revoke Request for API Workspace Membership by user \"" +
+                    usernameTopic.getSimpleValue().toString() + "\"");
+                sendSystemMailboxNotification("API Usage Revoked", "<br>Hi admin,<br><br>" +
+                    usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of " +
+                    "Service for API-Usage.<br><br>Just wanted to let you know.<br>Cheers!");
+                // 2.1) fails in all cases where user has no write access to the workspace the association was created
+                // in dmx.deleteAssociation(requestRelation.getId());
+                // For now: API Usage Membership must be revoked per Email but personally and confirmed by the
+                // administrator. A respective hint was place in the "API Usage" dialog on the users account
+                // (/sign-up/edit) page.
             }
             return "{ \"membership_created\" : " + true + "}";
         } else {
@@ -700,14 +720,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
                 //
                 String webAppTitle = activeModuleConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE)
-                        .getSimpleValue().toString();
+                    .getSimpleValue().toString();
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
-                    sendSystemMail("Your account on " + webAppTitle + " is now active",
-                            rb.getString("mail_hello") + " " + username.getSimpleValue()
-                                    + ",<br/><br/>your account on <a href=\"" + DMX_HOST_URL + "\">" + webAppTitle + "</a> is now " +
-                                    "active.<br/><br/>" + rb.getString("mail_ciao"), mailboxValue);
+                    sendSystemMail("Your account on " + webAppTitle + " is now active", rb.getString("mail_hello") +
+                        " " + username.getSimpleValue() + ",<br><br>your account on <a href=\"" + DMX_HOST_URL + "\">" +
+                        webAppTitle + "</a> is now active.<br><br>" + rb.getString("mail_ciao"), mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
             }
@@ -1059,34 +1078,36 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 mf.newTopicPlayerModel(usernameTopic.getId(), DEFAULT),
                 mf.newTopicPlayerModel(membershipNote.getId(), DEFAULT)));
         dmx.getPrivilegedAccess().assignToWorkspace(apiRequest, dmx.getPrivilegedAccess().getSystemWorkspaceId());
-        log.info("Request for new custom API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
-        sendSystemMailboxNotification("API Usage Requested", "<br/>Hi admin,<br/><br/>"
-            + usernameTopic.getSimpleValue().toString() + " accepted the Terms of Service for API Usage."
-                    + "<br/><br/>Just wanted to let you know.<br/>Cheers!");
+        log.info("Request for new custom API Workspace Membership by user \"" +
+            usernameTopic.getSimpleValue().toString() + "\"");
+        sendSystemMailboxNotification("API Usage Requested", "<br>Hi admin,<br><br>" +
+            usernameTopic.getSimpleValue().toString() + " accepted the Terms of Service for API Usage." +
+            "<br><br>Just wanted to let you know.<br>Cheers!");
     }
 
     private void createApiWorkspaceMembership(Topic usernameTopic) {
         String apiWorkspaceUri = activeModuleConfiguration.getChildTopics().getString(CONFIG_API_WORKSPACE_URI);
-        if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // do not rely or use this option in production
+        if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // don't use this option in production
             Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
             if (apiWorkspace != null) {
-                log.info("Request for new custom API Workspace Membership by user \""
-                        + usernameTopic.getSimpleValue().toString() + "\"");
+                log.info("Request for new custom API Workspace Membership by user \"" +
+                    usernameTopic.getSimpleValue().toString() + "\"");
                 // Attempt to create a Workspace membership for this Assocation/Relation
                 accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId());
             } else {
-                log.info("Revoke Request for API Workspace Membership by user \"" + usernameTopic.getSimpleValue().toString() + "\"");
+                log.info("Revoke Request for API Workspace Membership by user \"" +
+                    usernameTopic.getSimpleValue().toString() + "\"");
                 if (accesscontrol.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
                     Assoc assoc = getMembershipAssociation(usernameTopic.getId(), apiWorkspace.getId());
                     dmx.deleteAssoc(assoc.getId());
                 } else {
-                    log.info("Skipped Revoke Request for non-existent API Workspace Membership for \""
-                            + usernameTopic.getSimpleValue().toString() + "\"");
+                    log.info("Skipped Revoke Request for non-existent API Workspace Membership for \"" +
+                        usernameTopic.getSimpleValue().toString() + "\"");
                 }
             }
         } else {
-            log.info("No API Workspace Configured: You must enter the URI of a programmatically created workspace topic"
-                + " into your current \"Signup Configuration\".");
+            log.info("No API Workspace Configured: You must enter the URI of a programmatically created workspace " +
+                "topic into your current \"Signup Configuration\".");
         }
     }
 
@@ -1120,28 +1141,27 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         try {
             String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
             URL url = new URL(DMX_HOST_URL);
-            log.info("The confirmation mails token request URL should be:"
-                + "\n" + url + "sign-up/confirm/" + key);
+            log.info("The confirmation mails token request URL should be:" + "\n" + url + "sign-up/confirm/" + key);
             // Localize "sentence" structure for german, maybe via Formatter
             String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
             try {
-                String linkHref = "<a href=\"" + url + "sign-up/confirm/" + key + "\">"
-                    + rb.getString("mail_confirmation_link_label") + "</a>";
+                String linkHref = "<a href=\"" + url + "sign-up/confirm/" + key + "\">" +
+                    rb.getString("mail_confirmation_link_label") + "</a>";
                 if (DMX_ACCOUNTS_ENABLED) {
                     sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
-                            +rb.getString("mail_confirmation_active_body")+"<br/><br/>"
-                            + linkHref + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
+                        rb.getString("mail_hello") + " " + username + ",<br><br>" +
+                        rb.getString("mail_confirmation_active_body")+"<br><br>" + linkHref + "<br><br>" +
+                        rb.getString("mail_ciao"), mailbox
+                    );
                 } else {
                     sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br/><br/>"
-                            + rb.getString("mail_confirmation_proceed_1")+"<br/>"
-                            + linkHref + "<br/><br/>" + rb.getString("mail_confirmation_proceed_2")
-                            + "<br/><br/>" + rb.getString("mail_ciao"), mailbox);
+                        rb.getString("mail_hello") + " " + username + ",<br><br>" +
+                        rb.getString("mail_confirmation_proceed_1") + "<br>" + linkHref + "<br><br>" +
+                        rb.getString("mail_confirmation_proceed_2") + "<br><br>" + rb.getString("mail_ciao"), mailbox);
                 }
             } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                        + "we FAILED sending out the \"Email Confirmation\" mail, caused by: " +  ex.getMessage());
+                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
+                    "\"Email Confirmation\" mail, caused by: " +  ex.getMessage());
             }
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
@@ -1161,12 +1181,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     addressee = displayName;
                 }
                 sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + "!<br/><br/>"+rb.getString("mail_pw_reset_body")+"<br/>"
-                        + "<a href=\""+href+"\">" + href + "</a><br/><br/>" + rb.getString("mail_cheers") + "<br/>"
-                        + rb.getString("mail_signature"), mailbox);
+                    rb.getString("mail_hello") + "!<br><br>" + rb.getString("mail_pw_reset_body") + "<br>" +
+                    "<a href=\"" + href + "\">" + href + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
+                    rb.getString("mail_signature"), mailbox);
             } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                        + "we FAILED sending out the \"Password Reset\" mail, caused by: " +  ex.getMessage());
+                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
+                    "\"Password Reset\" mail, caused by: " +  ex.getMessage());
             }
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
@@ -1180,14 +1200,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String adminMailbox = CONFIG_ADMIN_MAILBOX;
             try {
                 sendSystemMail("Account registration on " + webAppTitle,
-                        "<br/>A user has registered.<br/><br/>Username: " + username + "<br/>Email: " + mailbox, adminMailbox);
+                    "<br>A user has registered.<br><br>Username: " + username + "<br>Email: " + mailbox, adminMailbox);
             } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup,"
-                        + "we FAILED notifying the \"system mailbox\" about account creation, caused by: " +  ex.getMessage());
+                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED notifying the " +
+                    "\"system mailbox\" about account creation, caused by: " +  ex.getMessage());
             }
         } else {
             log.info("ADMIN: No \"Admin Mailbox\" configured: A new user account (" + username + ") was created but" +
-                    " no notification could be sent.");
+                " no notification could be sent.");
         }
     }
 
