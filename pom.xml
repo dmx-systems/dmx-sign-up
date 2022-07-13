@@ -50,7 +50,7 @@
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-ldap</artifactId>
-            <version>0.5.4-SNAPSHOT</version>
+            <version>0.6.1-SNAPSHOT</version>
             <!--optional>true</optional-->
         </dependency>
     </dependencies>
