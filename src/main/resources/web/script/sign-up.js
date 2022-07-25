@@ -335,7 +335,7 @@
             console.log("Updated Password for ", username, "start auto-login sequence in 1sec")
             setTimeout(function (e) {
               doLogin(username, pwInput, function(e) {
-                console.log("Autologin successfull")
+                console.log("Autologin successfull", signupConfig.redirectUrl, signupConfig.appStartPageURL)
                 if (!signupConfig.redirectUrl) {
                   renderFriendlyMessage(signupConfig.appLoadingMessage)
                   redirectToStartPageURL()
