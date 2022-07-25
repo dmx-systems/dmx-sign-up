@@ -336,12 +336,12 @@
             setTimeout(function (e) {
               doLogin(username, pwInput, function(e) {
                 console.log("Autologin successfull", signupConfig.redirectUrl, signupConfig.appStartPageURL)
-                if (!signupConfig.redirectUrl) {
-                  renderFriendlyMessage(signupConfig.appLoadingMessage)
-                  redirectToStartPageURL()
-                } else {
-                  console.log("Redirect URL", signupConfig.redirectUrl)
-                }
+                // if (!signupConfig.redirectUrl) {     // commented by jri 2022/07/26
+                renderFriendlyMessage(signupConfig.appLoadingMessage)
+                redirectToStartPageURL()
+                // } else {
+                //   console.log("Redirect URL", signupConfig.redirectUrl)
+                // }
               }, 1000)
             })
         }
