@@ -333,7 +333,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/password-reset/{token}")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable handlePasswordResetRequest(@PathParam("token") String token) {
         try {
             // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
@@ -382,6 +382,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/password-reset/{token}/{password}")
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
     public Viewable processPasswordUpdateRequest(@PathParam("token") String token,
                                                  @PathParam("password") String password) {
@@ -487,6 +488,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/handle/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
     @Override
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
@@ -547,7 +549,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
                                               @PathParam("displayname") String displayName,
@@ -627,6 +629,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/confirm/{token}")
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
     public Viewable processSignupRequest(@PathParam("token") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
@@ -740,7 +743,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      * @return 
      */
     @GET
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getSignupFormView() throws URISyntaxException {
         if (!CONFIG_SELF_REGISTRATION && !isAdministrationWorkspaceMember()) {
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
@@ -759,7 +762,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/login")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getLoginView() {
         if (accesscontrol.getUsername() != null) {
             prepareSignupPage("logout");
@@ -775,7 +778,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/request-password")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getPasswordResetView() {
         prepareSignupPage("request-password");
         return view("request-password");
@@ -788,7 +791,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/{username}/ok")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getAccountCreationOKView(@PathParam("username") String username) {
         prepareSignupPage("ok");
         viewData("requested_username", username);
@@ -802,7 +805,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/pending")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getAccountCreationPendingView() {
         prepareSignupPage("pending");
         return view("pending");
@@ -814,7 +817,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/error")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getFailureView() {
         return getFailureView(null);
     }
@@ -841,7 +844,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/token-info")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getConfirmationInfoView() {
         prepareSignupPage("account-confirmation");
         return view("account-confirmation");
@@ -853,7 +856,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Path("/edit")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getAccountDetailsView() {
         prepareSignupPage("account-edit");
         prepareAccountEditPage();
