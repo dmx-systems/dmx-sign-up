@@ -4,8 +4,8 @@
     <head>
         <title th:text="${signup_title} + ' - ' + ${title}">Sign up</title>
         <link rel="stylesheet" th:href="${css_path}" type="text/css" />
-        <script type="text/javascript" src="/systems.dmx.sign-up/script/vendor/sha256.js"></script>
-        <script type="text/javascript" src="/systems.dmx.sign-up/script/sign-up.js" />
+        <script src="/systems.dmx.sign-up/script/vendor/sha256.js"></script>
+        <script src="/systems.dmx.sign-up/script/sign-up.js" />
         <script th:inline="javascript">
         /*<![CDATA[*/
             signupConfig.appLoadingMessage = /*[[${loading_app_hint}]]*/ 'Loading Webclient';
