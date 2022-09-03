@@ -17,9 +17,9 @@ import systems.dmx.core.service.DMXEvent;
 import systems.dmx.core.service.EventListener;
 import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Transactional;
+import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
-import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
@@ -92,7 +92,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
             + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
             + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
-            + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS);
+            + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
+            + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
+        );
     }
 
     /**
@@ -494,12 +496,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
-        if (!CONFIG_SELF_REGISTRATION & !isAdministrationWorkspaceMember()) {
+        if (!CONFIG_SELF_REGISTRATION && !canCreateNewAccount()) {
             throw new WebApplicationException(Response.noContent().build());
         }
         try {
             if (CONFIG_EMAIL_CONFIRMATION) {
-                if (skipConfirmation && isAdministrationWorkspaceMember()) {
+                if (skipConfirmation && canCreateNewAccount()) {
                     log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
                         "skipping confirmation mail.");
                     createSimpleUserAccount(username, password, mailbox);
@@ -554,7 +556,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
                                               @PathParam("displayname") String displayName,
                                               @PathParam("password") String password) throws URISyntaxException {
-        if (isAdministrationWorkspaceMember()) {
+        if (canCreateNewAccount()) {
             createCustomUserAccount(mailbox, displayName, password);
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
             handleAccountCreatedRedirect(mailbox); // throws WebAppException  
@@ -565,6 +567,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     /**
      * A HTTP resource for JS clients to create a new user account with a display name, email address as username and
      * password.
+     *
+     * Requires the currently logged in user to be a member of the administration workspace or a member of a designated
+     * workspace (specified through the configuration).
+     *
      * @param mailbox       String must be unique
      * @param displayName   String
      * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
@@ -577,8 +583,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
                                                @PathParam("displayname") String displayName,
                                                @PathParam("password") String password) throws URISyntaxException {
-        // Double check: This may require "Administration" membership (or being at least authenticated, Systems WS,
-        // DisplayNames WS Id)
+        checkAccountCreation();
         Topic username = createCustomUserAccount(mailbox, displayName, password); // throws if account creation fails
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         return username;
@@ -745,10 +750,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getSignupFormView() throws URISyntaxException {
-        if (!CONFIG_SELF_REGISTRATION && !isAdministrationWorkspaceMember()) {
+        if (!CONFIG_SELF_REGISTRATION && !canCreateNewAccount()) {
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
         }
-        if (accesscontrol.getUsername() != null && !isAdministrationWorkspaceMember()) {
+        if (accesscontrol.getUsername() != null && !canCreateNewAccount()) {
             prepareSignupPage("logout");
             return view("logout");
         }
@@ -992,18 +997,40 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
-    private boolean isAdministrationWorkspaceMember() {
-        String username = accesscontrol.getUsername();
-        if (username != null) {
-            long administrationWorkspaceId = dmx.getPrivilegedAccess().getAdminWorkspaceId();
-            if (accesscontrol.isMember(username, administrationWorkspaceId)
-                || accesscontrol.getWorkspaceOwner(administrationWorkspaceId).equals(username)) {
-                return true;
-            }
+    private boolean canCreateNewAccount() {
+        try {
+            checkAccountCreation();
+            return true;
+        } catch (AccessControlException ace) {
+            return false;
         }
-        return false;
     }
 
+    private void checkAccountCreation() {
+        if (isAccountCreationWorkspaceUriConfigured()) {
+            try {
+                checkAccountCreationWorkspaceWriteAccess();
+            } catch (AccessControlException ace) {
+                checkAdministrationWorkspaceWriteAccess();
+            }
+        } else {
+            checkAdministrationWorkspaceWriteAccess();
+        }
+    }
+
+    private void checkAdministrationWorkspaceWriteAccess() {
+        dmx.getTopic(dmx.getPrivilegedAccess().getAdminWorkspaceId()).checkWriteAccess();
+    }
+
+    private boolean isAccountCreationWorkspaceUriConfigured() {
+        return !CONFIG_ACCOUNT_CREATION_AUTH_WS_URI.isEmpty();
+    }
+
+    private void checkAccountCreationWorkspaceWriteAccess() {
+        dmx.getTopic(workspaces.getWorkspace(CONFIG_ACCOUNT_CREATION_AUTH_WS_URI).getId())
+                .checkWriteAccess();
+    }
+    
     private boolean isApiWorkspaceMember() {
         String username = accesscontrol.getUsername();
         if (username != null) {
@@ -1371,10 +1398,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             viewData("requested_page_3", rb.getString("page_account_requested_3"));
             // Generics
             String username = accesscontrol.getUsername();
-            // ### viewData("administration_workspace_member", isAdministrationWorkspaceMember());
             viewData("email_confirmation_active", CONFIG_EMAIL_CONFIRMATION);
             viewData("skip_confirmation_mail_label", rb.getString("admin_skip_email_confirmation_mail"));
-            viewData("administration_workspace_member", isAdministrationWorkspaceMember());
+            viewData("can_create_new_account", canCreateNewAccount());
             viewData("authenticated", (username != null));
             viewData("username", username);
             viewData("template", templateName);
