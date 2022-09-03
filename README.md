@@ -31,6 +31,7 @@ The **special logic** of this plugin is comprised of:
 *   Optionally: Send notifications to system administrator if a new user account was created
 *   Optionally: If `dmx.security.new_accounts_are_enabled` (platform configuration option) is set to `true` an account activation notice is sent
 *   Optionally: If a `User Mailbox` exists a "Passwort reset"-workflow is available
+*   Optionally: A workspace URI can be specified whose members have the right to create new users.
 *   Optionally: User accounts can be created through the LDAP plugin.
 
 **Note:** If `Email Confirmation Required` is set to _true_ the confirmation tokens the system sends out are **not persisted** and get lost after a bundle/system restart. Once a token was send out the link containing it is valid for sixty minutes.
@@ -64,6 +65,7 @@ dmx.signup.confirm_email_address = true
 dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.self_registration = false
+dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 ```
 
@@ -78,6 +80,9 @@ Note: If you want to use the "Password reset" functionality without allowing use
 If you only want to use the password-reset functionality and/or equip existing user accounts with an email address topic, please read the following hints: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2#note_17729
 
 If you don't want to allow users to self-register accounts but want to make use of the sign-up plugin features, you find more [hints here](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/26#note_17855). Basically you need to log in as "admin" ("or Administration workspace member) first and then browse (manually) to `/sign-up` and use the form to create new accounts.
+
+In order for an already logged in user have the permission to create a new user the former user either needs to be a member of the administration workspace or be a member of the workspace specified through the "dmx.signup.account_creation_auth_ws_uri" configuration option. Not setting this value means that only the
+administration workspace membership check is in place.
 
 ### Setup Custom Workspace Assignment
 
