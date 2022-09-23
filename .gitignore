@@ -1,4 +1,5 @@
 target/
+deploy/instance
 src/main/resources/web/
 .idea/
 .externalToolBuilders/
@@ -8,4 +9,6 @@ src/main/resources/web/
 .DS_Store
 commit.txt
 commit-message.txt
+package-lock.json
 node_modules
+*.iml
