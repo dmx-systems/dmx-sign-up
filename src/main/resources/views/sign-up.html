@@ -62,7 +62,7 @@
 
                 <div id="sign-up-view" class="dialog-body ui padded segment vertical">
                     <div class="ui container">
-                        <div th:if="${administration_workspace_member and email_confirmation_active}">
+                        <div th:if="${can_create_new_account and email_confirmation_active}">
                             <input id="skip-confirmation" name="skip-confirmation" type="checkbox"
                                    title="Skip the confirmation process" class="ui input checkbox"/>
                             <label for="skip-confirmation" th:text="${skip_confirmation_mail_label}">

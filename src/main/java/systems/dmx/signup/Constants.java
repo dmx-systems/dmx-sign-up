@@ -19,6 +19,8 @@ public class Constants {
     public static final String CONFIG_FROM_MAILBOX = System.getProperty("dmx.signup.system_mailbox");
     public static final boolean CONFIG_CREATE_LDAP_ACCOUNTS = Boolean.parseBoolean(System.getProperty("dmx.signup.ldap_account_creation", "false"));
 
+    public static final String CONFIG_ACCOUNT_CREATION_AUTH_WS_URI = System.getProperty("dmx.signup.account_creation_auth_ws_uri", "");
+
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
     public static final int SIGN_UP_TOKEN_TTL             = 86400000; // 24h token livetime
     public static final String SIGN_UP_CONFIG_TYPE_URI    = "dmx.signup.configuration";
