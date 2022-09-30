@@ -1003,6 +1003,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             return true;
         } catch (AccessControlException ace) {
             return false;
+        } catch (RuntimeException re) {
+            // Deals with unexpected behavior of DMX: On missing read permission RuntimeException is thrown
+            return false;
         }
     }
 
@@ -1012,12 +1015,15 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 checkAccountCreationWorkspaceWriteAccess();
             } catch (AccessControlException ace) {
                 checkAdministrationWorkspaceWriteAccess();
+            } catch (RuntimeException re) {
+                // Deals with unexpected behavior of DMX: On missing read permission RuntimeException is thrown
+                checkAdministrationWorkspaceWriteAccess();
             }
         } else {
             checkAdministrationWorkspaceWriteAccess();
         }
     }
-
+    
     private void checkAdministrationWorkspaceWriteAccess() {
         dmx.getTopic(dmx.getPrivilegedAccess().getAdminWorkspaceId()).checkWriteAccess();
     }
