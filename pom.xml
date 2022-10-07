@@ -16,6 +16,10 @@
         <version>5.3-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>systems.dmx</groupId>
@@ -51,7 +55,7 @@
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-ldap</artifactId>
             <version>0.6.1-SNAPSHOT</version>
-            <!--optional>true</optional-->
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

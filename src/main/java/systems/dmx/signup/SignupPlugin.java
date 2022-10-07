@@ -5,6 +5,7 @@ import com.sun.jersey.core.util.Base64;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.thymeleaf.context.AbstractContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.Assoc;
@@ -12,14 +13,12 @@ import systems.dmx.core.ChildTopics;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
-import systems.dmx.core.service.ChangeReport;
-import systems.dmx.core.service.DMXEvent;
 import systems.dmx.core.service.EventListener;
-import systems.dmx.core.service.Inject;
-import systems.dmx.core.service.Transactional;
+import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
+import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
@@ -43,7 +42,6 @@ import java.util.logging.Logger;
 
 import static systems.dmx.accesscontrol.Constants.*;
 import static systems.dmx.core.Constants.*;
-import systems.dmx.facets.FacetsService;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.workspaces.Constants.WORKSPACE;
 
@@ -73,8 +71,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     private SendmailService sendmail;
     @Inject
     private WorkspacesService workspaces;
-    @Inject
-    private LDAPPluginService ldapPluginService;
+
+    private OptionalService<LDAPPluginService> ldapPluginService;
 
     @Context
     UriInfo uri;
@@ -84,6 +82,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     @Override
     public void init() {
+        initOptionalServices();
         initTemplateEngine();
         loadPluginLanguageProperty();
         reloadAssociatedSignupConfiguration();
@@ -95,6 +94,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
             + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
         );
+        if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
+            log.warning("LDAP Account creation configured but respective plugin not available!");
+        }
+    }
+
+    private void initOptionalServices() {
+        ldapPluginService = new OptionalService<>(getBundleContext(), () -> LDAPPluginService.class);
+    }
+
+    @Override
+    public void stop(BundleContext context) {
+        ldapPluginService.release();
+        super.stop(context);
     }
 
     /**
@@ -394,7 +406,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             if (entry != null) {
                 Credentials newCreds = new Credentials("dummy", "pass");
                 newCreds.username = entry.getString("username").trim();
-                if (!ldapAccountCreationConfigured()) {
+                if (!isLdapAccountCreationEnabled()) {
                     newCreds.password = password;
                     // Change password stored in "User Account" topic
                     dmx.getPrivilegedAccess().changePassword(newCreds);
@@ -406,7 +418,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                     newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
-                    if (ldapPluginService.changePassword(newCreds) != null) {
+                    if (ldapPluginService.get().changePassword(newCreds) != null) {
                         log.info("If no previous errors are reported here or in the LDAP-service log, the " +
                             "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                     } else {
@@ -448,7 +460,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             if (entry != null) {
                 Credentials newCreds = new Credentials("dummy", "pass");
                 newCreds.username = entry.getString("username").trim();
-                if (!ldapAccountCreationConfigured()) {
+                if (!isLdapAccountCreationEnabled()) {
                     newCreds.password = password;
                     // Change password stored in "User Account" topic
                     dmx.getPrivilegedAccess().changePassword(newCreds);
@@ -460,7 +472,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                     newCreds.plaintextPassword = plaintextPassword;
                     newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
-                    if (ldapPluginService.changePassword(newCreds) != null) {
+                    if (ldapPluginService.get().changePassword(newCreds) != null) {
                         log.info("If no previous errors are reported here or in the LDAP-service log, the " +
                             "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                     } else {
@@ -893,13 +905,20 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
-    private boolean ldapAccountCreationConfigured() {
-        return CONFIG_CREATE_LDAP_ACCOUNTS;
+    private boolean isLdapPluginAvailable() {
+        try {
+            return ldapPluginService.get() != null;
+        } catch (NoClassDefFoundError error) {
+            return false;
+        }
+    }
+    private boolean isLdapAccountCreationEnabled() {
+        return CONFIG_CREATE_LDAP_ACCOUNTS && isLdapPluginAvailable();
     }
 
     private Topic createUsername(Credentials credentials) throws Exception {
-        if (ldapAccountCreationConfigured()) {
-            return ldapPluginService.createUser(credentials);
+        if (isLdapAccountCreationEnabled()) {
+            return ldapPluginService.get().createUser(credentials);
         } else {
             return accesscontrol._createUserAccount(credentials);
         }
@@ -916,7 +935,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             Credentials creds;
             // When the "Basic" method is used the password is already in -SHA256- form for all other
             // methods it is simply base64-encoded
-            if (!ldapAccountCreationConfigured()) {
+            if (!isLdapAccountCreationEnabled()) {
                 creds = new Credentials(new JSONObject()
                     .put("username", username.trim())
                     .put("password", password.trim()));
@@ -1326,7 +1345,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
             viewData("authorization_methods", accesscontrol.getAuthorizationMethods());
-            viewData("authorization_method_is_ldap", ldapAccountCreationConfigured());
+            viewData("authorization_method_is_ldap", isLdapAccountCreationEnabled());
             viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
             ChildTopics configuration = activeModuleConfiguration.getChildTopics();
             viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
