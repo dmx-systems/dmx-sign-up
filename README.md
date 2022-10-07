@@ -84,6 +84,32 @@ If you don't want to allow users to self-register accounts but want to make use 
 In order for an already logged in user have the permission to create a new user the former user either needs to be a member of the administration workspace or be a member of the workspace specified through the "dmx.signup.account_creation_auth_ws_uri" configuration option. Not setting this value means that only the
 administration workspace membership check is in place.
 
+### Optional module configuration
+
+The module configuration is done through a configuration topic in DMX itself. However during the *first deployment* default values for the topic can be provided through the platform configuration through
+the following properties:
+```
+dmx.signup.config_project_title =
+dmx.signup.config_webapp_title =
+dmx.signup.config_webapp_logo_path = 
+dmx.signup.config_custom_css_path = 
+dmx.signup.config_read_more_url = 
+dmx.signup.config_pages_footer = 
+dmx.signup.config_tos_label = 
+dmx.signup.config_tos_detail = 
+dmx.signup.config_pd_label = 
+dmx.signup.config_pd_detail = 
+dmx.signup.start_page_url = 
+dmx.signup.home_page_url = 
+dmx.signup.loading_app_hint = 
+dmx.signup.logging_out_hint = 
+dmx.signup.config_api_enabled = false 
+dmx.signup.config_api_description =
+dmx.signup.config_api_details =
+dmx.signup.config_api_workspace_uri =
+
+In case a value is not provided in the platform configuration a built-in default value is used.
+
 ### Setup Custom Workspace Assignment
 
 There is currently just one more special configuration option: You can setup an automatic workspace assignment for self-registering users. If you do so, new users using the sign-up dialog automatically join (become members of) that works. To do so you need to associate that very workspace topic with your active sign-up configuration. 
@@ -114,10 +140,12 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 
-**2.0.2-SNAPSHOT** -- Upcoming
+**2.1.0-SNAPSHOT** -- Upcoming
 
 * Account creation through LDAP plugin
-* Hardcoded dependency on `dmx-ldap-0.5.4+` plugin
+* True optional dependency on `dmx-ldap-0.6.1+` plugin
+* Configure workspace whose users can create new users
+* Configure module configuration through property configuration
 
 **2.0.1** -- Jun 30, 2021
 
