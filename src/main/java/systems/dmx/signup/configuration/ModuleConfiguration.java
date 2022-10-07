@@ -7,11 +7,11 @@ import static systems.dmx.core.Constants.DEFAULT;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.workspaces.Constants.WORKSPACE;
 
-public class PluginConfiguration {
+public class ModuleConfiguration {
 
     private Topic topic;
 
-    public PluginConfiguration(Topic topic) {
+    public ModuleConfiguration(Topic topic) {
         this.topic = topic;
     }
 

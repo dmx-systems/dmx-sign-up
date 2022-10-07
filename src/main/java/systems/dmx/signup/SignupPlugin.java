@@ -20,7 +20,7 @@ import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
-import systems.dmx.signup.configuration.PluginConfiguration;
+import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
 import systems.dmx.thymeleaf.ThymeleafPlugin;
 import systems.dmx.workspaces.WorkspacesService;
@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 import static systems.dmx.accesscontrol.Constants.*;
 import static systems.dmx.core.Constants.*;
 import static systems.dmx.signup.Constants.*;
-import static systems.dmx.workspaces.Constants.WORKSPACE;
+import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 
 /**
  * This plugin enables anonymous users to create themselves a user account in DMX through an (optional) Email based
@@ -58,7 +58,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
-    private PluginConfiguration activeModuleConfiguration = null;
+    private ModuleConfiguration activeModuleConfiguration = null;
     private Topic customWorkspaceAssignmentTopic = null;
     private String systemEmailContact = null;
     private ResourceBundle rb = null;
@@ -1325,9 +1325,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      *
      * @see reloadConfiguration()
      */
-    private PluginConfiguration getCurrentSignupConfiguration() {
+    private ModuleConfiguration getCurrentSignupConfiguration() {
         // Fixme: ### Allow for multiple sign-up configuration topics to exist and one to be active (configured).
-        return new PluginConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
+        return new ModuleConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
         /** 
         Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMBOLIC_NAME);
         return pluginTopic.getRelatedTopic(ASSOCIATION, DEFAULT, DEFAULT,
