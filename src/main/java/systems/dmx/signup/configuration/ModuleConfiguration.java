@@ -7,6 +7,12 @@ import static systems.dmx.core.Constants.DEFAULT;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.workspaces.Constants.WORKSPACE;
 
+/**
+ * Provides the module configuration options. The individual values are tried to be loaded from
+ * the signup configuration first and from the DMX configuration as a fallback.
+ *
+ * If no value is provided string fall back to the empty string and boolean default to false.
+ */
 public class ModuleConfiguration {
 
     private Topic topic;
@@ -31,76 +37,92 @@ public class ModuleConfiguration {
         topic.loadChildTopics();
     }
 
+    private String getString(String key) {
+        if (topic != null) {
+            return topic.getChildTopics().getString(key);
+        } else {
+            return System.getProperty(key, "");
+        }
+    }
+
+    private boolean getBoolean(String key) {
+        if (topic != null) {
+            return topic.getChildTopics().getBoolean(key);
+        } else {
+            return Boolean.parseBoolean(System.getProperty(key, "false"));
+        }
+    }
+
     public String getProjectTitle() {
-        return topic.getChildTopics().getString(CONFIG_PROJECT_TITLE);
+        return getString(CONFIG_PROJECT_TITLE);
     }
 
     public String getWebAppTitle() {
-        return topic.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString();
+        return getString(CONFIG_WEBAPP_TITLE);
     }
 
     public String getLogoPath() {
-        return topic.getChildTopics().getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString();
+        return getString(CONFIG_LOGO_PATH);
     }
 
     public String getCssPath() {
-        return topic.getChildTopics().getTopic(CONFIG_CSS_PATH).getSimpleValue().toString();
+        return getString(CONFIG_CSS_PATH);
     }
 
     public String getReadMoreUrl() {
-        return topic.getChildTopics().getTopic(CONFIG_READ_MORE_URL).getSimpleValue().toString();
+        return getString(CONFIG_READ_MORE_URL);
     }
     public String getTosLabel() {
-        return topic.getChildTopics().getTopic(CONFIG_TOS_LABEL).getSimpleValue().toString();
+        return getString(CONFIG_TOS_LABEL);
     }
 
     public String getTosDetails() {
-        return topic.getChildTopics().getTopic(CONFIG_TOS_DETAILS).getSimpleValue().toString();
+        return getString(CONFIG_TOS_DETAILS);
     }
 
     public String getPdLabel() {
-        return topic.getChildTopics().getTopic(CONFIG_PD_LABEL).getSimpleValue().toString();
+        return getString(CONFIG_PD_LABEL);
     }
 
     public String getPdDetails() {
-        return topic.getChildTopics().getTopic(CONFIG_PD_DETAILS).getSimpleValue().toString();
+        return getString(CONFIG_PD_DETAILS);
     }
 
     public String getPagesFooter() {
-        return topic.getChildTopics().getTopic(CONFIG_PAGES_FOOTER).getSimpleValue().toString();
+        return getString(CONFIG_PAGES_FOOTER);
     }
 
     public Boolean getCustomWorkspaceEnabled() {
         // TODO: Naming
-        return topic.getChildTopics().getBoolean(CONFIG_API_ENABLED);
+        return getBoolean(CONFIG_API_ENABLED);
     }
 
     public String getCustomWorkspaceDescription() {
-        return topic.getChildTopics().getTopic(CONFIG_API_DESCRIPTION).getSimpleValue().toString();
+        return getString(CONFIG_API_DESCRIPTION);
     }
 
     public String getCustomWorkspaceDetails() {
-        return topic.getChildTopics().getTopic(CONFIG_API_DETAILS).getSimpleValue().toString();
+        return getString(CONFIG_API_DETAILS);
     }
 
     public String getCustomWorkspaceUri() {
-        return topic.getChildTopics().getTopic(CONFIG_API_WORKSPACE_URI).getSimpleValue().toString();
+        return getString(CONFIG_API_WORKSPACE_URI);
     }
 
     public String getStartUrl() {
-        return topic.getChildTopics().getTopic(CONFIG_START_PAGE_URL).getSimpleValue().toString();
+        return getString(CONFIG_START_PAGE_URL);
     }
 
     public String getHomeUrl() {
-        return topic.getChildTopics().getTopic(CONFIG_HOME_PAGE_URL).getSimpleValue().toString();
+        return getString(CONFIG_HOME_PAGE_URL);
     }
 
     public String getLoadingAppHint() {
-        return topic.getChildTopics().getTopic(CONFIG_LOADING_HINT).getSimpleValue().toString();
+        return getString(CONFIG_LOADING_HINT);
     }
 
     public String getLoggingOutHint() {
-        return topic.getChildTopics().getTopic(CONFIG_LOGGING_OUT_HINT).getSimpleValue().toString();
+        return getString(CONFIG_LOGGING_OUT_HINT);
     }
 
     public Topic getCustomWorkspaceAssignmentTopic() {
