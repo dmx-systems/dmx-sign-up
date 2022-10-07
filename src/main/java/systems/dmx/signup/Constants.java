@@ -50,5 +50,5 @@ public class Constants {
     public static final String USER_MAILBOX_EDGE_TYPE     = "dmx.base.user_mailbox";
     public static final String SIGN_UP_LANGUAGE_PROPERTY  = "dmx.signup.language";
 
-    public static final String SIGNUP_SYMOBILIC_NAME    = "systems.dmx.sign-up";
+    public static final String SIGNUP_SYMBOLIC_NAME = "systems.dmx.sign-up";
 }

@@ -14,7 +14,7 @@ import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Migration;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.signup.Constants.CONFIG_CSS_PATH;
-import static systems.dmx.signup.Constants.SIGNUP_SYMOBILIC_NAME;
+import static systems.dmx.signup.Constants.SIGNUP_SYMBOLIC_NAME;
 import static systems.dmx.signup.Constants.SIGN_UP_CONFIG_TYPE_URI;
 import static systems.dmx.signup.Constants.USER_MAILBOX_EDGE_TYPE;
 import systems.dmx.workspaces.WorkspacesService;
@@ -81,7 +81,7 @@ public class Migration10 extends Migration {
         wsService.assignToWorkspace(apiWsURI, administrationWsId);
         wsService.assignToWorkspace(apiWsURI.getRelatingAssoc(), administrationWsId); **/
         // 3 Create Plugin <-> Standard Configuration Association to "Administration"
-        Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMOBILIC_NAME);
+        Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMBOLIC_NAME);
         // 3.1) Fixme: Probably not yet there on a fresh install.
         if (pluginTopic != null) {
             List<Assoc> configs = pluginTopic.getAssocs();
