@@ -15,7 +15,7 @@ import static systems.dmx.workspaces.Constants.WORKSPACE;
  */
 public class ModuleConfiguration {
 
-    private Topic topic;
+    private final Topic topic;
 
     public ModuleConfiguration(Topic topic) {
         this.topic = topic;
@@ -38,19 +38,11 @@ public class ModuleConfiguration {
     }
 
     private String getString(String key) {
-        if (topic != null) {
-            return topic.getChildTopics().getString(key);
-        } else {
-            return System.getProperty(key, "");
-        }
+        return topic.getChildTopics().getString(key);
     }
 
     private boolean getBoolean(String key) {
-        if (topic != null) {
-            return topic.getChildTopics().getBoolean(key);
-        } else {
-            return Boolean.parseBoolean(System.getProperty(key, "false"));
-        }
+        return topic.getChildTopics().getBoolean(key);
     }
 
     public String getProjectTitle() {
@@ -66,7 +58,7 @@ public class ModuleConfiguration {
     }
 
     public String getCssPath() {
-        return getString(CONFIG_CSS_PATH);
+        return getString(CONFIG_CUSTOM_CSS_PATH);
     }
 
     public String getReadMoreUrl() {
@@ -92,20 +84,19 @@ public class ModuleConfiguration {
         return getString(CONFIG_PAGES_FOOTER);
     }
 
-    public Boolean getCustomWorkspaceEnabled() {
-        // TODO: Naming
+    public Boolean getApiEnabled() {
         return getBoolean(CONFIG_API_ENABLED);
     }
 
-    public String getCustomWorkspaceDescription() {
+    public String getApiDescription() {
         return getString(CONFIG_API_DESCRIPTION);
     }
 
-    public String getCustomWorkspaceDetails() {
+    public String getApiDetails() {
         return getString(CONFIG_API_DETAILS);
     }
 
-    public String getCustomWorkspaceUri() {
+    public String getApiWorkspaceUri() {
         return getString(CONFIG_API_WORKSPACE_URI);
     }
 
@@ -118,7 +109,7 @@ public class ModuleConfiguration {
     }
 
     public String getLoadingAppHint() {
-        return getString(CONFIG_LOADING_HINT);
+        return getString(CONFIG_LOADING_APP_HINT);
     }
 
     public String getLoggingOutHint() {

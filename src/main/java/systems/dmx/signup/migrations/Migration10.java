@@ -13,7 +13,7 @@ import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Migration;
 import static systems.dmx.signup.Constants.*;
-import static systems.dmx.signup.Constants.CONFIG_CSS_PATH;
+import static systems.dmx.signup.Constants.CONFIG_CUSTOM_CSS_PATH;
 import static systems.dmx.signup.Constants.SIGNUP_SYMBOLIC_NAME;
 import static systems.dmx.signup.Constants.SIGN_UP_CONFIG_TYPE_URI;
 import static systems.dmx.signup.Constants.USER_MAILBOX_EDGE_TYPE;
@@ -40,7 +40,7 @@ public class Migration10 extends Migration {
         standardConfiguration.loadChildTopics();
         RelatedTopic webAppTitle = standardConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE);
         RelatedTopic logoPath = standardConfiguration.getChildTopics().getTopic(CONFIG_LOGO_PATH);
-        RelatedTopic cssPath = standardConfiguration.getChildTopics().getTopic(CONFIG_CSS_PATH);
+        RelatedTopic cssPath = standardConfiguration.getChildTopics().getTopic(CONFIG_CUSTOM_CSS_PATH);
         RelatedTopic projectTitle = standardConfiguration.getChildTopics().getTopic(CONFIG_PROJECT_TITLE);
         RelatedTopic tosLabel = standardConfiguration.getChildTopics().getTopic(CONFIG_TOS_LABEL);
         RelatedTopic tosDetail = standardConfiguration.getChildTopics().getTopic(CONFIG_TOS_DETAILS);

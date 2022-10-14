@@ -1058,7 +1058,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     private boolean isApiWorkspaceMember() {
         String username = accesscontrol.getUsername();
         if (username != null) {
-            String apiWorkspaceUri = activeModuleConfiguration.getCustomWorkspaceUri();
+            String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
             if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) {
                 Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
                 if (apiWorkspace != null) {
@@ -1142,7 +1142,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     private void createApiWorkspaceMembership(Topic usernameTopic) {
-        String apiWorkspaceUri = activeModuleConfiguration.getCustomWorkspaceUri();
+        String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
         if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // don't use this option in production
             Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
             if (apiWorkspace != null) {
@@ -1352,10 +1352,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             viewData("pd_label", activeModuleConfiguration.getPdLabel());
             viewData("pd_details", activeModuleConfiguration.getPdDetails());
             viewData("footer", activeModuleConfiguration.getPagesFooter());
-            viewData("custom_workspace_enabled", activeModuleConfiguration.getCustomWorkspaceEnabled());
-            viewData("custom_workspace_description", activeModuleConfiguration.getCustomWorkspaceDescription());
-            viewData("custom_workspace_details", activeModuleConfiguration.getCustomWorkspaceDetails());
-            viewData("custom_workspace_uri", activeModuleConfiguration.getCustomWorkspaceUri());
+            viewData("custom_workspace_enabled", activeModuleConfiguration.getApiEnabled());
+            viewData("custom_workspace_description", activeModuleConfiguration.getApiDescription());
+            viewData("custom_workspace_details", activeModuleConfiguration.getApiDetails());
+            viewData("custom_workspace_uri", activeModuleConfiguration.getApiWorkspaceUri());
             // values used on login and registration dialogs
             viewData("start_url", activeModuleConfiguration.getStartUrl());
             viewData("visit_start_url", rb.getString("visit_start_url"));
