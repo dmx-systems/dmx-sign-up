@@ -1,5 +1,9 @@
 package systems.dmx.signup.configuration;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Static configuration values from DMX' config.properties.
  */
@@ -17,5 +21,7 @@ public class SignUpConfigOptions {
     public static final boolean CONFIG_CREATE_LDAP_ACCOUNTS = Boolean.parseBoolean(System.getProperty("dmx.signup.ldap_account_creation", "false"));
 
     public static final String CONFIG_ACCOUNT_CREATION_AUTH_WS_URI = System.getProperty("dmx.signup.account_creation_auth_ws_uri", "");
+
+    public static final String CONFIG_RESTRICT_AUTH_METHODS = System.getProperty("dmx.signup.restrict_auth_methods", "");
 
 }
