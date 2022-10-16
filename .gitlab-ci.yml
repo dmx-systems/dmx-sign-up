@@ -97,6 +97,7 @@ install-in-container:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
     - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
+    - test -d instance/dev || mkdir -p instance/dev/conf instance/dev/logs instance/dev/db instance/dev/filedir instance/dev/bundle-deploy
     - cp target/*.jar deploy/dmx/dev/plugins
     - tree
   script:

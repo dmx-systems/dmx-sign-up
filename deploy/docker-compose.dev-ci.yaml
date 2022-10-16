@@ -3,7 +3,7 @@ services:
   dmx:
     container_name: "${CONTAINER_NAME}"
     restart: always
-    image: "container-registry.dmx.systems/dmx-contrib/dmx-docker/dmx-latest:latest"
+    image: container-registry.dmx.systems/dmx-contrib/dmx-docker/dmx-latest:latest
     ports:
       - "${DMX_PORT}:8080"
       #- "8000:8000"
