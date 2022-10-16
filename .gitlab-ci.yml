@@ -98,6 +98,7 @@ install-in-container:
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
     - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
     - cp target/*.jar deploy/dmx/dev/plugins
+    - tree
   script:
     - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
     - USER_ID="$( id -u )"
