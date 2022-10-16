@@ -47,31 +47,71 @@ copy-to-release:
     - tags
 
 # 4) Install in signup-test-container
+#install-in-container:
+#  stage: install
+#  script:
+#    - CONTAINER='signup-test-container'
+#    - WEBCGI='https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'
+#    - CIDIR='/var/www/download.dmx.systems/ci'
+#    - DESTDIR="${CIDIR}/${CI_PROJECT_NAME}"
+#    - docker exec ${CONTAINER} sh -c "rm -f /usr/share/dmx/bundle-deploy/${CI_PROJECT_NAME}-*.jar"
+#    - latest_version="$( /usr/bin/wget -q -O - "${WEBCGI}/ci/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}-latest.jar&basename=true" )"
+#    - echo "Install ${latest_version} in ${CONTAINER}"
+#    - NUNC="$( docker exec ${CONTAINER} sh -c "date \"+%b %d, %Y %I:%M:%S %p\"" )"
+#    - docker cp ${DESTDIR}/${latest_version} ${CONTAINER}:/usr/share/dmx/bundle-deploy/
+#    - sleep 60
+#    - LOGFILE='/var/log/dmx/dmx.log'
+#    - LINE="$( docker exec ${CONTAINER} sh -c "cat ${LOGFILE} | grep -B1 -n SEVERE | tail -n2 | head -n1" )"
+#    - LINE_DATE="$( echo "${LINE}" | cut -d'-' -f2 | cut -d' ' -f1,2,3,4,5 )"
+#    - echo "${NUNC}"
+#    - echo "${LINE_DATE}"
+#    - |
+#       if [ $( date --date "${LINE_DATE}" +%s) -gt $( date --date "${NUNC}" +%s) ]; then
+#         LINE_NR="$( echo "${LINE}" | cut -d'-' -f1 )"
+#         echo "${LINE_NR}"
+#         LOG="$( docker exec ${CONTAINER} sh -c "tail -n +${LINE_NR} ${LOGFILE} | grep -v 'INFO:'" )"
+#       fi
+#    - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
+#    - exit ${ERROR}
+#  only:
+#    - master
+
+# 4) Install in docker-container
 install-in-container:
   stage: install
-  script:
-    - CONTAINER='signup-test-container'
-    - WEBCGI='https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'
-    - CIDIR='/var/www/download.dmx.systems/ci'
-    - DESTDIR="${CIDIR}/${CI_PROJECT_NAME}"
-    - docker exec ${CONTAINER} sh -c "rm -f /usr/share/dmx/bundle-deploy/${CI_PROJECT_NAME}-*.jar"
-    - latest_version="$( /usr/bin/wget -q -O - "${WEBCGI}/ci/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}-latest.jar&basename=true" )"
-    - echo "Install ${latest_version} in ${CONTAINER}"
-    - NUNC="$( docker exec ${CONTAINER} sh -c "date \"+%b %d, %Y %I:%M:%S %p\"" )"
-    - docker cp ${DESTDIR}/${latest_version} ${CONTAINER}:/usr/share/dmx/bundle-deploy/
-    - sleep 60
-    - LOGFILE='/var/log/dmx/dmx.log'
-    - LINE="$( docker exec ${CONTAINER} sh -c "cat ${LOGFILE} | grep -B1 -n SEVERE | tail -n2 | head -n1" )"
-    - LINE_DATE="$( echo "${LINE}" | cut -d'-' -f2 | cut -d' ' -f1,2,3,4,5 )"
-    - echo "${NUNC}"
-    - echo "${LINE_DATE}"
-    - |
-       if [ $( date --date "${LINE_DATE}" +%s) -gt $( date --date "${NUNC}" +%s) ]; then
-         LINE_NR="$( echo "${LINE}" | cut -d'-' -f1 )"
-         echo "${LINE_NR}"
-         LOG="$( docker exec ${CONTAINER} sh -c "tail -n +${LINE_NR} ${LOGFILE} | grep -v 'INFO:'" )"
-       fi
-    - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
-    - exit ${ERROR}
-  only:
+  except:
+    - tags
     - master
+  tags:
+    ## requires shell-docker runner
+    - shell-docker
+  dependencies:
+    - maven-build
+  variables:
+    COMPOSE_PROJECT_NAME: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}"
+    CONTAINER_NAME: "${CI_COMMIT_REF_SLUG}-container"
+    WEB_URL: "${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}.ci.dmx.systems"
+    CONFIG_DIR: 'deploy/.config'
+    ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.ci"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
+    - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
+    - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
+    - tree -ug
+  script:
+    - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
+    - USER_ID="$( id -u )"
+    - GROUP_ID="$( id -g )"
+    - DMX_PORT="$( deploy/scripts/proxyport.sh ${WEB_URL}-dmx )"
+    - MAIL_PORT="$( deploy/scripts/proxyport.sh ${WEB_URL}-mail )"
+    - echo "CONTAINER_NAME=${CONTAINER_NAME}" >>"${ENV_FILE}"
+    - echo "user_id=${USER_ID}" >>"${ENV_FILE}"
+    - echo "group_id=${GROUP_ID}" >>"${ENV_FILE}"
+    - echo "DMX_PORT=${DMX_PORT}" >>"${ENV_FILE}"
+    - cat "${ENV_FILE}"
+    - echo "dmx.websockets.url = wss://${WEB_URL}/websocket" > deploy/dmx/dev/conf.d/config.properties.d/10_websocket_url
+    - echo "dmx.host.url = https://${WEB_URL}/" > deploy/dmx/dev/conf.d/config.properties.d/10_host_url
+    - docker container ls | grep ${CONTAINER_NAME} && docker container stop ${CONTAINER_NAME} || true
+    - docker container ls -a | grep ${CONTAINER_NAME} && docker container rm ${CONTAINER_NAME} || true
+    - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.dev-ci.yaml up --force-recreate -d
+    - echo "${WEB_URL}"
