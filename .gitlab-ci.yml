@@ -97,7 +97,9 @@ install-in-container:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
     - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
-    - test -d instance/dev || mkdir -p instance/dev/conf instance/dev/logs instance/dev/db instance/dev/filedir instance/dev/bundle-deploy
+    - test -d deploy/instance/dev || mkdir -p deploy/instance/dev/conf deploy/instance/dev/logs deploy/instance/dev/db deploy/instance/dev/filedir deploy/instance/dev/bundle-deploy
+    - test -f deploy/scripts/dmxstate.sh || curl https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
+    - chmod +x deploy/scripts/dmxstate.sh
     - cp target/*.jar deploy/dmx/dev/plugins
     - tree
   script:
@@ -117,4 +119,10 @@ install-in-container:
     - docker container ls | grep ${CONTAINER_NAME} && docker container stop ${CONTAINER_NAME} || true
     - docker container ls -a | grep ${CONTAINER_NAME} && docker container rm ${CONTAINER_NAME} || true
     - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.dev-ci.yaml up --force-recreate -d
+    - deploy/scripts/dmxstate.sh ./deploy/instance/dev/logs/dmx0.log
+    ## TEST
     - echo "${WEB_URL}"
+    - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
+    - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
+    - echo "${HTTP_CODE}"
+    - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test failed with error code ${RESULT}."; exit 1; fi
