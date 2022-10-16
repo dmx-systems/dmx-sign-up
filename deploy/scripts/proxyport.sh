@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## calculates a random port number from a domain name
+## calculates a port number from a domain name
 ## jpn - 20221015
 
 if [ -z "$1" ]; then
