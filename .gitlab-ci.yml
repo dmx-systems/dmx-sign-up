@@ -101,7 +101,7 @@ install-in-container:
     - test -f deploy/scripts/dmxstate.sh || curl https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
     - cp target/*.jar deploy/dmx/dev/plugins
-    - tree
+    #- tree
   script:
     - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
     - USER_ID="$( id -u )"
@@ -121,7 +121,7 @@ install-in-container:
     - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.dev-ci.yaml up --force-recreate -d
     - deploy/scripts/dmxstate.sh ./deploy/instance/dev/logs/dmx0.log
     ## TEST
-    - echo "${WEB_URL}"
+    #- echo "${WEB_URL}"
     - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
     - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
     - echo "${HTTP_CODE}"
