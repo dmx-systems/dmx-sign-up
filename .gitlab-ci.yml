@@ -119,7 +119,7 @@ install-in-container:
     - docker container ls | grep ${CONTAINER_NAME} && docker container stop ${CONTAINER_NAME} || true
     - docker container ls -a | grep ${CONTAINER_NAME} && docker container rm ${CONTAINER_NAME} || true
     - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.dev-ci.yaml up --force-recreate -d
-    - deploy/scripts/dmxstate.sh ./deploy/instance/dev/logs/dmx0.log
+    - deploy/scripts/dmxstate.sh ./deploy/instance/dev/logs/dmx0.log 30
     ## TEST
     #- echo "${WEB_URL}"
     - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
