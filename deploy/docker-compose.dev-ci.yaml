@@ -28,4 +28,4 @@ services:
     restart: unless-stopped
     image: container-registry.dmx.systems/dmx-intern/docker-images/mailhog:latest
     ports:
-      - "S{MAIL_PORT}:8025"
+      - "${MAIL_PORT}:8025"
