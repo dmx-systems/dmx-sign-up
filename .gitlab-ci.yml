@@ -98,7 +98,7 @@ install-in-container:
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
     - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
     - test -d deploy/instance/dev || mkdir -p deploy/instance/dev/conf deploy/instance/dev/logs deploy/instance/dev/db deploy/instance/dev/filedir deploy/instance/dev/bundle-deploy
-    - test -f deploy/scripts/dmxstate.sh || curl https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
+    - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
     - cp target/*.jar deploy/dmx/dev/plugins
     #- tree
