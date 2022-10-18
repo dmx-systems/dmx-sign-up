@@ -106,8 +106,8 @@ install-in-container:
     - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
     - USER_ID="$( id -u )"
     - GROUP_ID="$( id -g )"
-    - DMX_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=dmx | | grep PROXYPORT | grep -o '[^PROXYPORT[:space:]]*$' )"
-    - MAIL_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=mail | grep PROXYPORT | grep -o '[^PROXYPORT[:space:]]*$' )"
+    - DMX_PORT='"$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=dmx | | grep PROXYPORT | grep -o "[^PROXYPORT[:space:]]*$" )"'
+    - MAIL_PORT='"$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=mail | grep PROXYPORT | grep -o "[^PROXYPORT[:space:]]*$" )"'
     - echo "CONTAINER_NAME=${CONTAINER_NAME}" >>"${ENV_FILE}"
     - echo "user_id=${USER_ID}" >>"${ENV_FILE}"
     - echo "group_id=${GROUP_ID}" >>"${ENV_FILE}"
