@@ -95,6 +95,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
             + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
         );
+        log.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
             log.warning("LDAP Account creation configured but respective plugin not available!");
         }

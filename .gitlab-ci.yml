@@ -46,32 +46,58 @@ copy-to-release:
   only:
     - tags
 
-# 4) Install in signup-test-container
+# 4) Install in docker-container
 install-in-container:
   stage: install
+  except:
+    - tags
+    - master
+  tags:
+    ## requires shell-docker runner
+    - shell-docker
+  dependencies:
+    - maven-build
+  variables:
+    COMPOSE_PROJECT_NAME: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}"
+    CONTAINER_NAME: "${CI_COMMIT_REF_SLUG}-container"
+    WEB_URL: "${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}.ci.dmx.systems"
+    CONFIG_DIR: 'deploy/.config'
+    DOCKER_COMPOSE_PROFILE: dev-ci
+    ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.${DOCKER_COMPOSE_PROFILE}"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
+    - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
+    - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
+    - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
+    - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
+    - chmod +x deploy/scripts/dmxstate.sh
+    - cp target/*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
+    #- tree
   script:
-    - CONTAINER='signup-test-container'
-    - WEBCGI='https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'
-    - CIDIR='/var/www/download.dmx.systems/ci'
-    - DESTDIR="${CIDIR}/${CI_PROJECT_NAME}"
-    - docker exec ${CONTAINER} sh -c "rm -f /usr/share/dmx/bundle-deploy/${CI_PROJECT_NAME}-*.jar"
-    - latest_version="$( /usr/bin/wget -q -O - "${WEBCGI}/ci/${CI_PROJECT_NAME}/${CI_PROJECT_NAME}-latest.jar&basename=true" )"
-    - echo "Install ${latest_version} in ${CONTAINER}"
-    - NUNC="$( docker exec ${CONTAINER} sh -c "date \"+%b %d, %Y %I:%M:%S %p\"" )"
-    - docker cp ${DESTDIR}/${latest_version} ${CONTAINER}:/usr/share/dmx/bundle-deploy/
-    - sleep 60
-    - LOGFILE='/var/log/dmx/dmx.log'
-    - LINE="$( docker exec ${CONTAINER} sh -c "cat ${LOGFILE} | grep -B1 -n SEVERE | tail -n2 | head -n1" )"
-    - LINE_DATE="$( echo "${LINE}" | cut -d'-' -f2 | cut -d' ' -f1,2,3,4,5 )"
-    - echo "${NUNC}"
-    - echo "${LINE_DATE}"
-    - |
-       if [ $( date --date "${LINE_DATE}" +%s) -gt $( date --date "${NUNC}" +%s) ]; then
-         LINE_NR="$( echo "${LINE}" | cut -d'-' -f1 )"
-         echo "${LINE_NR}"
-         LOG="$( docker exec ${CONTAINER} sh -c "tail -n +${LINE_NR} ${LOGFILE} | grep -v 'INFO:'" )"
-       fi
+    - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
+    - USER_ID="$( id -u )"
+    - GROUP_ID="$( id -g )"
+    - DMX_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=dmx | grep PROXYPORT | grep -o '[^PROXYPORT$]*$' | sed s'/\s//g' )"
+    - MAIL_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=mail | grep PROXYPORT | grep -o '[^PROXYPORT$]*$' | sed s'/\s//g' )"
+    - echo "CONTAINER_NAME=${CONTAINER_NAME}" >>"${ENV_FILE}"
+    - echo "user_id=${USER_ID}" >>"${ENV_FILE}"
+    - echo "group_id=${GROUP_ID}" >>"${ENV_FILE}"
+    - echo "DMX_PORT=${DMX_PORT}" >>"${ENV_FILE}"
+    - echo "MAIL_PORT=${MAIL_PORT}" >>"${ENV_FILE}"
+    - cat "${ENV_FILE}"
+    - echo "dmx.websockets.url = wss://${WEB_URL}/websocket" > deploy/dmx/${DOCKER_COMPOSE_PROFILE}/conf.d/config.properties.d/10_websocket_url
+    - echo "dmx.host.url = https://${WEB_URL}/" > deploy/dmx/${DOCKER_COMPOSE_PROFILE}/conf.d/config.properties.d/10_host_url
+    - docker container ls | grep ${CONTAINER_NAME} && docker container stop ${CONTAINER_NAME} || true
+    - docker container ls -a | grep ${CONTAINER_NAME} && docker container rm ${CONTAINER_NAME} || true
+    - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml up --force-recreate -d
+    - deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30
+    ## TEST
+    - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
+    - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
+    - echo "${HTTP_CODE}"
+    - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test failed with error code ${RESULT}."; exit 1; fi
+    - echo "You can now browse to https://${WEB_URL}/ for testing."
+
     - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
     - exit ${ERROR}
-  only:
-    - master
+
