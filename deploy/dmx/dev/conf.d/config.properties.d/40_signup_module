@@ -1,0 +1,23 @@
+### DMX Configuration for Docker Environments ###
+
+# Sign-Up Module
+dmx.signup.config_project_title = Value from config.properties
+dmx.signup.config_webapp_title = Value from config.properties
+dmx.signup.config_webapp_logo_path = Value from config.properties
+dmx.signup.config_custom_css_path = Value from config.properties
+dmx.signup.config_read_more_url = Value from config.properties
+dmx.signup.config_pages_footer = Value from config.properties
+dmx.signup.config_tos_label = Value from config.properties
+dmx.signup.config_tos_detail = Value from config.properties
+dmx.signup.config_pd_label = Value from config.properties
+dmx.signup.config_pd_detail = Value from config.properties
+dmx.signup.start_page_url = Value from config.properties
+dmx.signup.home_page_url = Value from config.properties
+dmx.signup.loading_app_hint = Value from config.properties
+dmx.signup.logging_out_hint = Value from config.properties
+dmx.signup.config_api_enabled = false
+dmx.signup.config_api_description = Value from config.properties
+dmx.signup.config_api_details = Value from config.properties
+dmx.signup.config_api_workspace_uri = Value from config.properties
+
+

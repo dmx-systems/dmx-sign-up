@@ -185,23 +185,5 @@
                 }
             ]
         }
-    ],
-    "topics": [
-        {
-            "typeUri": "dmx.signup.configuration",
-            "uri": "dmx.signup.default_configuration",
-            "children": {
-                "dmx.signup.config_project_title"    : "My DMX",
-                "dmx.signup.config_webapp_title"     : "My DMX",
-                "dmx.signup.config_custom_css_path"  : "/systems.dmx.sign-up/style/style.css",
-                "dmx.signup.config_pd_label"         : "I understand that any private information I give to this site may be made publicly available.",
-                "dmx.signup.config_pd_detail"        : "...",
-                "dmx.signup.config_tos_label"        : "Terms of Service",
-                "dmx.signup.config_tos_detail"       : "...",
-                "dmx.signup.config_read_more_url"    : "...",
-                "dmx.signup.config_pages_footer"     : "standard",
-                "dmx.signup.config_webapp_logo_path" : "/systems.dmx.sign-up/dmx-logo.svg"
-            }
-        }
     ]
 }

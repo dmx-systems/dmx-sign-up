@@ -9,7 +9,6 @@ import org.osgi.framework.BundleContext;
 import org.thymeleaf.context.AbstractContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.Assoc;
-import systems.dmx.core.ChildTopics;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
@@ -21,6 +20,7 @@ import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
+import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
 import systems.dmx.thymeleaf.ThymeleafPlugin;
 import systems.dmx.workspaces.WorkspacesService;
@@ -43,7 +43,7 @@ import java.util.logging.Logger;
 import static systems.dmx.accesscontrol.Constants.*;
 import static systems.dmx.core.Constants.*;
 import static systems.dmx.signup.Constants.*;
-import static systems.dmx.workspaces.Constants.WORKSPACE;
+import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 
 /**
  * This plugin enables anonymous users to create themselves a user account in DMX through an (optional) Email based
@@ -57,8 +57,8 @@ import static systems.dmx.workspaces.Constants.WORKSPACE;
 public class SignupPlugin extends ThymeleafPlugin implements SignupService, PostUpdateTopic {
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
- 
-    private Topic activeModuleConfiguration = null;
+
+    private ModuleConfiguration activeModuleConfiguration = null;
     private Topic customWorkspaceAssignmentTopic = null;
     private String systemEmailContact = null;
     private ResourceBundle rb = null;
@@ -739,8 +739,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
                 log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
                 //
-                String webAppTitle = activeModuleConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE)
-                    .getSimpleValue().toString();
+                String webAppTitle = activeModuleConfiguration.getWebAppTitle();
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
@@ -1059,7 +1058,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     private boolean isApiWorkspaceMember() {
         String username = accesscontrol.getUsername();
         if (username != null) {
-            String apiWorkspaceUri = activeModuleConfiguration.getChildTopics().getString(CONFIG_API_WORKSPACE_URI);
+            String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
             if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) {
                 Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
                 if (apiWorkspace != null) {
@@ -1143,7 +1142,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     private void createApiWorkspaceMembership(Topic usernameTopic) {
-        String apiWorkspaceUri = activeModuleConfiguration.getChildTopics().getString(CONFIG_API_WORKSPACE_URI);
+        String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
         if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // don't use this option in production
             Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
             if (apiWorkspace != null) {
@@ -1175,28 +1174,30 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      * @see init()
      * @see postUpdateTopic()
      */
-    private Topic reloadAssociatedSignupConfiguration() {
+    private void reloadAssociatedSignupConfiguration() {
         // load module configuration
         activeModuleConfiguration = getCurrentSignupConfiguration();
-        if (activeModuleConfiguration == null) {
+        if (!activeModuleConfiguration.isValid()) {
             log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
-            return null;
+            return;
         }
-        activeModuleConfiguration.loadChildTopics();
+        activeModuleConfiguration.reload();
         // check for custom workspace assignment
-        customWorkspaceAssignmentTopic = getCustomWorkspaceAssignmentTopic();
+        customWorkspaceAssignmentTopic = activeModuleConfiguration.getCustomWorkspaceAssignmentTopic();
         if (customWorkspaceAssignmentTopic != null) {
             log.info("Configured Custom Sign-up Workspace => \"" + customWorkspaceAssignmentTopic.getSimpleValue() +
                 "\"");
         }
         log.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"",
-            new Object[]{activeModuleConfiguration.getUri(), activeModuleConfiguration.getSimpleValue()});
-        return activeModuleConfiguration;
+            new Object[]{
+                    activeModuleConfiguration.getConfigurationUri(),
+                    activeModuleConfiguration.getConfigurationName()});
+
     }
 
     private void sendConfirmationMail(String key, String username, String mailbox) {
         try {
-            String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
+            String webAppTitle = activeModuleConfiguration.getWebAppTitle();
             URL url = new URL(DMX_HOST_URL);
             log.info("The confirmation mails token request URL should be:" + "\n" + url + "sign-up/confirm/" + key);
             // Localize "sentence" structure for german, maybe via Formatter
@@ -1227,7 +1228,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
-            String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
+            String webAppTitle = activeModuleConfiguration.getWebAppTitle();
             URL url = new URL(DMX_HOST_URL);
             log.info("The password reset mails token request URL should be:"
                 + "\n" + url + "sign-up/password-reset/" + key);
@@ -1251,7 +1252,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     private void sendNotificationMail(String username, String mailbox) {
-        String webAppTitle = activeModuleConfiguration.getChildTopics().getString(CONFIG_WEBAPP_TITLE);
+        String webAppTitle = activeModuleConfiguration.getWebAppTitle();
         //
         if (CONFIG_ADMIN_MAILBOX != null && !CONFIG_ADMIN_MAILBOX.isEmpty()) {
             String adminMailbox = CONFIG_ADMIN_MAILBOX;
@@ -1275,7 +1276,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      * @param recipientValues     String of Email Address message is sent to **must not** be NULL.
      */
     private void sendSystemMail(String subject, String message, String recipientValues) {
-        String projectName = activeModuleConfiguration.getChildTopics().getString(CONFIG_PROJECT_TITLE);
+        String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
         String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
         sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, recipientValues);
@@ -1324,51 +1325,44 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      *
      * @see reloadConfiguration()
      */
-    private Topic getCurrentSignupConfiguration() {
-        // Fixme: ### Allow for multipl sign-up configuration topics to exist and one to be active (configured).
-        return dmx.getTopicByUri("dmx.signup.default_configuration");
+    private ModuleConfiguration getCurrentSignupConfiguration() {
+        // Fixme: ### Allow for multiple sign-up configuration topics to exist and one to be active (configured).
+        return new ModuleConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
         /** 
-        Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMOBILIC_NAME);
+        Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMBOLIC_NAME);
         return pluginTopic.getRelatedTopic(ASSOCIATION, DEFAULT, DEFAULT,
                 SIGN_UP_CONFIG_TYPE_URI); **/
     }
 
-    private Topic getCustomWorkspaceAssignmentTopic() {
-        // Note: It must always be just ONE workspace related to the current module configuration
-        return activeModuleConfiguration.getRelatedTopic(ASSOCIATION, DEFAULT,
-                DEFAULT, WORKSPACE);
-    }
-
     private void prepareSignupPage(String templateName) {
-        if (activeModuleConfiguration != null) {
+        if (activeModuleConfiguration.isValid()) {
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
             viewData("authorization_methods", accesscontrol.getAuthorizationMethods());
             viewData("authorization_method_is_ldap", isLdapAccountCreationEnabled());
             viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
-            ChildTopics configuration = activeModuleConfiguration.getChildTopics();
-            viewData("title", configuration.getTopic(CONFIG_WEBAPP_TITLE).getSimpleValue().toString());
-            viewData("logo_path", configuration.getTopic(CONFIG_LOGO_PATH).getSimpleValue().toString());
-            viewData("css_path", configuration.getTopic(CONFIG_CSS_PATH).getSimpleValue().toString());
-            viewData("project_name", configuration.getTopic(CONFIG_PROJECT_TITLE).getSimpleValue().toString());
-            viewData("read_more_url", configuration.getTopic(CONFIG_READ_MORE_URL).getSimpleValue().toString());
-            viewData("tos_label", configuration.getTopic(CONFIG_TOS_LABEL).getSimpleValue().toString());
-            viewData("tos_details", configuration.getTopic(CONFIG_TOS_DETAILS).getSimpleValue().toString());
-            viewData("pd_label", configuration.getTopic(CONFIG_PD_LABEL).getSimpleValue().toString());
-            viewData("pd_details", configuration.getTopic(CONFIG_PD_DETAILS).getSimpleValue().toString());
-            viewData("footer", configuration.getTopic(CONFIG_PAGES_FOOTER).getSimpleValue().toString());
-            viewData("custom_workspace_enabled", configuration.getBoolean(CONFIG_API_ENABLED));
-            viewData("custom_workspace_description", configuration.getTopic(CONFIG_API_DESCRIPTION).getSimpleValue().toString());
-            viewData("custom_workspace_details", configuration.getTopic(CONFIG_API_DETAILS).getSimpleValue().toString());
-            viewData("custom_workspace_uri", configuration.getTopic(CONFIG_API_WORKSPACE_URI).getSimpleValue().toString());
+            viewData("title", activeModuleConfiguration.getWebAppTitle());
+            viewData("logo_path", activeModuleConfiguration.getLogoPath());
+            viewData("css_path", activeModuleConfiguration.getCssPath());
+            viewData("project_name", activeModuleConfiguration.getProjectTitle());
+            viewData("read_more_url", activeModuleConfiguration.getReadMoreUrl());
+            viewData("tos_label", activeModuleConfiguration.getTosLabel());
+            viewData("tos_details", activeModuleConfiguration.getTosDetails());
+            viewData("pd_label", activeModuleConfiguration.getPdLabel());
+            viewData("pd_details", activeModuleConfiguration.getPdDetails());
+            viewData("footer", activeModuleConfiguration.getPagesFooter());
+            viewData("custom_workspace_enabled", activeModuleConfiguration.getApiEnabled());
+            viewData("custom_workspace_description", activeModuleConfiguration.getApiDescription());
+            viewData("custom_workspace_details", activeModuleConfiguration.getApiDetails());
+            viewData("custom_workspace_uri", activeModuleConfiguration.getApiWorkspaceUri());
             // values used on login and registration dialogs
-            viewData("start_url", configuration.getTopic(CONFIG_START_PAGE_URL).getSimpleValue().toString());
+            viewData("start_url", activeModuleConfiguration.getStartUrl());
             viewData("visit_start_url", rb.getString("visit_start_url"));
-            viewData("home_url", configuration.getTopic(CONFIG_HOME_PAGE_URL).getSimpleValue().toString());
+            viewData("home_url", activeModuleConfiguration.getHomeUrl());
             viewData("visit_home_url", rb.getString("visit_home_url"));
-            viewData("loading_app_hint", configuration.getTopic(CONFIG_LOADING_HINT).getSimpleValue().toString());
-            viewData("logging_out_hint", configuration.getTopic(CONFIG_LOGGING_OUT_HINT).getSimpleValue().toString());
+            viewData("loading_app_hint", activeModuleConfiguration.getLoadingAppHint());
+            viewData("logging_out_hint", activeModuleConfiguration.getLoggingOutHint());
             // messages used on login and registration dialogs
             viewData("password_length_hint", rb.getString("password_length_hint"));
             viewData("password_match_hint", rb.getString("password_match_hint"));
