@@ -20,4 +20,4 @@ dmx.signup.config_api_description = Value from config.properties
 dmx.signup.config_api_details = Value from config.properties
 dmx.signup.config_api_workspace_uri = Value from config.properties
 
-
+dmx.signup.restrict_auth_methods = LdAp, bAsiC
