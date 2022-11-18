@@ -35,6 +35,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -94,6 +95,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
             + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
             + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
+            + "  dmx.signup.token_expiration_time: " + CONFIG_TOKEN_EXPIRATION_DURATION.toHours() + "\n"
         );
         log.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
@@ -1093,7 +1095,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     private String createUserValidationToken(String username, String password, String mailbox) {
         try {
             String tokenKey = UUID.randomUUID().toString();
-            long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
+            long valid = calculateTokenExpiration();
             JSONObject tokenValue = new JSONObject()
                 .put("username", username.trim())
                 .put("mailbox", mailbox.trim())
@@ -1111,10 +1113,14 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
+    private long calculateTokenExpiration() {
+        return Instant.now().plus(CONFIG_TOKEN_EXPIRATION_DURATION).toEpochMilli();
+    }
+
     private String createPasswordResetToken(String username, String mailbox, String name, String redirectUrl) {
         try {
             String tokenKey = UUID.randomUUID().toString();
-            long valid = new Date().getTime() + SIGN_UP_TOKEN_TTL; // Token is valid fo 60 min
+            long valid = calculateTokenExpiration();
             JSONObject tokenValue = new JSONObject()
                 .put("username", username.trim())
                 .put("mailbox", mailbox.trim())
