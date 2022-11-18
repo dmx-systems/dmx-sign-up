@@ -5,5 +5,5 @@ dmx.signup.confirm_email_address = true
 dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.account_creation_auth_ws_uri =
-dmx.signup.ldap_account_creation = false
+dmx.signup.ldap_account_creation = true
 dmx.signup.account_creation = public
