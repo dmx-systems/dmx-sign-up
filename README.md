@@ -67,6 +67,7 @@ dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.self_registration = false
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
+dmx.signup.token_expiration_time = 2
 ```
 
 Legacy wise, the rest of the plugin options are stored in DB. The central topic for configuring the sign-up plugin is of type `Sign-up Configuration`. Editing this topic via the DMX Webclient allows you to interactively configure the appearance of the custom login and self-registration dialogs.
@@ -83,6 +84,15 @@ If you don't want to allow users to self-register accounts but want to make use 
 
 In order for an already logged in user have the permission to create a new user the former user either needs to be a member of the administration workspace or be a member of the workspace specified through the "dmx.signup.account_creation_auth_ws_uri" configuration option. Not setting this value means that only the
 administration workspace membership check is in place.
+
+### Token validity
+The validity of the tokens used for account creation and password reset in *hours* is set through the property:
+```
+dmx.signup.token_expiration_time = 2
+```
+
+The default value is 2, so a user has two hours from the moment of creating the account/requesting the password reset to
+click on the link that is contained in the account creation/password reset request email. 
 
 ### Optional module configuration
 
@@ -107,6 +117,7 @@ dmx.signup.config_api_enabled = false
 dmx.signup.config_api_description =
 dmx.signup.config_api_details =
 dmx.signup.config_api_workspace_uri =
+```
 
 In case a value is not provided in the platform configuration a built-in default value is used.
 
@@ -158,6 +169,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 * True optional dependency on `dmx-ldap-0.6.1+` plugin
 * Configure workspace whose users can create new users
 * Configure module configuration through property configuration
+* Validity of account creation and password reset token configurable
 
 **2.0.1** -- Jun 30, 2021
 
@@ -263,4 +275,4 @@ Authors
 -------
 
 Copyright (c) 2014-2019 Malte Reißig
-Copyright (c) 2020-2021 DMX Systems
+Copyright (c) 2020-2022 DMX Systems

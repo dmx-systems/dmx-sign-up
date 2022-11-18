@@ -1,8 +1,6 @@
 package systems.dmx.signup.configuration;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.Duration;
 
 /**
  * Static configuration values from DMX' config.properties.
@@ -23,5 +21,7 @@ public class SignUpConfigOptions {
     public static final String CONFIG_ACCOUNT_CREATION_AUTH_WS_URI = System.getProperty("dmx.signup.account_creation_auth_ws_uri", "");
 
     public static final String CONFIG_RESTRICT_AUTH_METHODS = System.getProperty("dmx.signup.restrict_auth_methods", "");
+
+    public static final Duration CONFIG_TOKEN_EXPIRATION_DURATION = Duration.ofHours(Integer.parseInt(System.getProperty("dmx.signup.token_expiration_time", "2")));
 
 }
