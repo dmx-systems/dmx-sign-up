@@ -809,12 +809,12 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/login")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getLoginView() {
+    public Viewable getLoginView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
         if (accesscontrol.getUsername() != null) {
             prepareSignupPage("logout");
             return view("logout");
         }
-        prepareSignupPage("login");
+        prepareSignupPage("login", lastAuthorizationMethod);
         return view("login");
     }
 
@@ -1402,11 +1402,16 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
 
     private void prepareSignupPage(String templateName) {
+        prepareSignupPage(templateName, null);
+    }
+
+    private void prepareSignupPage(String templateName, String lastAuthorizationMethod) {
         if (activeModuleConfiguration.isValid()) {
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
             viewData("authorization_methods", getAuthorizationMethods());
+            viewData("last_authorization_method", lastAuthorizationMethod);
             viewData("account_creation_method_is_ldap", isLdapAccountCreationEnabled());
             viewData("self_registration_enabled", isSelfRegistrationEnabled());
             viewData("title", activeModuleConfiguration.getWebAppTitle());
