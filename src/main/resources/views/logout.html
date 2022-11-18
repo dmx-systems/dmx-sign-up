@@ -33,10 +33,10 @@
 
                     <div class="logout dialog-body">
                         <div id="message-view">
-                            <span th:text="${logged_in_as}">Eingelogged als </span>&nbsp;<span th:text="${username}" id="message"></span>
+                            <span th:text="${logged_in_as}">Eingelogged als </span>&#160;<span th:text="${username}" id="message"></span>
                         </div>
                         <form class="logout-form" action="javascript:doLogout()">
-                            <input type="submit" th:value="${logout} + '&nbsp;&#x2794;'" class="ok ui button red sign-up" />
+                            <input type="submit" th:value="${logout} + '&#160;&#x2794;'" class="ok ui button red sign-up" />
                         </form>
                     </div>
 

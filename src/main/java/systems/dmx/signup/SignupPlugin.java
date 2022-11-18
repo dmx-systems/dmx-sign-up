@@ -791,7 +791,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getSignupFormView() throws URISyntaxException {
-        if (!isSelfRegistrationEnabled() && !canCreateNewAccount()) {
+        if (!isSelfRegistrationEnabled() || !canCreateNewAccount()) {
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
         }
         if (accesscontrol.getUsername() != null && !canCreateNewAccount()) {
