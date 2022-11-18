@@ -79,10 +79,11 @@
             /** Returns value for the "Authorization" header. */
             function authorization() {
                 try {
+                    var selectElement = document.getElementById("auth_method");
+                    var authMethod = selectElement.options[selectElement.selectedIndex].value;
+
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
-                    var authMethod = signupConfig["authorizationMethodIsLdap"] ? "LDAP" : "Basic"
                     return authMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
-                    // ### Todo: Auth method selector
                 } catch (error) {
                     console.error("Error encoding Auth-Header", error)
                 }
@@ -125,7 +126,7 @@
 
             // With Basic auth hash the password with SHA256 with ldap only "btoa" it
             var passwordVal = encodeURIComponent(
-                        		signupConfig["authorizationMethodIsLdap"] ?
+                        		signupConfig["accountCreationMethodIsLdap"] ?
                         		 window.btoa(document.getElementById("pass-one").value) :
                                  '-SHA256-' + SHA256(document.getElementById("pass-one").value))
 

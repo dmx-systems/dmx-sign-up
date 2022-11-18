@@ -18,7 +18,7 @@
             signupConfig.emailInvalid = /*[[${email_invalid_hint}]]*/ "This Email Address would be invalid.";
             signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
-            signupConfig.authorizationMethodIsLdap = /*[[${authorization_method_is_ldap}]]*/ false;
+            signupConfig.accountCreationMethodIsLdap = /*[[${account_creation_method_is_ldap}]]*/ false;
             signupConfig.authorizationMethods = /*[[${authorization_methods}]]*/ "["Basic"]";
             signupConfig.selfRegistrationEnabled = /*[[${self_registration_enabled}]]*/ true;
         /*]]>*/
@@ -56,10 +56,9 @@
                                 <input type="password" id="password" name="password" th:placeholder="${label_password}" title="Password" class="log-in sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
-                            <!--Todo: Generate select id="auth-method">
-                                <option value="LDAP" selected="true" label="LDAP"></option>
-                                <option value="Basic" label="Basic"></option>
-                            </select-->
+                            <select id="auth_method" th:hidden="${#lists.size(authorization_methods)} == 1">
+                                <option th:each="method : ${authorization_methods}" th:value="${method}" th:text="${method}"></option>
+                            </select>
                         </form>
 
                         <div class="ui input">
