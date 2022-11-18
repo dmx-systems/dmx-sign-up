@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  dmx:
+    container_name: "${CONTAINER_NAME}"
+    restart: always
+    image: container-registry.dmx.systems/dmx-contrib/dmx-docker/dmx-latest:latest
+    ports:
+      - "${DMX_PORT}:8080"
+    environment:
+      DEBUG:
+      USER_ID: "${user_id}"
+      GROUP_ID: "${group_id}"
+    volumes:
+      - ./instance/dev-ci/conf:/opt/dmx/conf
+      - ./instance/dev-ci/logs:/opt/dmx/logs
+      - ./instance/dev-ci/db:/opt/dmx/dmx-db
+      - ./instance/dev-ci/filedir:/opt/dmx/dmx-filedir
+      - ./instance/dev-ci/bundle-deploy:/opt/dmx/bundle-deploy
+      - ./dmx/dev-ci/plugins:/opt/dmx/plugins:ro
+      - ./dmx/dev-ci/conf.d/config.properties.d:/opt/dmx/conf.d/config.properties.d:ro
+      - ./dmx/dev-ci/conf.d/logging.properties.d:/opt/dmx/conf.d/logging.properties.d:ro
+    depends_on:
+      - mailhog
+
+  mailhog:
+    container_name: "${CONTAINER_NAME}-mailhog"
+    restart: unless-stopped
+    image: container-registry.dmx.systems/dmx-intern/docker-images/mailhog:latest
+    ports:
+      - "${MAIL_PORT}:8025"
+

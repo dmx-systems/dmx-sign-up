@@ -134,6 +134,18 @@ dmx.signup.ldap_account_creation = true
 
 Keep in mind that the dmx-ldap plugin also has a configuration option that controls account creation functionality. This  must be enabled as well. Refer to the [plugins README](https://git.dmx.systems/dmx-plugins/dmx-ldap/-/blob/master/README.md) for more information on its configuration. 
 
+### Restricting authorization (login) methods and/or defining their order
+
+The plugin allows restricting the allowed authorization methods by setting the property:
+```
+dmx.signup.dmx.signup.restrict_auth_methods = LDAP, BASIC
+```
+
+The value is a comma-separated list of auth method values. Please note that the order of the restriction list is
+preserved in the web frontend. As such the property can also be used to enforce a certain auth method order.
+
+When the property is not set, all known auth methods are allowed and their order is defined by the platform.
+
 ## License
 
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).

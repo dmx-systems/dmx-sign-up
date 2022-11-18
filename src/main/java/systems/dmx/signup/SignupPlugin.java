@@ -93,7 +93,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
             + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
             + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
+            + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
         );
+        log.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
             log.warning("LDAP Account creation configured but respective plugin not available!");
         }
@@ -1334,12 +1336,41 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 SIGN_UP_CONFIG_TYPE_URI); **/
     }
 
+    private List<String> getAuthorizationMethods() {
+        Map<String, String> knownAms = new HashMap<>();
+        Set<String> originalAms = new HashSet(accesscontrol.getAuthorizationMethods());
+        originalAms.add("Basic");
+        for (String s : originalAms) {
+            // key: lowercased
+            // value: original value
+            knownAms.put(s.toLowerCase(), s);
+        }
+
+        List<String> filteredRestrictedAms = new ArrayList<>();
+        if (CONFIG_RESTRICT_AUTH_METHODS.trim().length() > 0) {
+            // filters out any values the platform does not know from the restriction list
+            // and deliberately preserve the order of the restriction list
+            for (String s : CONFIG_RESTRICT_AUTH_METHODS.split(",")) {
+                String trimmedLowercase = s.trim().toLowerCase();
+                String value = knownAms.get(trimmedLowercase);
+                if (value != null) {
+                    filteredRestrictedAms.add(value);
+                }
+            }
+        } else {
+            // Copy the original authorization methods
+            filteredRestrictedAms.addAll(originalAms);
+        }
+
+        return filteredRestrictedAms;
+    }
+
     private void prepareSignupPage(String templateName) {
         if (activeModuleConfiguration.isValid()) {
             // Notify 3rd party plugins about template preparation
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
-            viewData("authorization_methods", accesscontrol.getAuthorizationMethods());
+            viewData("authorization_methods", getAuthorizationMethods());
             viewData("authorization_method_is_ldap", isLdapAccountCreationEnabled());
             viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
             viewData("title", activeModuleConfiguration.getWebAppTitle());
