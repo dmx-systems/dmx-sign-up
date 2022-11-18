@@ -10,7 +10,6 @@ public class Constants {
     public static final String USER_MAILBOX_TYPE_URI = "dmx.contacts.email_address";
 
     // --- Sign-up related type URIs (Configuration, Template Data) --- //
-    public static final int SIGN_UP_TOKEN_TTL             = 86400000; // 24h token livetime
     public static final String SIGN_UP_CONFIG_TYPE_URI    = "dmx.signup.configuration";
     public static final String CONFIG_PROJECT_TITLE       = "dmx.signup.config_project_title";
     public static final String CONFIG_WEBAPP_TITLE        = "dmx.signup.config_webapp_title";
