@@ -7,3 +7,4 @@ dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.self_registration = false
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = true
+dmx.signup.account_creation = admin

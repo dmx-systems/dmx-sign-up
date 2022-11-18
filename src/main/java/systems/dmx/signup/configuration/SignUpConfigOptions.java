@@ -12,7 +12,7 @@ public class SignUpConfigOptions {
     public static final boolean DMX_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dmx.security.new_accounts_are_enabled"));
 
     // --- Sign-up config options
-    public static final boolean CONFIG_SELF_REGISTRATION = Boolean.parseBoolean(System.getProperty("dmx.signup.self_registration"));
+    public static final AccountCreation CONFIG_ACCOUNT_CREATION = AccountCreation.fromStringOrDisabled(System.getProperty("dmx.signup.account_creation"));
     public static final boolean CONFIG_EMAIL_CONFIRMATION = Boolean.parseBoolean(System.getProperty("dmx.signup.confirm_email_address"));
     public static final String CONFIG_ADMIN_MAILBOX = System.getProperty("dmx.signup.admin_mailbox");
     public static final String CONFIG_FROM_MAILBOX = System.getProperty("dmx.signup.system_mailbox");

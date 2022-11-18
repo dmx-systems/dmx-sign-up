@@ -20,6 +20,7 @@ import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
+import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
 import systems.dmx.thymeleaf.ThymeleafPlugin;
@@ -88,7 +89,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         loadPluginLanguageProperty();
         reloadAssociatedSignupConfiguration();
         // Log configuration settings
-        log.info("\n  dmx.signup.self_registration: " + CONFIG_SELF_REGISTRATION + "\n"
+        log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
             + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
             + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
             + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
@@ -340,7 +341,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/self-registration-active")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSelfRegistrationStatus() {
-        return Response.ok("" + CONFIG_SELF_REGISTRATION).build();
+        return Response.ok("" + isSelfRegistrationEnabled()).build();
     }
 
     /** 
@@ -512,33 +513,58 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
-        if (!CONFIG_SELF_REGISTRATION && !canCreateNewAccount()) {
+        if (CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !canCreateNewAccount()) {
             throw new WebApplicationException(Response.noContent().build());
         }
         try {
             if (CONFIG_EMAIL_CONFIRMATION) {
-                if (skipConfirmation && canCreateNewAccount()) {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
-                        "skipping confirmation mail.");
-                    createSimpleUserAccount(username, password, mailbox);
-                    handleAccountCreatedRedirect(username);
-                } else {
-                    log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
-                        "confirmation mail.");
-                    sendUserValidationToken(username, password, mailbox);
-                    // redirect user to a "token-info" page
-                    throw new WebApplicationException(
-                        Response.temporaryRedirect(new URI("/sign-up/token-info")).build()
-                    );
-                }
+                handleSignupRequestWithEmailConfirmation(username, password, mailbox, skipConfirmation);
             } else {
-                createSimpleUserAccount(username, password, mailbox);
-                handleAccountCreatedRedirect(username);
+                handleSignupRequestWithDirectAccountCreation(username, password, mailbox);
             }
         } catch (URISyntaxException e) {
             log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
         }
         return getFailureView("created");
+    }
+
+    private void handleSignupRequestWithDirectAccountCreation(
+            String username,
+            String password,
+            String mailbox) throws URISyntaxException {
+        // ensures that logged in user is an admin or account creation is allowed for everyone
+        if (isSelfRegistrationEnabled() || canCreateNewAccount()) {
+            createSimpleUserAccount(username, password, mailbox);
+            handleAccountCreatedRedirect(username);
+        } else {
+            throw new WebApplicationException(Response.noContent().build());
+        }
+    }
+
+    private void handleSignupRequestWithEmailConfirmation(
+            String username,
+            String password,
+            String mailbox,
+            boolean skipConfirmation) throws URISyntaxException {
+        if (skipConfirmation && canCreateNewAccount()) {
+            if (CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
+                log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
+                        "skipping confirmation mail.");
+                createSimpleUserAccount(username, password, mailbox);
+                handleAccountCreatedRedirect(username);
+            } else {
+                // skipping confirmation is only allowed for admins
+                throw new WebApplicationException(Response.noContent().build());
+            }
+        } else {
+            log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
+                    "confirmation mail.");
+            sendUserValidationToken(username, password, mailbox);
+            // redirect user to a "token-info" page
+            throw new WebApplicationException(
+                    Response.temporaryRedirect(new URI("/sign-up/token-info")).build()
+            );
+        }
     }
 
     /**
@@ -765,7 +791,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getSignupFormView() throws URISyntaxException {
-        if (!CONFIG_SELF_REGISTRATION && !canCreateNewAccount()) {
+        if (!isSelfRegistrationEnabled() && !canCreateNewAccount()) {
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
         }
         if (accesscontrol.getUsername() != null && !canCreateNewAccount()) {
@@ -1017,6 +1043,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             // redirecting to page displaying "your account was created but needs to be activated"
             throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/pending")).build());
         }
+    }
+
+    private boolean isSelfRegistrationEnabled() {
+        return CONFIG_ACCOUNT_CREATION == AccountCreation.PUBLIC;
     }
 
     private boolean canCreateNewAccount() {
@@ -1378,7 +1408,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             // Build up sign-up template variables
             viewData("authorization_methods", getAuthorizationMethods());
             viewData("authorization_method_is_ldap", isLdapAccountCreationEnabled());
-            viewData("self_registration_enabled", CONFIG_SELF_REGISTRATION);
+            viewData("self_registration_enabled", isSelfRegistrationEnabled());
             viewData("title", activeModuleConfiguration.getWebAppTitle());
             viewData("logo_path", activeModuleConfiguration.getLogoPath());
             viewData("css_path", activeModuleConfiguration.getCssPath());
