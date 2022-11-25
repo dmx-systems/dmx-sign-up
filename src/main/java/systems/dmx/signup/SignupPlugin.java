@@ -513,7 +513,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
                                         @PathParam("mailbox") String mailbox,
                                         @PathParam("skipConfirmation") boolean skipConfirmation) {
-        if (CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !canCreateNewAccount()) {
+        if (CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !hasAccountCreationPrivilege()) {
             throw new WebApplicationException(Response.noContent().build());
         }
         try {
@@ -533,7 +533,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String password,
             String mailbox) throws URISyntaxException {
         // ensures that logged in user is an admin or account creation is allowed for everyone
-        if (isSelfRegistrationEnabled() || canCreateNewAccount()) {
+        if (isSelfRegistrationEnabled() || hasAccountCreationPrivilege()) {
             createSimpleUserAccount(username, password, mailbox);
             handleAccountCreatedRedirect(username);
         } else {
@@ -546,7 +546,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String password,
             String mailbox,
             boolean skipConfirmation) throws URISyntaxException {
-        if (skipConfirmation && canCreateNewAccount()) {
+        if (skipConfirmation && hasAccountCreationPrivilege()) {
             if (CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
                 log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
                         "skipping confirmation mail.");
@@ -598,7 +598,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
                                               @PathParam("displayname") String displayName,
                                               @PathParam("password") String password) throws URISyntaxException {
-        if (canCreateNewAccount()) {
+        if (hasAccountCreationPrivilege()) {
             createCustomUserAccount(mailbox, displayName, password);
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
             handleAccountCreatedRedirect(mailbox); // throws WebAppException  
@@ -791,15 +791,24 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getSignupFormView() throws URISyntaxException {
-        if (!isSelfRegistrationEnabled() || !canCreateNewAccount()) {
-            throw new WebApplicationException(Response.temporaryRedirect(new URI("/systems.dmx.webclient/")).build());
+        String page = null;
+        switch (CONFIG_ACCOUNT_CREATION) {
+            case DISABLED:
+                page = isLoggedIn() ? "logout" : "login";
+                break;
+            case ADMIN:
+                page = isLoggedIn() ? (hasAccountCreationPrivilege() ? "sign-up" : "logout") : "login";
+                break;
+            case PUBLIC:
+                page = (!isLoggedIn() || hasAccountCreationPrivilege()) ? "sign-up" : "logout";
+                break;
         }
-        if (accesscontrol.getUsername() != null && !canCreateNewAccount()) {
-            prepareSignupPage("logout");
-            return view("logout");
-        }
-        prepareSignupPage("sign-up");
-        return view("sign-up");
+        prepareSignupPage(page);
+        return view(page);
+    }
+
+    private Boolean isLoggedIn() {
+        return accesscontrol.getUsername() != null;
     }
 
     /**
@@ -1049,7 +1058,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         return CONFIG_ACCOUNT_CREATION == AccountCreation.PUBLIC;
     }
 
-    private boolean canCreateNewAccount() {
+    private boolean hasAccountCreationPrivilege() {
         try {
             checkAccountCreation();
             return true;
@@ -1491,7 +1500,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             String username = accesscontrol.getUsername();
             viewData("email_confirmation_active", CONFIG_EMAIL_CONFIRMATION);
             viewData("skip_confirmation_mail_label", rb.getString("admin_skip_email_confirmation_mail"));
-            viewData("can_create_new_account", canCreateNewAccount());
+            viewData("can_create_new_account", hasAccountCreationPrivilege());
             viewData("authenticated", (username != null));
             viewData("username", username);
             viewData("template", templateName);
