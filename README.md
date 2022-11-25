@@ -64,7 +64,7 @@ Since the 2.0.0 release, the following options must be configured in either the 
 dmx.signup.confirm_email_address = true
 dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
-dmx.signup.self_registration = false
+dmx.signup.account_creation = admin
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 dmx.signup.token_expiration_time = 2
@@ -76,7 +76,22 @@ The sign-up configuration is associated with the "Plugin" topic representing thi
 
 Note: If you want to use the "Password reset" functionality without allowing users to self-register you must make sure "User Account" topics are equipped with a "User Mailbox". To set this up, see instructions here: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2
 
-## Usage Hints
+### Configure account creation logic
+
+The sign-up can work in three different modes:
+
+| Value    | Description                                                                                 |
+|----------|---------------------------------------------------------------------------------------------|
+| disabled | nobody can create new accounts                                                              |
+| admin    | only administrator (privileged users) can create new accounts                               |
+| public   | anybody can create new accounts through self-registration in addition to the administrators |
+
+The desired working mode is configured by setting the property: 
+```
+dmx.signup.account_creation = disabled | admin | public
+```
+
+The default value is "disabled" and also goes into effect when the value has been misspelled. 
 
 If you only want to use the password-reset functionality and/or equip existing user accounts with an email address topic, please read the following hints: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2#note_17729
 
