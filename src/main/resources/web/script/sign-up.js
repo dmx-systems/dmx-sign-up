@@ -82,6 +82,8 @@
                     var selectElement = document.getElementById("auth_method");
                     var authMethod = selectElement.options[selectElement.selectedIndex].value;
 
+                    document.cookie = "last_authorization_method=" + authMethod;
+
                     // See https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/btoa
                     return authMethod + " " + window.btoa(id + ":" + secret) // IE >= 10 compatible
                 } catch (error) {

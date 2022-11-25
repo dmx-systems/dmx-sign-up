@@ -20,6 +20,7 @@
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
             signupConfig.accountCreationMethodIsLdap = /*[[${account_creation_method_is_ldap}]]*/ false;
             signupConfig.authorizationMethods = /*[[${authorization_methods}]]*/ "["Basic"]";
+            signupConfig.lastAuthorizationMethod = /*[[${last_authorization_method}]]*/ "Basic";
             signupConfig.selfRegistrationEnabled = /*[[${self_registration_enabled}]]*/ true;
         /*]]>*/
         </script>
@@ -57,7 +58,7 @@
                             </div>
                             <div id="message-view"><span id="message"></span></div>
                             <select id="auth_method" th:hidden="${#lists.size(authorization_methods)} == 1">
-                                <option th:each="method : ${authorization_methods}" th:value="${method}" th:text="${method}"></option>
+                                <option th:each="method : ${authorization_methods}" th:value="${method}" th:text="${method}" th:selected="${last_authorization_method} == ${method}"></option>
                             </select>
                         </form>
 
