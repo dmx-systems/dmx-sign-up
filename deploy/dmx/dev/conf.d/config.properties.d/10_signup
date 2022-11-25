@@ -6,4 +6,4 @@ dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
-dmx.signup.account_creation = admin
+dmx.signup.account_creation = public

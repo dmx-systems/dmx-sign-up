@@ -1407,7 +1407,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
             // Build up sign-up template variables
             viewData("authorization_methods", getAuthorizationMethods());
-            viewData("authorization_method_is_ldap", isLdapAccountCreationEnabled());
+            viewData("account_creation_method_is_ldap", isLdapAccountCreationEnabled());
             viewData("self_registration_enabled", isSelfRegistrationEnabled());
             viewData("title", activeModuleConfiguration.getWebAppTitle());
             viewData("logo_path", activeModuleConfiguration.getLogoPath());
