@@ -158,6 +158,12 @@
     // This is the form.onsubmit() implementation.
     function createCustomAccount() {
 
+        function getPassword() {
+            return signupConfig["isAccountCreationPasswordEditable"]
+                ? document.getElementById("pass-one").value
+                : generateRandomString(23)
+        }
+
         function doCreateRequest() {
             var mailbox = encodeURIComponent(document.getElementById("username").value)
             // when sign-up creates ldap accounts, make sure, these are always in lower-case
@@ -165,9 +171,8 @@
               mailbox = mailbox.toLowerCase()
             }
             var displayName = encodeURIComponent(document.getElementById("displayname").value)
-            var dummyPassword = generateRandomString(23)
             var passwordVal = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
-                      window.btoa(dummyPassword) : '-SHA256-' + SHA256(dummyPassword))
+                      window.btoa(getPassword()) : '-SHA256-' + SHA256(getPassword()))
             // send a GET to handle the account creation request (SignupPlugin.java@handleCustomSignupRequest)
             window.document.location.assign("//" +  window.location.host + "/sign-up/custom-handle/"
                     + mailbox + "/" + displayName + "/" + passwordVal)

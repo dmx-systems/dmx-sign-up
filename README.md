@@ -65,6 +65,7 @@ dmx.signup.confirm_email_address = true
 dmx.signup.admin_mailbox = signup-test@dmx.systems
 dmx.signup.system_mailbox = nomail@dmx.systems
 dmx.signup.account_creation = admin
+dmx.signup.account_creation_password_handling = generated
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 dmx.signup.token_expiration_time = 2
@@ -99,6 +100,18 @@ If you don't want to allow users to self-register accounts but want to make use 
 
 In order for an already logged in user have the permission to create a new user the former user either needs to be a member of the administration workspace or be a member of the workspace specified through the "dmx.signup.account_creation_auth_ws_uri" configuration option. Not setting this value means that only the
 administration workspace membership check is in place.
+
+### Configure account creation password handling
+
+The plugin can be configured so that during sign-up one can enter the password to be used for the account or the
+password is generated and users are required to do an initial password reset in order to set the password to a value
+of their liking.
+
+The behavior is configured through the option:
+
+```
+dmx.signup.account_creation_password_handling = editable | generated
+```
 
 ### Token validity
 The validity of the tokens used for account creation and password reset in *hours* is set through the property:

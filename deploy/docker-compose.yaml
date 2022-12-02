@@ -22,12 +22,27 @@ services:
       - ./dmx/dev/conf.d/logging.properties.d:/opt/dmx/conf.d/logging.properties.d:ro
     depends_on:
       - mailhog
+      - ldap
     labels:
       traefik.http.services.dmx.loadbalancer.server.port: 8080
       traefik.http.routers.dmx.rule: "PathPrefix(`/`)"
       traefik.http.routers.dmx.middlewares: "dmxreplace@docker"
       traefik.http.middlewares.dmxreplace.replacepathregex.regex: "^/static/(.*)"
-      
+
+  ldap:
+    container_name: dev-ldap
+    restart: unless-stopped
+    command: "--copy-service --loglevel debug"
+    build:
+      context: ./ldap/dev
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_ORGANISATION: "example"
+      LDAP_DOMAIN: "example.app"
+      LDAP_TLS_VERIFY_CLIENT: "never"
+
   mailhog:
     container_name: dev-mailhog
     restart: unless-stopped

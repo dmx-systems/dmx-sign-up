@@ -90,6 +90,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         reloadAssociatedSignupConfiguration();
         // Log configuration settings
         log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
+            + "  dmx.signup.account_creation_password_handling: " + CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING + "\n"
             + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
             + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
             + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
@@ -598,7 +599,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
                                               @PathParam("displayname") String displayName,
                                               @PathParam("password") String password) throws URISyntaxException {
-        if (hasAccountCreationPrivilege()) {
+        if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
             createCustomUserAccount(mailbox, displayName, password);
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
             handleAccountCreatedRedirect(mailbox); // throws WebAppException  
@@ -952,6 +953,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     }
     private boolean isLdapAccountCreationEnabled() {
         return CONFIG_CREATE_LDAP_ACCOUNTS && isLdapPluginAvailable();
+    }
+
+    private boolean isAccountCreationPasswordEditable() {
+        return CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING == AccountCreation.PasswordHandling.EDITABLE;
     }
 
     private Topic createUsername(Credentials credentials) throws Exception {
@@ -1422,6 +1427,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             viewData("authorization_methods", getAuthorizationMethods());
             viewData("last_authorization_method", lastAuthorizationMethod);
             viewData("account_creation_method_is_ldap", isLdapAccountCreationEnabled());
+            viewData("is_account_creation_password_editable", isAccountCreationPasswordEditable());
             viewData("self_registration_enabled", isSelfRegistrationEnabled());
             viewData("title", activeModuleConfiguration.getWebAppTitle());
             viewData("logo_path", activeModuleConfiguration.getLogoPath());
