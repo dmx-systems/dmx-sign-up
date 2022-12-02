@@ -17,6 +17,7 @@ import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
+import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
@@ -595,12 +596,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    @Transactional
     public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
                                               @PathParam("displayname") String displayName,
                                               @PathParam("password") String password) throws URISyntaxException {
         if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
-            createCustomUserAccount(mailbox, displayName, password);
+            transactional(() -> createCustomUserAccount(mailbox, displayName, password));
             log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
             handleAccountCreatedRedirect(mailbox); // throws WebAppException  
         }
@@ -1555,4 +1555,19 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public void removeTemplateResolverBundle(Bundle bundle) {
         super.removeTemplateResourceBundle(bundle);
     }
+
+    private void transactional(Runnable r) {
+        DMXTransaction tx = dmx.beginTx();
+
+        try {
+            r.run();
+            tx.success();
+        } catch (Throwable t) {
+            log.warning("A custom transaction failed: " + t.getLocalizedMessage());
+            tx.failure();
+        } finally {
+            tx.finish();
+        }
+    }
+
 }
