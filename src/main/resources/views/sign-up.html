@@ -19,6 +19,7 @@
             signupConfig.emailTaken = /*[[${email_taken_hint}]]*/ "This E-Mail address is already registered.";
             signupConfig.notAuthorized = /*[[${not_authorized_message}]]*/ "You're not authorized. Sorry.";
             signupConfig.accountCreationMethodIsLdap = /*[[${account_creation_method_is_ldap}]]*/ false;
+            signupConfig.isAccountCreationPasswordEditable = /*[[${is_account_creation_password_editable}]]*/ false;
         /*]]>*/
         </script>
         <meta th:replace="fragments/tracker" />
@@ -54,6 +55,10 @@
                                 <label for="username"  th:text="${label_email}"></label>
                                 <input id="username" type="text" name="username" th:placeholder="${label_email}" title="Username"
                                    onblur="checkUserNameAvailability()" class="sign-up username" />
+                            </div>
+                            <div class="ui input" th:if="${is_account_creation_password_editable}">
+                                <label for="pass-one" th:text="${label_password}"></label>
+                                <input id="pass-one" type="password" name="password" th:placeholder="${label_password}" title="Password" class="sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
                     </div>

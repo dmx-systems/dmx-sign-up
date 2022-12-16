@@ -13,6 +13,8 @@ public class SignUpConfigOptions {
 
     // --- Sign-up config options
     public static final AccountCreation CONFIG_ACCOUNT_CREATION = AccountCreation.fromStringOrDisabled(System.getProperty("dmx.signup.account_creation"));
+
+    public static final AccountCreation.PasswordHandling CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING = AccountCreation.PasswordHandling.fromStringOrEditable(System.getProperty("dmx.signup.account_creation_password_handling"));
     public static final boolean CONFIG_EMAIL_CONFIRMATION = Boolean.parseBoolean(System.getProperty("dmx.signup.confirm_email_address"));
     public static final String CONFIG_ADMIN_MAILBOX = System.getProperty("dmx.signup.admin_mailbox");
     public static final String CONFIG_FROM_MAILBOX = System.getProperty("dmx.signup.system_mailbox");

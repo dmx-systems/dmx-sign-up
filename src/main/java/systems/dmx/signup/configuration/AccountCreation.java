@@ -10,4 +10,16 @@ public enum AccountCreation {
             return DISABLED;
         }
     }
+
+    public enum PasswordHandling {
+        EDITABLE, GENERATED;
+
+        static PasswordHandling fromStringOrEditable(String value) {
+            try {
+                return PasswordHandling.valueOf(value.trim().toUpperCase());
+            } catch (NullPointerException | IllegalArgumentException e) {
+                return EDITABLE;
+            }
+        }
+    }
 }
