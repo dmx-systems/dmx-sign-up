@@ -333,7 +333,7 @@
         var token = document.getElementById("token-info").value
         var username = document.getElementById("username").value
         var pwInput = document.getElementById("pass-one").value
-        var secret = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
+        var secret = encodeURIComponent(signupConfig["accountCreationMethodIsLdap"] ?
                          window.btoa(pwInput) : '-SHA256-' + SHA256(pwInput))
         // a) Form-based way
         // window.document.location.replace("/sign-up/password-reset/" + token + "/" + secret)
