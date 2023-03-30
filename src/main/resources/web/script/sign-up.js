@@ -5,7 +5,6 @@
 
     // Sign-up Configuration Object Initialized via Thymeleaf
     var signupConfig = {
-        "authorizationMethodIsLdap" : false,
         "authorizationMethods": ["Basic"],
         "customWorkspaceEnabled" : false,
         "customWorkspaceURI" : "",
@@ -44,7 +43,7 @@
 
         var id = (typeof username === "undefined") ? document.getElementById("username").value : username
         // when ldap account creation is configured, we make the user-id is always authorized in lower-case
-        if (signupConfig["authorizationMethodIsLdap"]) {
+        if (signupConfig["accountCreationMethodIsLdap"]) {
           id = id.toLowerCase()
         }
         var secret = (typeof pass === "undefined") ? document.getElementById("password").value : pass
@@ -167,11 +166,11 @@
         function doCreateRequest() {
             var mailbox = encodeURIComponent(document.getElementById("username").value)
             // when sign-up creates ldap accounts, make sure, these are always in lower-case
-            if (signupConfig["authorizationMethodIsLdap"]) {
+            if (signupConfig["accountCreationMethodIsLdap"]) {
               mailbox = mailbox.toLowerCase()
             }
             var displayName = encodeURIComponent(document.getElementById("displayname").value)
-            var passwordVal = encodeURIComponent(signupConfig["authorizationMethodIsLdap"] ?
+            var passwordVal = encodeURIComponent(signupConfig["accountCreationMethodIsLdap"] ?
                       window.btoa(getPassword()) : '-SHA256-' + SHA256(getPassword()))
             // send a GET to handle the account creation request (SignupPlugin.java@handleCustomSignupRequest)
             window.document.location.assign("//" +  window.location.host + "/sign-up/custom-handle/"
