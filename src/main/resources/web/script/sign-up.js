@@ -5,6 +5,7 @@
 
     // Sign-up Configuration Object Initialized via Thymeleaf
     var signupConfig = {
+        "lastAuthorizationMethod": "Basic",
         "authorizationMethods": ["Basic"],
         "customWorkspaceEnabled" : false,
         "customWorkspaceURI" : "",
@@ -79,7 +80,7 @@
             function authorization() {
                 try {
                     var selectElement = document.getElementById("auth_method");
-                    var authMethod = selectElement.options[selectElement.selectedIndex].value;
+                    var authMethod = if (selectElement != null) selectElement.options[selectElement.selectedIndex].value ? signupConfig["lastAuthorizationMethod"]
 
                     document.cookie = "last_authorization_method=" + authMethod;
 
