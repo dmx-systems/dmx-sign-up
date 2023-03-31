@@ -355,7 +355,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/password-reset/{token}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable handlePasswordResetRequest(@PathParam("token") String token) {
+    public Viewable handlePasswordResetRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("token") String token) {
         try {
             // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
             if (!pwToken.containsKey(token)) {
@@ -381,7 +381,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     String redirectUrl = input.getString("redirectUrl");
                     viewData("redirect_url", redirectUrl);
                 }
-                prepareSignupPage("password-reset");
+                prepareSignupPage("password-reset", lastAuthorizationMethod);
                 return view("password-reset");
             } else {
                 log.warning("Sorry the link to reset the password for ... has expired.");
@@ -405,7 +405,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/password-reset/{token}/{password}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
-    public Viewable processPasswordUpdateRequest(@PathParam("token") String token,
+    public Viewable processPasswordUpdateRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
+                                                 @PathParam("token") String token,
                                                  @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
         try {
@@ -436,7 +437,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 }
                 pwToken.remove(token);
                 viewData("message", rb.getString("reset_password_ok"));
-                prepareSignupPage("password-ok");
+                prepareSignupPage("password-ok", lastAuthorizationMethod);
                 return view("password-ok");
             } else {
                 viewData("message", rb.getString("reset_password_error"));
@@ -679,7 +680,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/confirm/{token}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
-    public Viewable processSignupRequest(@PathParam("token") String key) {
+    public Viewable processSignupRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("token") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
         if (!token.containsKey(key)) {
             viewData("username", null);
@@ -712,9 +713,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         viewData("message", rb.getString("account_created"));
         if (!DMX_ACCOUNTS_ENABLED) {
             log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
-            return getAccountCreationPendingView();
+            return getAccountCreationPendingView(lastAuthorizationMethod);
         }
-        return getAccountCreationOKView(username);
+        return getAccountCreationOKView(lastAuthorizationMethod, username);
     }
 
     /**
@@ -791,7 +792,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getSignupFormView() throws URISyntaxException {
+    public Viewable getSignupFormView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) throws URISyntaxException {
         String page = null;
         switch (CONFIG_ACCOUNT_CREATION) {
             case DISABLED:
@@ -804,7 +805,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 page = (!isLoggedIn() || hasAccountCreationPrivilege()) ? "sign-up" : "logout";
                 break;
         }
-        prepareSignupPage(page);
+        prepareSignupPage(page, lastAuthorizationMethod);
         return view(page);
     }
 
@@ -821,7 +822,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Produces(MediaType.APPLICATION_XHTML_XML)
     public Viewable getLoginView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
         if (accesscontrol.getUsername() != null) {
-            prepareSignupPage("logout");
+            prepareSignupPage("logout", lastAuthorizationMethod);
             return view("logout");
         }
         prepareSignupPage("login", lastAuthorizationMethod);
@@ -835,8 +836,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/request-password")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getPasswordResetView() {
-        prepareSignupPage("request-password");
+    public Viewable getPasswordResetView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+        prepareSignupPage("request-password", lastAuthorizationMethod);
         return view("request-password");
     }
 
@@ -848,8 +849,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/{username}/ok")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationOKView(@PathParam("username") String username) {
-        prepareSignupPage("ok");
+    public Viewable getAccountCreationOKView(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("username") String username) {
+        prepareSignupPage("ok", lastAuthorizationMethod);
         viewData("requested_username", username);
         return view("ok");
     }
@@ -862,8 +863,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/pending")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationPendingView() {
-        prepareSignupPage("pending");
+    public Viewable getAccountCreationPendingView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+        prepareSignupPage("pending", lastAuthorizationMethod);
         return view("pending");
     }
 
@@ -874,11 +875,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/error")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getFailureView() {
-        return getFailureView(null);
+    public Viewable getFailureView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+        return getFailureView(null, lastAuthorizationMethod);
     }
 
-    private Viewable getFailureView(String status) {
+    private Viewable getFailureView(String status, String lastAuthorizationMethod) {
         if (status != null && status.equals("created")) {
             viewData("status_label", rb.getString("status_label_created"));
         } else {
@@ -889,7 +890,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         viewData("please_try_1", rb.getString("please_try_1"));
         viewData("please_try_2", rb.getString("please_try_2"));
         viewData("please_try_3", rb.getString("please_try_3"));
-        prepareSignupPage("failure");
+        prepareSignupPage("failure", lastAuthorizationMethod);
         return view("failure");
     }
 
@@ -901,8 +902,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/token-info")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getConfirmationInfoView() {
-        prepareSignupPage("account-confirmation");
+    public Viewable getConfirmationInfoView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+        prepareSignupPage("account-confirmation", lastAuthorizationMethod);
         return view("account-confirmation");
     }
 
@@ -913,8 +914,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/edit")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountDetailsView() {
-        prepareSignupPage("account-edit");
+    public Viewable getAccountDetailsView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+        prepareSignupPage("account-edit", lastAuthorizationMethod);
         prepareAccountEditPage();
         return view("account-edit");
     }
@@ -1413,10 +1414,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
 
         return filteredRestrictedAms;
-    }
-
-    private void prepareSignupPage(String templateName) {
-        prepareSignupPage(templateName, null);
     }
 
     private void prepareSignupPage(String templateName, String lastAuthorizationMethod) {
