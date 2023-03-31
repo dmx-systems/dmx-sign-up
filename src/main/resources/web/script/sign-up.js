@@ -76,15 +76,11 @@
             xhr.setRequestHeader("Authorization", authorization)
             xhr.send()
 
-            function lastAuthMethod() {
-                return (signupConfig["lastAuthorizationMethod"] !== null) ? signupConfig["lastAuthorizationMethod"] : signupConfig["authorizationMethods"][0]
-            }
-
             /** Returns value for the "Authorization" header. */
             function authorization() {
                 try {
                     var selectElement = document.getElementById("auth_method");
-                    var authMethod = (selectElement !== null) ? selectElement.options[selectElement.selectedIndex].value : lastAuthMethod()
+                    var authMethod = selectElement.options[selectElement.selectedIndex]
 
                     document.cookie = "last_authorization_method=" + authMethod;
 
