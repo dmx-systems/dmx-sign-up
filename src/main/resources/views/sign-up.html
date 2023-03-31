@@ -62,9 +62,6 @@
                                 <input id="pass-one" type="password" name="password" th:placeholder="${label_password}" title="Password" class="sign-up password" />
                             </div>
                             <div id="message-view"><span id="message"></span></div>
-                            <select id="auth_method" th:hidden="${#lists.size(authorization_methods)} == 1">
-                                <option th:each="method : ${authorization_methods}" th:value="${method}" th:text="${method}" th:selected="${last_authorization_method} == ${method}"></option>
-                            </select>
                     </div>
                 </div>
 
