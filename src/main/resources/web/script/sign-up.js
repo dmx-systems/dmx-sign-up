@@ -80,7 +80,7 @@
             function authorization() {
                 try {
                     var selectElement = document.getElementById("auth_method");
-                    var authMethod = selectElement.options[selectElement.selectedIndex]
+                    var authMethod = selectElement.options[selectElement.selectedIndex].value
 
                     document.cookie = "last_authorization_method=" + authMethod;
 
