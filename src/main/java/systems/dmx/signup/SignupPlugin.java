@@ -290,7 +290,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Override
     public Response initiatePasswordResetWithName(@PathParam("email") String email,
                                                   @PathParam("name") String name) throws URISyntaxException {
-        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+name+"\"");
+        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \"" + name + "\"");
         try {
             String emailAddressValue = email.toLowerCase().trim();
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
@@ -356,7 +356,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/password-reset/{token}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable handlePasswordResetRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("token") String token) {
+    public Viewable handlePasswordResetRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
+                                               @PathParam("token") String token) {
         try {
             // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
             if (!pwToken.containsKey(token)) {
@@ -406,9 +407,10 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/password-reset/{token}/{password}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
-    public Viewable processPasswordUpdateRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
-                                                 @PathParam("token") String token,
-                                                 @PathParam("password") String password) {
+    public Viewable processPasswordUpdateRequest(
+                                               @CookieParam("last_authorization_method") String lastAuthorizationMethod,
+                                               @PathParam("token") String token,
+                                               @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
         try {
             JSONObject entry = pwToken.get(token);
@@ -681,7 +683,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Path("/confirm/{token}")
     @Produces(MediaType.APPLICATION_XHTML_XML)
     @Transactional
-    public Viewable processSignupRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("token") String key) {
+    public Viewable processSignupRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
+                                         @PathParam("token") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
         if (!token.containsKey(key)) {
             viewData("username", null);
@@ -770,7 +773,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             Topic username = topic.getRelatedTopic("dmx.config.configuration", null, null, USERNAME);
             // Perform notification
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
-                log.info("Sign-up Notification: User Account \"" + username.getSimpleValue()+"\" is now ENABLED!");
+                log.info("Sign-up Notification: User Account \"" + username.getSimpleValue() + "\" is now ENABLED!");
                 //
                 String webAppTitle = activeModuleConfiguration.getWebAppTitle();
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
@@ -793,7 +796,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     @GET
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getSignupFormView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) throws URISyntaxException {
+    public Viewable getSignupFormView(@CookieParam("last_authorization_method") String lastAuthorizationMethod)
+                                                                                            throws URISyntaxException {
         String page = null;
         switch (CONFIG_ACCOUNT_CREATION) {
             case DISABLED:
@@ -850,7 +854,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/{username}/ok")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationOKView(@CookieParam("last_authorization_method") String lastAuthorizationMethod, @PathParam("username") String username) {
+    public Viewable getAccountCreationOKView(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
+                                             @PathParam("username") String username) {
         prepareSignupPage("ok", lastAuthorizationMethod);
         viewData("requested_username", username);
         return view("ok");
@@ -864,7 +869,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @GET
     @Path("/pending")
     @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationPendingView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
+    public Viewable getAccountCreationPendingView(
+                                            @CookieParam("last_authorization_method") String lastAuthorizationMethod) {
         prepareSignupPage("pending", lastAuthorizationMethod);
         return view("pending");
     }
@@ -929,7 +935,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 sendSystemMail(subject, message, recipient);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
-                    "notification mail to the \"System Mailbox\", caused by: " +  ex.getMessage());
+                    "notification mail to the \"System Mailbox\", caused by: " + ex.getMessage());
             }
         } else {
             log.info("Did not send notification mail to System Mailbox - Admin Mailbox Empty");
@@ -942,7 +948,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             sendSystemMail(subject, message, mailbox);
         } catch (Exception ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
-                "notification mail to User \""+mailbox+"\", caused by: " +  ex.getMessage());
+                "notification mail to User \"" + mailbox + "\", caused by: " + ex.getMessage());
         }
     }
 
@@ -1053,7 +1059,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         if (DMX_ACCOUNTS_ENABLED) {
             log.info("DMX Config: The new account is now ENABLED, redirecting to OK page.");
             // redirecting user to the "your account is now active" page
-            throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/"+username+"/ok")).build());
+            throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/" + username + "/ok"))
+                .build());
         } else {
             log.info("DMX Config: The new account is now DISABLED, redirecting to PENDING page.");
             // redirecting to page displaying "your account was created but needs to be activated"
@@ -1262,7 +1269,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 if (DMX_ACCOUNTS_ENABLED) {
                     sendSystemMail(mailSubject,
                         rb.getString("mail_hello") + " " + username + ",<br><br>" +
-                        rb.getString("mail_confirmation_active_body")+"<br><br>" + linkHref + "<br><br>" +
+                        rb.getString("mail_confirmation_active_body") + "<br><br>" + linkHref + "<br><br>" +
                         rb.getString("mail_ciao"), mailbox
                     );
                 } else {
@@ -1273,7 +1280,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 }
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
-                    "\"Email Confirmation\" mail, caused by: " +  ex.getMessage());
+                    "\"Email Confirmation\" mail, caused by: " + ex.getMessage());
             }
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
@@ -1298,7 +1305,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     rb.getString("mail_signature"), mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
-                    "\"Password Reset\" mail, caused by: " +  ex.getMessage());
+                    "\"Password Reset\" mail, caused by: " + ex.getMessage());
             }
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
@@ -1315,7 +1322,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                     "<br>A user has registered.<br><br>Username: " + username + "<br>Email: " + mailbox, adminMailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED notifying the " +
-                    "\"system mailbox\" about account creation, caused by: " +  ex.getMessage());
+                    "\"system mailbox\" about account creation, caused by: " + ex.getMessage());
             }
         } else {
             log.info("ADMIN: No \"Admin Mailbox\" configured: A new user account (" + username + ") was created but" +
@@ -1522,7 +1529,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             try {
                 eMailAddressValue = dmx.getPrivilegedAccess().getEmailAddress(username);
             } catch (Exception e) {
-                log.warning("Username has no Email Address topic related via \""+USER_MAILBOX_EDGE_TYPE+"\"");
+                log.warning("Username has no Email Address topic related via \"" + USER_MAILBOX_EDGE_TYPE + "\"");
             }
             viewData("logged_in", true);
             viewData("username", username);
@@ -1567,5 +1574,4 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             tx.finish();
         }
     }
-
 }
