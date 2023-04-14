@@ -292,7 +292,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                                                   @PathParam("name") String name) throws URISyntaxException {
         log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \"" + name + "\"");
         try {
-            String emailAddressValue = email.toLowerCase().trim();
+            String emailAddressValue = email.trim();
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
@@ -300,7 +300,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
-                    emailAddressValue);
+                    email.trim());
             }
         } catch (URISyntaxException ex) {
             Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
@@ -325,7 +325,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             @PathParam("redirectUrl") String redirectUrl) throws URISyntaxException {
         log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \"" +
             redirectUrl + "\"");
-        String emailAddressValue = email.toLowerCase().trim();
+        String emailAddressValue = email.trim();
         boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
         if (emailExists) {
             log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
@@ -335,8 +335,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
             sendPasswordResetToken(emailAddressValue, null, redirectUrl);
             return Response.ok().build();
         }
-        log.warning("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
-            emailAddressValue);
+        log.warning("Email based password reset workflow not do'able, Email Address does NOT EXIST => " + email.trim());
         return Response.serverError().build();
     }
 
