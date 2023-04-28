@@ -3,8 +3,16 @@ package systems.dmx.signup;
 
 import com.sun.jersey.api.view.Viewable;
 import java.net.URISyntaxException;
+import java.util.List;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.osgi.framework.Bundle;
+import systems.dmx.core.Topic;
+import systems.dmx.core.service.Transactional;
 
 /**
  * A plugin service to check username or mailbox availability and to send
@@ -15,7 +23,9 @@ import org.osgi.framework.Bundle;
 
 public interface SignupService {
 
-    /** 
+    String getSystemEmailContactOrEmpty();
+
+    /**
      * Checks for a Topic with the exact "username" value. 
      * 
      * @return  String  JSON-Object with property "isAvailable" set to true or false
@@ -33,6 +43,16 @@ public interface SignupService {
     String getDisplayName(String username);
 
     void updateDisplayName(String username, String displayName);
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    @Transactional
+    Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
+                                        @PathParam("displayname") String displayName,
+                                        @PathParam("password") String password) throws URISyntaxException;
+
+    Topic createCustomUserAccount(String mailbox, String displayName, String password);
 
     /**
      *
@@ -110,6 +130,8 @@ public interface SignupService {
 
     boolean isUsernameTaken(String value);
 
+    Boolean isLoggedIn();
+
     /** Send notification email to system administrator mailbox configured in current \"Sign-up Configuration\" topic.*/
     void sendSystemMailboxNotification(String subject, String message);
 
@@ -126,6 +148,8 @@ public interface SignupService {
 
     void removeTemplateResolverBundle(Bundle bundle);
 
+
+    List<String> getAuthorizationMethods();
 
     void reinitTemplateEngine();
 

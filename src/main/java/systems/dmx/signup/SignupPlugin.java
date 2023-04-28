@@ -104,6 +104,11 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
+    @Override
+    public String getSystemEmailContactOrEmpty() {
+        return (systemEmailContact == null) ? "" : systemEmailContact;
+    }
+
     private void initOptionalServices() {
         ldapPluginService = new OptionalService<>(getBundleContext(), () -> LDAPPluginService.class);
     }
@@ -624,6 +629,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
     @Transactional
+    @Override
     public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
                                                @PathParam("displayname") String displayName,
                                                @PathParam("password") String password) throws URISyntaxException {
@@ -633,7 +639,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         return username;
     }
 
-    private Topic createCustomUserAccount(String mailbox, String displayName, String password) {
+    @Override
+    public Topic createCustomUserAccount(String mailbox, String displayName, String password) {
         try {
             // 1) Custom sign-up request means "mailbox" = "username"
             String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
@@ -811,7 +818,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         return view(page);
     }
 
-    private Boolean isLoggedIn() {
+    @Override
+    public Boolean isLoggedIn() {
         return accesscontrol.getUsername() != null;
     }
 
@@ -1365,7 +1373,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
                 SIGN_UP_CONFIG_TYPE_URI); **/
     }
 
-    private List<String> getAuthorizationMethods() {
+    @Override
+    public List<String> getAuthorizationMethods() {
         Map<String, String> knownAms = new HashMap<>();
         Set<String> originalAms = new HashSet(accesscontrol.getAuthorizationMethods());
         originalAms.add("Basic");
