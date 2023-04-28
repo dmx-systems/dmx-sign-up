@@ -32,7 +32,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -1334,7 +1333,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      * @param message       String Text content of the message.
      * @param recipientValues     String of Email Address message is sent to **must not** be NULL.
      */
-    private void sendSystemMail(String subject, String message, String recipientValues) {
+    @Override
+    public void sendSystemMail(String subject, String message, String recipientValues) {
         String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
         String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
