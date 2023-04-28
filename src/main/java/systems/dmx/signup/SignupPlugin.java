@@ -87,7 +87,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
     public void init() {
         initOptionalServices();
         initTemplateEngine();
-        loadPluginLanguageProperty();
         reloadAssociatedSignupConfiguration();
         // Log configuration settings
         log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
@@ -1348,34 +1347,6 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
 
     private Assoc getMembershipAssociation(long id, long idTwo) {
         return dmx.getAssocBetweenTopicAndTopic(MEMBERSHIP,  id, idTwo, DEFAULT, DEFAULT);
-    }
-
-    /**
-     * Loads the ""org.deepamehta.sign-up.language" value from the plugin.properties file. Currently "de" and "fr"
-     * are supported next to "en", which is the dfeault.
-     *
-     * @see init()
-     */
-    private void loadPluginLanguageProperty() {
-        String signupPropertyLanguageValue = null;
-        try {
-            Properties allProperties = new Properties();
-            allProperties.load(getStaticResource("/plugin.properties"));
-            signupPropertyLanguageValue = allProperties.getProperty(SIGN_UP_LANGUAGE_PROPERTY);
-            if (signupPropertyLanguageValue == null || signupPropertyLanguageValue.toLowerCase().equals("en")) {
-                log.info("Sign-up Plugin Language option sets labels to ENGLISH");
-                rb = ResourceBundle.getBundle("SignupMessages", Locale.ENGLISH);
-            } else if (signupPropertyLanguageValue.toLowerCase().equals("de")) {
-                log.info("Sign-up Plugin Language \"" + signupPropertyLanguageValue + "\" sets labels to GERMAN");
-                rb = ResourceBundle.getBundle("SignupMessages", Locale.GERMAN);
-            } else if (signupPropertyLanguageValue.toLowerCase().equals("fr")) {
-                log.info("Sign-up Plugin Language \"" + signupPropertyLanguageValue + "\" sets labels to FRENCH");
-                rb = ResourceBundle.getBundle("SignupMessages", Locale.FRENCH);
-            }
-        } catch (IOException ex) {
-            log.warning("Could not find Sign-up plugin properties - use default resource bundle for labels");
-            rb = ResourceBundle.getBundle("SignupMessages", Locale.ENGLISH);
-        }
     }
 
     /**
