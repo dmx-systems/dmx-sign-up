@@ -24,7 +24,6 @@ import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.events.SignupResourceRequestedListener;
-import systems.dmx.thymeleaf.ThymeleafPlugin;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -56,7 +55,7 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
  * @author Malte Rei&szlig;ig et al
 **/
 @Path("/sign-up")
-public class SignupPlugin extends ThymeleafPlugin implements SignupService, PostUpdateTopic {
+public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, PostUpdateTopic {
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
@@ -1073,11 +1072,13 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         }
     }
 
-    private boolean isSelfRegistrationEnabled() {
+    @Override
+    public boolean isSelfRegistrationEnabled() {
         return CONFIG_ACCOUNT_CREATION == AccountCreation.PUBLIC;
     }
 
-    private boolean hasAccountCreationPrivilege() {
+    @Override
+    public boolean hasAccountCreationPrivilege() {
         try {
             checkAccountCreation();
             return true;
@@ -1116,8 +1117,9 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
         dmx.getTopic(workspaces.getWorkspace(CONFIG_ACCOUNT_CREATION_AUTH_WS_URI).getId())
                 .checkWriteAccess();
     }
-    
-    private boolean isApiWorkspaceMember() {
+
+    @Override
+    public boolean isApiWorkspaceMember() {
         String username = accesscontrol.getUsername();
         if (username != null) {
             String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
@@ -1242,7 +1244,7 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      */
     private void reloadAssociatedSignupConfiguration() {
         // load module configuration
-        activeModuleConfiguration = getCurrentSignupConfiguration();
+        activeModuleConfiguration = getConfiguration();
         if (!activeModuleConfiguration.isValid()) {
             log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
             return;
@@ -1364,7 +1366,8 @@ public class SignupPlugin extends ThymeleafPlugin implements SignupService, Post
      *
      * @see reloadConfiguration()
      */
-    private ModuleConfiguration getCurrentSignupConfiguration() {
+    @Override
+    public ModuleConfiguration getConfiguration() {
         // Fixme: ### Allow for multiple sign-up configuration topics to exist and one to be active (configured).
         return new ModuleConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
         /** 

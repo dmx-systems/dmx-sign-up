@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response;
 import org.osgi.framework.Bundle;
 import systems.dmx.core.Topic;
 import systems.dmx.core.service.Transactional;
+import systems.dmx.signup.configuration.ModuleConfiguration;
 
 /**
  * A plugin service to check username or mailbox availability and to send
@@ -138,6 +139,12 @@ public interface SignupService {
     /** Send notification email to all mailboxes in String (many are seperated by a simple ";" and without spaces. */
     void sendUserMailboxNotification(String mailboxes, String subject, String message);
 
+    boolean isSelfRegistrationEnabled();
+
+    boolean hasAccountCreationPrivilege();
+
+    boolean isApiWorkspaceMember();
+
     void sendSystemMail(String subject, String message, String recipientValues);
 
     /**
@@ -152,5 +159,7 @@ public interface SignupService {
     List<String> getAuthorizationMethods();
 
     void reinitTemplateEngine();
+
+    ModuleConfiguration getConfiguration();
 
 }
