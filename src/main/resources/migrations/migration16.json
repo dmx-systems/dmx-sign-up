@@ -1,0 +1,257 @@
+{
+  "topic_types": [
+    {
+      "value": "Sign-up Legacy Config: Web-App Title",
+      "uri": "dmx.signup.legacy_config_webapp_title",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Web-App Logo Path",
+      "uri": "dmx.signup.legacy_config_webapp_logo_path",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Custom CSS Path",
+      "uri": "dmx.signup.legacy_config_custom_css_path",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Project Title",
+      "uri": "dmx.signup.legacy_config_project_title",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: ToS Checkbox Label",
+      "uri": "dmx.signup.legacy_config_tos_label",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: ToS Detail Text",
+      "uri": "dmx.signup.legacy_config_tos_detail",
+      "dataTypeUri": "dmx.core.html",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Personal Data Checkbox Label",
+      "uri": "dmx.signup.legacy_config_pd_label",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Personal Data Detail Text",
+      "uri": "dmx.signup.legacy_config_pd_detail",
+      "dataTypeUri": "dmx.core.html",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: \"Read more\" URL",
+      "uri": "dmx.signup.legacy_config_read_more_url",
+      "dataTypeUri": "dmx.core.text",
+      "index_mode_uris": ["dmx.core.key"],
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Config: Sign-up Page Footer",
+      "uri": "dmx.signup.legacy_config_pages_footer",
+      "dataTypeUri": "dmx.core.html",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy: Start Page URL",
+      "uri": "dmx.signup.legacy_config_start_page_url",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy: Home Page URL",
+      "uri": "dmx.signup.legacy_config_home_page_url",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy: Loading App Hint",
+      "uri": "dmx.signup.legacy_config_loading_app_hint",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up: Logging Out Hint",
+      "uri": "dmx.signup.legacy_config_logging_out_hint",
+      "dataTypeUri": "dmx.core.text",
+      "viewConfigTopics": [
+        {
+          "typeUri": "dmx.webclient.view_config",
+          "children": {
+            "dmx.webclient.add_to_create_menu": false
+          }
+        }
+      ]
+    },
+    {
+      "value": "Sign-up Legacy Configuration",
+      "uri": "dmx.signup.legacy_configuration",
+      "dataTypeUri": "dmx.core.entity",
+      "compDefs": [
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_project_title",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_tos_label",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_tos_detail",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_pd_label",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_pd_detail",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_webapp_title",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_webapp_logo_path",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_custom_css_path",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_read_more_url",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_pages_footer",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_start_page_url",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_home_page_url",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_loading_app_hint",
+          "childCardinalityUri":    "dmx.core.one"
+        },
+        {
+          "childTypeUri":           "dmx.signup.legacy_config_logging_out_hint",
+          "childCardinalityUri":    "dmx.core.one"
+        }
+      ], "viewConfigTopics": [
+      {
+        "typeUri": "dmx.webclient.view_config",
+        "children": {
+          "dmx.webclient.add_to_create_menu": false
+        }
+      }
+    ]
+    }
+  ]
+}
