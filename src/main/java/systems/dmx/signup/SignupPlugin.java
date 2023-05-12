@@ -1244,7 +1244,7 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
      */
     private void reloadAssociatedSignupConfiguration() {
         // load module configuration
-        activeModuleConfiguration = getConfiguration();
+        activeModuleConfiguration = loadConfiguration();
         if (!activeModuleConfiguration.isValid()) {
             log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
             return;
@@ -1366,14 +1366,18 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
      *
      * @see reloadConfiguration()
      */
-    @Override
-    public ModuleConfiguration getConfiguration() {
+    private ModuleConfiguration loadConfiguration() {
         // Fixme: ### Allow for multiple sign-up configuration topics to exist and one to be active (configured).
         return new ModuleConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
         /** 
         Topic pluginTopic = dmx.getTopicByUri(SIGNUP_SYMBOLIC_NAME);
         return pluginTopic.getRelatedTopic(ASSOCIATION, DEFAULT, DEFAULT,
                 SIGN_UP_CONFIG_TYPE_URI); **/
+    }
+
+    @Override
+    public ModuleConfiguration getConfiguration() {
+        return activeModuleConfiguration;
     }
 
     @Override
