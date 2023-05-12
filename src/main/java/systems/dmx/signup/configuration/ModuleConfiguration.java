@@ -45,45 +45,6 @@ public class ModuleConfiguration {
         return topic.getChildTopics().getBoolean(key);
     }
 
-    public String getProjectTitle() {
-        return getString(CONFIG_PROJECT_TITLE);
-    }
-
-    public String getWebAppTitle() {
-        return getString(CONFIG_WEBAPP_TITLE);
-    }
-
-    public String getLogoPath() {
-        return getString(CONFIG_LOGO_PATH);
-    }
-
-    public String getCssPath() {
-        return getString(CONFIG_CUSTOM_CSS_PATH);
-    }
-
-    public String getReadMoreUrl() {
-        return getString(CONFIG_READ_MORE_URL);
-    }
-    public String getTosLabel() {
-        return getString(CONFIG_TOS_LABEL);
-    }
-
-    public String getTosDetails() {
-        return getString(CONFIG_TOS_DETAILS);
-    }
-
-    public String getPdLabel() {
-        return getString(CONFIG_PD_LABEL);
-    }
-
-    public String getPdDetails() {
-        return getString(CONFIG_PD_DETAILS);
-    }
-
-    public String getPagesFooter() {
-        return getString(CONFIG_PAGES_FOOTER);
-    }
-
     public Boolean getApiEnabled() {
         return getBoolean(CONFIG_API_ENABLED);
     }
@@ -98,22 +59,6 @@ public class ModuleConfiguration {
 
     public String getApiWorkspaceUri() {
         return getString(CONFIG_API_WORKSPACE_URI);
-    }
-
-    public String getStartUrl() {
-        return getString(CONFIG_START_PAGE_URL);
-    }
-
-    public String getHomeUrl() {
-        return getString(CONFIG_HOME_PAGE_URL);
-    }
-
-    public String getLoadingAppHint() {
-        return getString(CONFIG_LOADING_APP_HINT);
-    }
-
-    public String getLoggingOutHint() {
-        return getString(CONFIG_LOGGING_OUT_HINT);
     }
 
     public Topic getCustomWorkspaceAssignmentTopic() {

@@ -61,45 +61,6 @@ public interface SignupService {
      */
     String createAPIWorkspaceMembershipRequest();
 
-    /** 
-     * Handles a sign-up request in regards to whether an Email based confirmation process is configured (true|false)
-     * in the resp. <code>Sign-up Configuration</code> topic.
-     *
-     * To check whether a username is already taken you *must* use the getUsernameAvailability() call before issueing
-     * an account creation request via this method.
-     *
-     * @param   username    String Unique username.
-     * @param   password    String SHA256 encoded password with a prefix of "-SHA26-"
-     * @param   mailbox     String containing a valid Email address related to the account creation request.
-     * 
-     * @return  String  username
-     */
-    Viewable handleSignupRequest(String username, String password, String mailbox);
-    
-    /** 
-     * Handles a sign-up request in regards to whether an Email based confirmation process is configured (true|false)
-     * in the resp. <code>Sign-up Configuration</code> topic.
-     *
-     * To check whether a username is already taken you *must* use the getUsernameAvailability() call before issueing
-     * an account creation request via this method.
-     *
-     * @param   username    String Unique username.
-     * @param   password    String SHA256 encoded password with a prefix of "-SHA26-"
-     * @param   mailbox     String containing a valid Email address related to the account creation request.
-     * @param   skipConfirmation    Boolean if true skips email verification transaction and creates user immediately.
-     * 
-     * @return  String  username
-     */
-    Viewable handleSignupRequest(String username, String password, String mailbox, boolean skipConfirmation);
-
-    /**
-     * Sends out a valid password-reset token (if the email address is known to the system).
-     * @throws URISyntaxException
-     * @param email
-     * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
-     */
-    Response initiatePasswordReset(String email) throws URISyntaxException;
-
     /**
      * Sends out a valid password-reset token (if the email address is known to the system).
      * @throws URISyntaxException
@@ -157,8 +118,6 @@ public interface SignupService {
 
 
     List<String> getAuthorizationMethods();
-
-    void reinitTemplateEngine();
 
     ModuleConfiguration getConfiguration();
 

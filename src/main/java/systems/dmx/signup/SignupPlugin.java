@@ -1,6 +1,5 @@
 package systems.dmx.signup;
 
-import com.sun.jersey.api.view.Viewable;
 import com.sun.jersey.core.util.Base64;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -12,12 +11,12 @@ import systems.dmx.core.Assoc;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
+import systems.dmx.core.osgi.PluginActivator;
 import systems.dmx.core.service.EventListener;
 import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
-import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
@@ -32,7 +31,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.Instant;
@@ -55,7 +53,7 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
  * @author Malte Rei&szlig;ig et al
 **/
 @Path("/sign-up")
-public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, PostUpdateTopic {
+public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic {
 
     private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
@@ -84,7 +82,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
     @Override
     public void init() {
         initOptionalServices();
-        initTemplateEngine();
         reloadAssociatedSignupConfiguration();
         // Log configuration settings
         log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
@@ -146,31 +143,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
 
 
     // --- Plugin Service Implementation --- //
-
-    /** 
-     * Fetch all ui-labels in the language the plugins source code was compiled.
-     * @param language
-     * @return A String containing a JSONObject with key-value pairs of all multilingual labels.
-     */
-    @GET
-    @Path("/translation/{locale}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public String getTranslationTable(@PathParam("locale") String language) {
-        if (language.isEmpty()) return null;
-        Locale le = new Locale(language);
-        ResourceBundle newRb = ResourceBundle.getBundle("SignupMessages", le);
-        Enumeration bundleKeys = newRb.getKeys();
-        JSONObject response = new JSONObject();
-        while (bundleKeys.hasMoreElements()) {
-            try {
-                String key = (String) bundleKeys.nextElement();
-                response.put(key, newRb.getString(key));
-            } catch (JSONException ex) {
-                Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        return response.toString();
-    }
 
     /**
      * A HTTP resource allowing existence checks for given username strings.
@@ -265,58 +237,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
      * @param email
      * @return A Response.temporaryRedirect to either the "token info"
      * or the "error message" page.
-     * @throws URISyntaxException 
-     */
-    @GET
-    @Path("/password-token/{email}")
-    @Produces(MediaType.TEXT_HTML)
-    @Override
-    public Response initiatePasswordReset(@PathParam("email") String email) throws URISyntaxException {
-        log.info("Password reset requested for user with Email: \"" + email + "\"");
-        return initiatePasswordResetWithName(email, null);
-    }
-
-    /**
-     * A HTTP Resource to initiate a password-reset sequence. Creates a password-reset token
-     * and sends it out as link via Email. Redirects the request to either the "token info"
-     * or the "error message" page.
-     * @param name
-     * @param email
-     * @return A Response.temporaryRedirect to either the "token info"
-     * or the "error message" page.
-     * @throws URISyntaxException 
-     */
-    @GET
-    @Path("/password-token/{email}/{name}")
-    @Produces(MediaType.TEXT_HTML)
-    @Override
-    public Response initiatePasswordResetWithName(@PathParam("email") String email,
-                                                  @PathParam("name") String name) throws URISyntaxException {
-        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \"" + name + "\"");
-        try {
-            String emailAddressValue = email.trim();
-            boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
-            if (emailExists) {
-                log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue, name, null);
-                return Response.temporaryRedirect(new URI("/sign-up/token-info")).build();
-            } else {
-                log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
-                    email.trim());
-            }
-        } catch (URISyntaxException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return Response.temporaryRedirect(new URI("/sign-up/error")).build();
-    }
-
-    /**
-     * A HTTP Resource to initiate a password-reset sequence. Creates a password-reset token
-     * and sends it out as link via Email. Redirects the request to either the "token info"
-     * or the "error message" page.
-     * @param email
-     * @return A Response.temporaryRedirect to either the "token info"
-     * or the "error message" page.
      * @throws URISyntaxException
      */
     @GET
@@ -341,117 +261,16 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
         return Response.serverError().build();
     }
 
+    @Override
+    public Response initiatePasswordResetWithName(String email, String name) throws URISyntaxException {
+        return null;
+    }
+
     @GET
     @Path("/self-registration-active")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getSelfRegistrationStatus() {
         return Response.ok("" + isSelfRegistrationEnabled()).build();
-    }
-
-    /** 
-     * Checks the given password-reset token for validity and return either the
-     * password-reset dialog or the error message page.
-     * @param token
-     * @return The correct dialog/template for the given password-reset token value.
-     */
-    @GET
-    @Path("/password-reset/{token}")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable handlePasswordResetRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
-                                               @PathParam("token") String token) {
-        try {
-            // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-            if (!pwToken.containsKey(token)) {
-                viewData("message", rb.getString("link_invalid"));
-            }
-            // 2) Process available token and remove it from stack
-            String username, email;
-            JSONObject input = pwToken.get(token);
-            // 3) Update the user account credentials OR present an error message.
-            viewData("token", token);
-            if (input != null && input.getLong("expiration") > new Date().getTime()) {
-                username = input.getString("username");
-                email = input.getString("mailbox");
-                log.info("Handling password reset request for Email: \"" + email);
-                viewData("mailbox", email);
-                viewData("requested_username", username);
-                String displayName = (input.has("name")) ? input.getString("name") : "";
-                viewData("requested_display_name", displayName);
-                viewData("password_requested_title", rb.getString("password_requested_title"));
-                viewData("password_requested_button", rb.getString("password_requested_button"));
-                // Pass "redirectUrl" to password-update dialog (if initially given)
-                if (input.has("redirectUrl")) {
-                    String redirectUrl = input.getString("redirectUrl");
-                    viewData("redirect_url", redirectUrl);
-                }
-                prepareSignupPage("password-reset", lastAuthorizationMethod);
-                return view("password-reset");
-            } else {
-                log.warning("Sorry the link to reset the password for ... has expired.");
-                viewData("message", rb.getString("reset_link_expired"));
-                return getFailureView("updated");
-            }
-        } catch (JSONException ex) {
-            log.severe("Sorry, an error occured during retriving your token. Please try again. " + ex.getMessage());
-            viewData("message", rb.getString("reset_link_error"));
-            return getFailureView("updated");
-        }
-    }
-
-    /**
-     * Updates the user password.
-     * @param token
-     * @param password
-     * @return Returns the correct template for the input.
-     */
-    @GET
-    @Path("/password-reset/{token}/{password}")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    @Transactional
-    public Viewable processPasswordUpdateRequest(
-                                               @CookieParam("last_authorization_method") String lastAuthorizationMethod,
-                                               @PathParam("token") String token,
-                                               @PathParam("password") String password) {
-        log.info("Processing Password Update Request Token... ");
-        try {
-            JSONObject entry = pwToken.get(token);
-            if (entry != null) {
-                Credentials newCreds = new Credentials("dummy", "pass");
-                newCreds.username = entry.getString("username").trim();
-                if (!isLdapAccountCreationEnabled()) {
-                    newCreds.password = password;
-                    // Change password stored in "User Account" topic
-                    dmx.getPrivilegedAccess().changePassword(newCreds);
-                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
-                } else {
-                    String plaintextPassword = Base64.base64Decode(password);
-                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
-                        "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
-                    // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
-                    newCreds.plaintextPassword = plaintextPassword;
-                    newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
-                    if (ldapPluginService.get().changePassword(newCreds) != null) {
-                        log.info("If no previous errors are reported here or in the LDAP-service log, the " +
-                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
-                    } else {
-                        log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
-                        viewData("message", rb.getString("reset_password_error"));
-                        return getFailureView("updated");
-                    }
-                }
-                pwToken.remove(token);
-                viewData("message", rb.getString("reset_password_ok"));
-                prepareSignupPage("password-ok", lastAuthorizationMethod);
-                return view("password-ok");
-            } else {
-                viewData("message", rb.getString("reset_password_error"));
-                return getFailureView("updated");
-            }
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            viewData("message", rb.getString("reset_password_error"));
-            return getFailureView("updated");
-        }
     }
 
     /**
@@ -501,115 +320,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
             Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
             return Response.serverError().build();
         }
-    }
-
-    /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @param skipConfirmation  Flag if "true" skips intiating the email verification process
-     * (useful to allow admins to create new accounts without verifying users).
-     * @return 
-     */
-    @GET
-    @Path("/handle/{username}/{pass-one}/{mailbox}/{skipConfirmation}")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    @Transactional
-    @Override
-    public Viewable handleSignupRequest(@PathParam("username") String username, @PathParam("pass-one") String password,
-                                        @PathParam("mailbox") String mailbox,
-                                        @PathParam("skipConfirmation") boolean skipConfirmation) {
-        if (CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !hasAccountCreationPrivilege()) {
-            throw new WebApplicationException(Response.noContent().build());
-        }
-        try {
-            if (CONFIG_EMAIL_CONFIRMATION) {
-                handleSignupRequestWithEmailConfirmation(username, password, mailbox, skipConfirmation);
-            } else {
-                handleSignupRequestWithDirectAccountCreation(username, password, mailbox);
-            }
-        } catch (URISyntaxException e) {
-            log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
-        }
-        return getFailureView("created");
-    }
-
-    private void handleSignupRequestWithDirectAccountCreation(
-            String username,
-            String password,
-            String mailbox) throws URISyntaxException {
-        // ensures that logged in user is an admin or account creation is allowed for everyone
-        if (isSelfRegistrationEnabled() || hasAccountCreationPrivilege()) {
-            createSimpleUserAccount(username, password, mailbox);
-            handleAccountCreatedRedirect(username);
-        } else {
-            throw new WebApplicationException(Response.noContent().build());
-        }
-    }
-
-    private void handleSignupRequestWithEmailConfirmation(
-            String username,
-            String password,
-            String mailbox,
-            boolean skipConfirmation) throws URISyntaxException {
-        if (skipConfirmation && hasAccountCreationPrivilege()) {
-            if (CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
-                log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
-                        "skipping confirmation mail.");
-                createSimpleUserAccount(username, password, mailbox);
-                handleAccountCreatedRedirect(username);
-            } else {
-                // skipping confirmation is only allowed for admins
-                throw new WebApplicationException(Response.noContent().build());
-            }
-        } else {
-            log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
-                    "confirmation mail.");
-            sendUserValidationToken(username, password, mailbox);
-            // redirect user to a "token-info" page
-            throw new WebApplicationException(
-                    Response.temporaryRedirect(new URI("/sign-up/token-info")).build()
-            );
-        }
-    }
-
-    /**
-     * A HTTP resource to create a new user account.
-     * @param username  String must be unique
-     * @param password  String must be SHA-256 encoded
-     * @param mailbox   String must be unique
-     * @return 
-     */
-    @GET
-    @Path("/handle/{username}/{pass-one}/{mailbox}")
-    @Produces(MediaType.TEXT_HTML)
-    @Override
-    public Viewable handleSignupRequest(@PathParam("username") String username,
-            @PathParam("pass-one") String password, @PathParam("mailbox") String mailbox) {
-        return handleSignupRequest(username, password, mailbox, false);
-    }
-
-    /**
-     * A HTTP resource to create a new user account with a display name, email address as username and some random
-     * password.
-     * @throws WebAppException to issue a redirect (thus method is not @Transactional)
-     * @param mailbox  String must be unique
-     * @param displayName String
-     * @return
-     */
-    @GET
-    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable handleCustomSignupRequest(@PathParam("mailbox") String mailbox,
-                                              @PathParam("displayname") String displayName,
-                                              @PathParam("password") String password) throws URISyntaxException {
-        if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
-            transactional(() -> createCustomUserAccount(mailbox, displayName, password));
-            log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
-            handleAccountCreatedRedirect(mailbox); // throws WebAppException  
-        }
-        return getFailureView("created");
     }
 
     /**
@@ -678,54 +388,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
     }
 
     /**
-     * The HTTP resource to confirm the email address and acutally create an account.
-     * @param key String must be a valid token
-     * @return 
-     */
-    @GET
-    @Path("/confirm/{token}")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    @Transactional
-    public Viewable processSignupRequest(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
-                                         @PathParam("token") String key) {
-        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-        if (!token.containsKey(key)) {
-            viewData("username", null);
-            viewData("message", rb.getString("link_invalid"));
-            return getFailureView("created");
-        }
-        // 2) Process available token and remove it from stack
-        String username;
-        JSONObject input = token.get(key);
-        token.remove(key);
-        // 3) Create the user account and show ok OR present an error message.
-        try {
-            username = input.getString("username");
-            if (input.getLong("expiration") > new Date().getTime()) {
-                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
-            } else {
-                viewData("username", null);
-                viewData("message", rb.getString("link_expired"));
-                return getFailureView("created");
-            }
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            viewData("message", rb.getString("internal_error"));
-            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
-                new Object[]{ex.getMessage(), ex.getCause().toString()});
-            return getFailureView("created");
-        }
-        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
-        viewData("message", rb.getString("account_created"));
-        if (!DMX_ACCOUNTS_ENABLED) {
-            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
-            return getAccountCreationPendingView(lastAuthorizationMethod);
-        }
-        return getAccountCreationOKView(lastAuthorizationMethod, username);
-    }
-
-    /**
      * A HTTP resource to associate the requesting username with
      * the "Custom Membership Request" note topic and to inform the administrators by email.
      * @return String containing a JSONObject with an "membership_created" r´property representing the relation.
@@ -778,7 +440,8 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
                 log.info("Sign-up Notification: User Account \"" + username.getSimpleValue() + "\" is now ENABLED!");
                 //
-                String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+                //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+                String webAppTitle = "TODO"; // TODO
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
@@ -793,142 +456,9 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
 
     // --- Sign-up Plugin Routes --- //
 
-    /**
-     * The root resource, routing either the sign-up or the logout dialog.
-     * @return 
-     */
-    @GET
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getSignupFormView(@CookieParam("last_authorization_method") String lastAuthorizationMethod)
-                                                                                            throws URISyntaxException {
-        String page = null;
-        switch (CONFIG_ACCOUNT_CREATION) {
-            case DISABLED:
-                page = isLoggedIn() ? "logout" : "login";
-                break;
-            case ADMIN:
-                page = isLoggedIn() ? (hasAccountCreationPrivilege() ? "sign-up" : "logout") : "login";
-                break;
-            case PUBLIC:
-                page = (!isLoggedIn() || hasAccountCreationPrivilege()) ? "sign-up" : "logout";
-                break;
-        }
-        prepareSignupPage(page, lastAuthorizationMethod);
-        return view(page);
-    }
-
     @Override
     public Boolean isLoggedIn() {
         return accesscontrol.getUsername() != null;
-    }
-
-    /**
-     * The login resource, routing either the login or the logout dialog.
-     * @return 
-     */
-    @GET
-    @Path("/login")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getLoginView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        if (accesscontrol.getUsername() != null) {
-            prepareSignupPage("logout", lastAuthorizationMethod);
-            return view("logout");
-        }
-        prepareSignupPage("login", lastAuthorizationMethod);
-        return view("login");
-    }
-
-    /**
-     * The route for the password forgotton page to initiate a reset sequence.
-     * @return 
-     */
-    @GET
-    @Path("/request-password")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getPasswordResetView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        prepareSignupPage("request-password", lastAuthorizationMethod);
-        return view("request-password");
-    }
-
-    /**
-     * The route to the confirmation page for the account creation.
-     * @param username
-     * @return 
-     */
-    @GET
-    @Path("/{username}/ok")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationOKView(@CookieParam("last_authorization_method") String lastAuthorizationMethod,
-                                             @PathParam("username") String username) {
-        prepareSignupPage("ok", lastAuthorizationMethod);
-        viewData("requested_username", username);
-        return view("ok");
-    }
-
-    /**
-     * The route to the pending page, informing the user to wait for an
-     * administrator to activate the account.
-     * @return 
-     */
-    @GET
-    @Path("/pending")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountCreationPendingView(
-                                            @CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        prepareSignupPage("pending", lastAuthorizationMethod);
-        return view("pending");
-    }
-
-    /**
-     * The route to the error message page.
-     * @return 
-     */
-    @GET
-    @Path("/error")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getFailureView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        return getFailureView(null, lastAuthorizationMethod);
-    }
-
-    private Viewable getFailureView(String status, String lastAuthorizationMethod) {
-        if (status != null && status.equals("created")) {
-            viewData("status_label", rb.getString("status_label_created"));
-        } else {
-            viewData("status_label", rb.getString("status_label_updated"));
-        }
-        // ### Monlingual split sentence can't be easily translated
-        viewData("account_failure_message", rb.getString("account_failure_message"));
-        viewData("please_try_1", rb.getString("please_try_1"));
-        viewData("please_try_2", rb.getString("please_try_2"));
-        viewData("please_try_3", rb.getString("please_try_3"));
-        prepareSignupPage("failure", lastAuthorizationMethod);
-        return view("failure");
-    }
-
-    /**
-     * The route informing users to please check their mail in
-     * the next 60mins to verify and activate their new account.
-     * @return 
-     */
-    @GET
-    @Path("/token-info")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getConfirmationInfoView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        prepareSignupPage("account-confirmation", lastAuthorizationMethod);
-        return view("account-confirmation");
-    }
-
-    /**
-     * The route to the users account edit page.
-     * @return 
-     */
-    @GET
-    @Path("/edit")
-    @Produces(MediaType.APPLICATION_XHTML_XML)
-    public Viewable getAccountDetailsView(@CookieParam("last_authorization_method") String lastAuthorizationMethod) {
-        prepareSignupPage("account-edit", lastAuthorizationMethod);
-        prepareAccountEditPage();
-        return view("account-edit");
     }
 
     @Override
@@ -1058,19 +588,6 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
     }
 
     // --- Private Helpers --- //
-
-    private void handleAccountCreatedRedirect(String username) throws URISyntaxException {
-        if (DMX_ACCOUNTS_ENABLED) {
-            log.info("DMX Config: The new account is now ENABLED, redirecting to OK page.");
-            // redirecting user to the "your account is now active" page
-            throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/" + username + "/ok"))
-                .build());
-        } else {
-            log.info("DMX Config: The new account is now DISABLED, redirecting to PENDING page.");
-            // redirecting to page displaying "your account was created but needs to be activated"
-            throw new WebApplicationException(Response.temporaryRedirect(new URI("/sign-up/pending")).build());
-        }
-    }
 
     @Override
     public boolean isSelfRegistrationEnabled() {
@@ -1264,12 +781,12 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
     }
 
     private void sendConfirmationMail(String key, String username, String mailbox) {
+        EmailTextProducer emailTextProducer = new EmailTextProducerImpl(null); // TODO: Via arguments
         try {
-            String webAppTitle = activeModuleConfiguration.getWebAppTitle();
             URL url = new URL(DMX_HOST_URL);
             log.info("The confirmation mails token request URL should be:" + "\n" + url + "sign-up/confirm/" + key);
             // Localize "sentence" structure for german, maybe via Formatter
-            String mailSubject = rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
+            String mailSubject = emailTextProducer.getSubject();
             try {
                 String linkHref = "<a href=\"" + url + "sign-up/confirm/" + key + "\">" +
                     rb.getString("mail_confirmation_link_label") + "</a>";
@@ -1296,7 +813,8 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
 
     private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
-            String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+            //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+            String webAppTitle = "TODO";
             URL url = new URL(DMX_HOST_URL);
             log.info("The password reset mails token request URL should be:"
                 + "\n" + url + "sign-up/password-reset/" + key);
@@ -1320,7 +838,9 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
     }
 
     private void sendNotificationMail(String username, String mailbox) {
-        String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+        //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
+        String webAppTitle = "TODO";
+
         //
         if (CONFIG_ADMIN_MAILBOX != null && !CONFIG_ADMIN_MAILBOX.isEmpty()) {
             String adminMailbox = CONFIG_ADMIN_MAILBOX;
@@ -1345,10 +865,21 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
      */
     @Override
     public void sendSystemMail(String subject, String message, String recipientValues) {
-        String projectName = activeModuleConfiguration.getProjectTitle();
+        String projectName = "TODO"; // TODO
+        //String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
         String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
         sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, recipientValues);
+    }
+
+    @Override
+    public void addTemplateResolverBundle(Bundle bundle) {
+
+    }
+
+    @Override
+    public void removeTemplateResolverBundle(Bundle bundle) {
+
     }
 
     private Assoc getDefaultAssociation(long topic1, long topic2) {
@@ -1410,154 +941,4 @@ public class SignupPlugin extends FakeThymeleafPlugin implements SignupService, 
         return filteredRestrictedAms;
     }
 
-    private void prepareSignupPage(String templateName, String lastAuthorizationMethod) {
-        if (activeModuleConfiguration.isValid()) {
-            // Notify 3rd party plugins about template preparation
-            dmx.fireEvent(SIGNUP_RESOURCE_REQUESTED, context(), templateName);
-            // Build up sign-up template variables
-            viewData("authorization_methods", getAuthorizationMethods());
-            viewData("last_authorization_method", lastAuthorizationMethod);
-            viewData("account_creation_method_is_ldap", isLdapAccountCreationEnabled());
-            viewData("is_account_creation_password_editable", isAccountCreationPasswordEditable());
-            viewData("self_registration_enabled", isSelfRegistrationEnabled());
-            viewData("title", activeModuleConfiguration.getWebAppTitle());
-            viewData("logo_path", activeModuleConfiguration.getLogoPath());
-            viewData("css_path", activeModuleConfiguration.getCssPath());
-            viewData("project_name", activeModuleConfiguration.getProjectTitle());
-            viewData("read_more_url", activeModuleConfiguration.getReadMoreUrl());
-            viewData("tos_label", activeModuleConfiguration.getTosLabel());
-            viewData("tos_details", activeModuleConfiguration.getTosDetails());
-            viewData("pd_label", activeModuleConfiguration.getPdLabel());
-            viewData("pd_details", activeModuleConfiguration.getPdDetails());
-            viewData("footer", activeModuleConfiguration.getPagesFooter());
-            viewData("custom_workspace_enabled", activeModuleConfiguration.getApiEnabled());
-            viewData("custom_workspace_description", activeModuleConfiguration.getApiDescription());
-            viewData("custom_workspace_details", activeModuleConfiguration.getApiDetails());
-            viewData("custom_workspace_uri", activeModuleConfiguration.getApiWorkspaceUri());
-            // values used on login and registration dialogs
-            viewData("start_url", activeModuleConfiguration.getStartUrl());
-            viewData("visit_start_url", rb.getString("visit_start_url"));
-            viewData("home_url", activeModuleConfiguration.getHomeUrl());
-            viewData("visit_home_url", rb.getString("visit_home_url"));
-            viewData("loading_app_hint", activeModuleConfiguration.getLoadingAppHint());
-            viewData("logging_out_hint", activeModuleConfiguration.getLoggingOutHint());
-            // messages used on login and registration dialogs
-            viewData("password_length_hint", rb.getString("password_length_hint"));
-            viewData("password_match_hint", rb.getString("password_match_hint"));
-            viewData("check_terms_hint", rb.getString("check_terms_hint"));
-            viewData("username_invalid_hint", rb.getString("username_invalid_hint"));
-            viewData("username_taken_hint", rb.getString("username_taken_hint"));
-            viewData("email_invalid_hint", rb.getString("email_invalid_hint"));
-            viewData("email_taken_hint", rb.getString("email_taken_hint"));
-            viewData("not_authorized_message", rb.getString("not_authorized_message"));
-            // labels used in other templates
-            viewData("signup_title", rb.getString("signup_title"));
-            viewData("create_account", rb.getString("create_account"));
-            viewData("login_title", rb.getString("login_title"));
-            viewData("log_in_small", rb.getString("log_in_small"));
-            viewData("login", rb.getString("login"));
-            viewData("or_label", rb.getString("or_label"));
-            viewData("logout", rb.getString("logout"));
-            viewData("logged_in_as", rb.getString("logged_in_as"));
-            viewData("label_username", rb.getString("label_username"));
-            viewData("label_name", rb.getString("label_name"));
-            viewData("label_email", rb.getString("label_email"));
-            viewData("label_password", rb.getString("label_password"));
-            viewData("label_password_repeat", rb.getString("label_password_repeat"));
-            viewData("read_more", rb.getString("read_more"));
-            viewData("label_forgot_password", rb.getString("forgot_password"));
-            viewData("label_reset_password", rb.getString("reset_password"));
-            viewData("label_reset_password_submit", rb.getString("reset_password_submit"));
-            viewData("info_reset_password", rb.getString("reset_password_hint"));
-            viewData("password_reset_ok_message", rb.getString("password_reset_success_1"));
-            //
-            viewData("your_account_title", rb.getString("your_account_title"));
-            viewData("your_account_heading", rb.getString("your_account_heading"));
-            viewData("your_account_username_label", rb.getString("your_account_username_label"));
-            viewData("your_account_email_label", rb.getString("your_account_email_label"));
-            //
-            viewData("api_option_title", rb.getString("api_option_title"));
-            viewData("api_option_descr", rb.getString("api_option_descr"));
-            viewData("api_option_revoke", rb.getString("api_option_revoke"));
-            viewData("api_workspace_member", isApiWorkspaceMember());
-            viewData("api_email_contact", (systemEmailContact == null) ? "" : systemEmailContact);
-            viewData("api_contact_revoke", rb.getString("api_contact_revoke"));
-            // complete page
-            viewData("created_page_title", rb.getString("page_account_created_title"));
-            viewData("created_page_body_1", rb.getString("page_account_created_body_1"));
-            viewData("created_page_body_2", rb.getString("page_account_created_body_2"));
-            viewData("created_page_body_3", rb.getString("page_account_created_body_3"));
-            viewData("created_page_body_4", rb.getString("page_account_created_body_4"));
-            // mail confirmation page
-            viewData("requested_page_title", rb.getString("page_account_requested_title"));
-            viewData("requested_page_1", rb.getString("page_account_requested_1"));
-            viewData("requested_page_2", rb.getString("page_account_requested_2"));
-            viewData("requested_page_3", rb.getString("page_account_requested_3"));
-            // Generics
-            String username = accesscontrol.getUsername();
-            viewData("email_confirmation_active", CONFIG_EMAIL_CONFIRMATION);
-            viewData("skip_confirmation_mail_label", rb.getString("admin_skip_email_confirmation_mail"));
-            viewData("can_create_new_account", hasAccountCreationPrivilege());
-            viewData("authenticated", (username != null));
-            viewData("username", username);
-            viewData("template", templateName);
-            viewData("hostUrl", DMX_HOST_URL);
-        } else {
-            log.severe("Could not load module configuration of sign-up plugin during page preparation!");
-        }
-    }
-
-    private void prepareAccountEditPage() {
-        String username = accesscontrol.getUsername();
-        if (username != null) {
-            // Make use of the new privileged getEmailAddress call for users to see their own
-            String eMailAddressValue = "None";
-            try {
-                eMailAddressValue = dmx.getPrivilegedAccess().getEmailAddress(username);
-            } catch (Exception e) {
-                log.warning("Username has no Email Address topic related via \"" + USER_MAILBOX_EDGE_TYPE + "\"");
-            }
-            viewData("logged_in", true);
-            viewData("username", username);
-            viewData("display_name", getDisplayName(username));
-            viewData("email", eMailAddressValue);
-            viewData("link", "");
-            // ### viewData("confirmed", true); // Check if user already has confirmed for a membership
-        } else {
-            // Not authenticated, can't do nothing but login
-            viewData("logged_in", false);
-            viewData("username", "Not logged in");
-            viewData("email", "Not logged in");
-            viewData("link", "/sign-up/login");
-        }
-    }
-
-    @Override
-    public void reinitTemplateEngine() {
-        super.initTemplateEngine();
-    }
-
-    @Override
-    public void addTemplateResolverBundle(Bundle bundle) {
-        super.addTemplateResourceBundle(bundle);
-    }
-
-    @Override
-    public void removeTemplateResolverBundle(Bundle bundle) {
-        super.removeTemplateResourceBundle(bundle);
-    }
-
-    private void transactional(Runnable r) {
-        DMXTransaction tx = dmx.beginTx();
-
-        try {
-            r.run();
-            tx.success();
-        } catch (Throwable t) {
-            log.warning("A custom transaction failed: " + t.getLocalizedMessage());
-            tx.failure();
-        } finally {
-            tx.finish();
-        }
-    }
 }
