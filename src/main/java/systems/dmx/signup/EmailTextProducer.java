@@ -4,22 +4,31 @@ import java.util.ResourceBundle;
 
 public interface EmailTextProducer {
 
-    String getSubject();
-}
+    String getConfirmationActiveMailSubject();
 
-class EmailTextProducerImpl implements EmailTextProducer {
+    String getConfirmationActiveMailMessage(String username, String href);
 
-    private ResourceBundle rb;
+    String getConfirmationProceedMailSubject();
 
-    // TODO
-    private String webAppTitle = null;
+    String getUserConfirmationProceedMailMessage(String username, String href);
 
-    EmailTextProducerImpl(ResourceBundle rb) {
-        this.rb = rb;
-    }
+    String getApiUsageRevokedMailSubject();
 
-    @Override
-    public String getSubject() {
-        return rb.getString("mail_confirmation_subject") + " - " + webAppTitle;
-    }
+    String getApiUsageRevokedMailText(String username);
+
+    String getAccountActiveEmailSubject();
+
+    String getAccountActiveEmailMessage(String username, String hostUrl);
+
+    String getApiUsageRequestedSubject();
+
+    String getApiUsageRequestedMessage(String username);
+
+    String getPasswordResetMailSubject();
+
+    String getPasswordResetMailMessage(String href, String addressee);
+
+    String getAccountCreationSystemEmailSubject();
+
+    String getAccountCreationSystemEmailMessage(String username, String mailbox);
 }

@@ -24,6 +24,8 @@ import systems.dmx.signup.configuration.ModuleConfiguration;
 
 public interface SignupService {
 
+    void setEmailTextProducer(EmailTextProducer emailTextProducer);
+
     String getSystemEmailContactOrEmpty();
 
     /**
@@ -107,15 +109,6 @@ public interface SignupService {
     boolean isApiWorkspaceMember();
 
     void sendSystemMail(String subject, String message, String recipientValues);
-
-    /**
-     * IMPORTANT: If you register your own bundle as a resource for thymeleaf templates you must call
-     * reinitTemplateEngine afterwards.
-     */
-    void addTemplateResolverBundle(Bundle bundle);
-
-    void removeTemplateResolverBundle(Bundle bundle);
-
 
     List<String> getAuthorizationMethods();
 

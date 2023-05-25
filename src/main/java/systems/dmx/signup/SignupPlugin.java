@@ -5,7 +5,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
-import org.thymeleaf.context.AbstractContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.Assoc;
 import systems.dmx.core.Topic;
@@ -22,7 +21,6 @@ import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
-import systems.dmx.signup.events.SignupResourceRequestedListener;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -55,12 +53,11 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 @Path("/sign-up")
 public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic {
 
-    private static Logger log = Logger.getLogger(SignupPlugin.class.getName());
+    private static final Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
     private ModuleConfiguration activeModuleConfiguration = null;
     private Topic customWorkspaceAssignmentTopic = null;
     private String systemEmailContact = null;
-    private ResourceBundle rb = null;
 
     @Inject
     private AccessControlService accesscontrol;
@@ -78,6 +75,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     HashMap<String, JSONObject> token = new HashMap<String, JSONObject>();
     HashMap<String, JSONObject> pwToken = new HashMap<String, JSONObject>();
+
+    EmailTextProducer emailTextProducer = new DefaultEmailTextProducer();
 
     @Override
     public void init() {
@@ -98,6 +97,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
             log.warning("LDAP Account creation configured but respective plugin not available!");
         }
+    }
+
+    @Override
+    public void setEmailTextProducer(EmailTextProducer emailTextProducer) {
+        this.emailTextProducer = emailTextProducer;
     }
 
     @Override
@@ -127,19 +131,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             ((UserAccountCreateListener) listener).userAccountCreated((Topic) params[0]);
         }
     };
-
-    /**
-     * Custom event fired by sign-up module whenever a template resource is requested.
-     **/
-    static DMXEvent SIGNUP_RESOURCE_REQUESTED = new DMXEvent(SignupResourceRequestedListener.class) {
-        @Override
-        public void dispatch(EventListener listener, Object... params) {
-            ((SignupResourceRequestedListener) listener).signupResourceRequested(
-                (AbstractContext) params[0], (String) params[1]
-            );
-        }
-    };
-
 
 
     // --- Plugin Service Implementation --- //
@@ -412,9 +403,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             } else {
                 log.info("Revoke Request for API Workspace Membership by user \"" +
                     usernameTopic.getSimpleValue().toString() + "\"");
-                sendSystemMailboxNotification("API Usage Revoked", "<br>Hi admin,<br><br>" +
-                    usernameTopic.getSimpleValue().toString() + " just revoked his/her acceptance to your Terms of " +
-                    "Service for API-Usage.<br><br>Just wanted to let you know.<br>Cheers!");
+                String api_usage_revoked = emailTextProducer.getApiUsageRevokedMailSubject();
+                String message = emailTextProducer.getApiUsageRevokedMailText(usernameTopic.getSimpleValue().toString());
+                sendSystemMailboxNotification(api_usage_revoked, message);
                 // 2.1) fails in all cases where user has no write access to the workspace the association was created
                 // in dmx.deleteAssociation(requestRelation.getId());
                 // For now: API Usage Membership must be revoked per Email but personally and confirmed by the
@@ -439,15 +430,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // Perform notification
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
                 log.info("Sign-up Notification: User Account \"" + username.getSimpleValue() + "\" is now ENABLED!");
-                //
-                //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
-                String webAppTitle = "TODO"; // TODO
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
-                    sendSystemMail("Your account on " + webAppTitle + " is now active", rb.getString("mail_hello") +
-                        " " + username.getSimpleValue() + ",<br><br>your account on <a href=\"" + DMX_HOST_URL + "\">" +
-                        webAppTitle + "</a> is now active.<br><br>" + rb.getString("mail_ciao"), mailboxValue);
+                    String subject = emailTextProducer.getAccountActiveEmailSubject();
+                    String message = emailTextProducer.getAccountActiveEmailMessage(username.toString(), DMX_HOST_URL);
+                    sendSystemMail(subject, message, mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
             }
@@ -721,9 +709,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         dmx.getPrivilegedAccess().assignToWorkspace(apiRequest, dmx.getPrivilegedAccess().getSystemWorkspaceId());
         log.info("Request for new custom API Workspace Membership by user \"" +
             usernameTopic.getSimpleValue().toString() + "\"");
-        sendSystemMailboxNotification("API Usage Requested", "<br>Hi admin,<br><br>" +
-            usernameTopic.getSimpleValue().toString() + " accepted the Terms of Service for API Usage." +
-            "<br><br>Just wanted to let you know.<br>Cheers!");
+        String subject = emailTextProducer.getApiUsageRequestedSubject();
+        String message = emailTextProducer.getApiUsageRequestedMessage(usernameTopic.getSimpleValue().toString());
+        sendSystemMailboxNotification(subject, message);
     }
 
     private void createApiWorkspaceMembership(Topic usernameTopic) {
@@ -756,8 +744,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * Loads the sign-up configuration, a topic of type "Sign-up Configuration" associated to this plugins
      * topic of type "Plugin".
      *
-     * @see init()
-     * @see postUpdateTopic()
+     * @see #init()
+     * @see #postUpdateTopic(Topic, ChangeReport, TopicModel)
      */
     private void reloadAssociatedSignupConfiguration() {
         // load module configuration
@@ -781,26 +769,21 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     private void sendConfirmationMail(String key, String username, String mailbox) {
-        EmailTextProducer emailTextProducer = new EmailTextProducerImpl(null); // TODO: Via arguments
         try {
             URL url = new URL(DMX_HOST_URL);
             log.info("The confirmation mails token request URL should be:" + "\n" + url + "sign-up/confirm/" + key);
             // Localize "sentence" structure for german, maybe via Formatter
-            String mailSubject = emailTextProducer.getSubject();
             try {
-                String linkHref = "<a href=\"" + url + "sign-up/confirm/" + key + "\">" +
-                    rb.getString("mail_confirmation_link_label") + "</a>";
+                String href = url + "sign-up/confirm/" + key;
                 if (DMX_ACCOUNTS_ENABLED) {
-                    sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br><br>" +
-                        rb.getString("mail_confirmation_active_body") + "<br><br>" + linkHref + "<br><br>" +
-                        rb.getString("mail_ciao"), mailbox
+                    String mailSubject = emailTextProducer.getConfirmationActiveMailSubject();
+                    String message = emailTextProducer.getConfirmationActiveMailMessage(username, href);
+                    sendSystemMail(mailSubject, message, mailbox
                     );
                 } else {
-                    sendSystemMail(mailSubject,
-                        rb.getString("mail_hello") + " " + username + ",<br><br>" +
-                        rb.getString("mail_confirmation_proceed_1") + "<br>" + linkHref + "<br><br>" +
-                        rb.getString("mail_confirmation_proceed_2") + "<br><br>" + rb.getString("mail_ciao"), mailbox);
+                    String mailSubject = emailTextProducer.getConfirmationProceedMailSubject();
+                    String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, href);
+                    sendSystemMail(mailSubject, message, mailbox);
                 }
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
@@ -813,21 +796,18 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
-            //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
-            String webAppTitle = "TODO";
             URL url = new URL(DMX_HOST_URL);
-            log.info("The password reset mails token request URL should be:"
-                + "\n" + url + "sign-up/password-reset/" + key);
             String href = url + "sign-up/password-reset/" + key;
+            log.info("The password reset mails token request URL should be: \n" + href);
             try {
                 String addressee = username;
                 if (displayName != null && !displayName.isEmpty()) {
                     addressee = displayName;
                 }
-                sendSystemMail(rb.getString("mail_pw_reset_title") + " " + webAppTitle,
-                    rb.getString("mail_hello") + "!<br><br>" + rb.getString("mail_pw_reset_body") + "<br>" +
-                    "<a href=\"" + href + "\">" + href + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
-                    rb.getString("mail_signature"), mailbox);
+                String subject = emailTextProducer.getPasswordResetMailSubject();
+                String message = emailTextProducer.getPasswordResetMailMessage(href, addressee);
+                sendSystemMail(subject,
+                        message, mailbox);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
                     "\"Password Reset\" mail, caused by: " + ex.getMessage());
@@ -838,15 +818,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     private void sendNotificationMail(String username, String mailbox) {
-        //String webAppTitle = activeModuleConfiguration.getWebAppTitle();
-        String webAppTitle = "TODO";
-
-        //
         if (CONFIG_ADMIN_MAILBOX != null && !CONFIG_ADMIN_MAILBOX.isEmpty()) {
-            String adminMailbox = CONFIG_ADMIN_MAILBOX;
             try {
-                sendSystemMail("Account registration on " + webAppTitle,
-                    "<br>A user has registered.<br><br>Username: " + username + "<br>Email: " + mailbox, adminMailbox);
+                String subject = emailTextProducer.getAccountCreationSystemEmailSubject();
+                String message = emailTextProducer.getAccountCreationSystemEmailMessage(username, mailbox);
+                sendSystemMail(subject,
+                        message, CONFIG_ADMIN_MAILBOX);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED notifying the " +
                     "\"system mailbox\" about account creation, caused by: " + ex.getMessage());
@@ -872,16 +849,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, recipientValues);
     }
 
-    @Override
-    public void addTemplateResolverBundle(Bundle bundle) {
-
-    }
-
-    @Override
-    public void removeTemplateResolverBundle(Bundle bundle) {
-
-    }
-
     private Assoc getDefaultAssociation(long topic1, long topic2) {
         return dmx.getAssocBetweenTopicAndTopic(ASSOCIATION,  topic1, topic2, DEFAULT, DEFAULT);
     }
@@ -895,7 +862,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * is initialized by the framework and as soon as one configuration was
      * edited.
      *
-     * @see reloadConfiguration()
+     * @see #reloadAssociatedSignupConfiguration()
      */
     private ModuleConfiguration loadConfiguration() {
         // Fixme: ### Allow for multiple sign-up configuration topics to exist and one to be active (configured).
