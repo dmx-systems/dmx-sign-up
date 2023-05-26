@@ -27,13 +27,6 @@ public interface SignupService {
     String getSystemEmailContactOrEmpty();
 
     /**
-     * Checks for a Topic with the exact "username" value. 
-     * 
-     * @return  String  JSON-Object with property "isAvailable" set to true or false
-     */
-    String getUsernameAvailability(String username);
-
-    /**
      * Returns the display name of the given user.
      *
      * @return      the user's display name, or null if no display name is stored (or is not readable),
@@ -59,13 +52,17 @@ public interface SignupService {
                                         @PathParam("displayname") String displayName,
                                         @PathParam("password") String password) throws URISyntaxException;
 
-    Topic createCustomUserAccount(String mailbox, String displayName, String password);
-
     /**
      *
      * @return  String  Workspace Topic ID
      */
     String createAPIWorkspaceMembershipRequest();
+
+    SignUpRequestResult requestCustomSignup(String mailbox, String displayName, String password);
+
+    SignUpRequestResult requestSignUp(String username, String password, String mailbox, boolean skipConfirmation);
+
+    ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key);
 
     /**
      * Sends out a valid password-reset token (if the email address is known to the system).
@@ -78,36 +75,17 @@ public interface SignupService {
 
     boolean isLdapAccountCreationEnabled();
 
-    /**
-     * Creates a new user account with mailbox. If configured, a custom workspace membership is created automatically.
-     * @param username
-     * @param password
-     * @param mailbox
-     * @return 
-     */
-    String createSimpleUserAccount(String username, String password, String mailbox);
-
-    boolean isValidEmailAddress(String value);
-
     boolean isMailboxTaken(String value);
 
     boolean isUsernameTaken(String value);
 
     Boolean isLoggedIn();
 
-    /** Send notification email to system administrator mailbox configured in current \"Sign-up Configuration\" topic.*/
-    void sendSystemMailboxNotification(String subject, String message);
-
-    /** Send notification email to all mailboxes in String (many are seperated by a simple ";" and without spaces. */
-    void sendUserMailboxNotification(String mailboxes, String subject, String message);
-
     boolean isSelfRegistrationEnabled();
 
     boolean hasAccountCreationPrivilege();
 
     boolean isApiWorkspaceMember();
-
-    void sendSystemMail(String subject, String message, String recipientValues);
 
     List<String> getAuthorizationMethods();
 

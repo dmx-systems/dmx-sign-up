@@ -15,6 +15,7 @@ import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
+import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPPluginService;
 import systems.dmx.sendmail.SendmailService;
@@ -134,17 +135,16 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
 
     // --- Plugin Service Implementation --- //
-
     /**
      * A HTTP resource allowing existence checks for given username strings.
      * @param username
      * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
+     *
      * If the username is already taken isAvailable is set to false.
      */
     @GET
     @Path("/check/{username}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Override
     public String getUsernameAvailability(@PathParam("username") String username) {
         JSONObject response = new JSONObject();
         try {
@@ -220,6 +220,19 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             throw new RuntimeException(e);
         }
     }
+
+    @Override
+    public SignUpRequestResult requestCustomSignup(String mailbox, String displayName, String password) {
+        if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
+            transactional(() -> createCustomUserAccount(mailbox, displayName, password));
+            log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+            return handleAccountCreatedRedirect(mailbox);
+        }
+        return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+    }
+
+
+    @Override
     public SignUpRequestResult requestSignUp(String username, String password, String mailbox, boolean skipConfirmation) {
         if (SignUpConfigOptions.CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
@@ -282,6 +295,40 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // redirecting to page displaying "your account was created but needs to be activated"
             return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING);
         }
+    }
+
+    @Override
+    public ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key) {
+        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+        if (!token.containsKey(key)) {
+            return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.INVALID_TOKEN);
+        }
+        // 2) Process available token and remove it from stack
+        String username;
+        JSONObject input = token.get(key);
+        token.remove(key);
+        // 3) Create the user account and show ok OR present an error message.
+        try {
+            username = input.getString("username");
+            if (input.getLong("expiration") > new Date().getTime()) {
+                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
+                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
+            } else {
+                return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.LINK_EXPIRED);
+            }
+        } catch (JSONException ex) {
+            log.log(Level.SEVERE, null, ex);
+            log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
+                    new Object[]{ex.getMessage(), ex.getCause().toString()});
+            return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.UNEXPECTED_ERROR);
+
+        }
+        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
+        if (!SignUpConfigOptions.DMX_ACCOUNTS_ENABLED) {
+            log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
+            return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING);
+        }
+        return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS, username);
     }
 
 
@@ -448,8 +495,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return username;
     }
 
-    @Override
-    public Topic createCustomUserAccount(String mailbox, String displayName, String password) {
+    private Topic createCustomUserAccount(String mailbox, String displayName, String password) {
         try {
             // 1) Custom sign-up request means "mailbox" = "username"
             String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
@@ -558,8 +604,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return accesscontrol.getUsername() != null;
     }
 
-    @Override
-    public void sendSystemMailboxNotification(String subject, String message) {
+    private void sendSystemMailboxNotification(String subject, String message) {
         if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
             String recipient = CONFIG_ADMIN_MAILBOX;
             try {
@@ -573,8 +618,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    @Override
-    public void sendUserMailboxNotification(String mailbox, String subject, String message) {
+    private void sendUserMailboxNotification(String mailbox, String subject, String message) {
         try {
             sendSystemMail(subject, message, mailbox);
         } catch (Exception ex) {
@@ -608,8 +652,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    @Override
-    public String createSimpleUserAccount(String username, String password, String mailbox) {
+    private String createSimpleUserAccount(String username, String password, String mailbox) {
         try {
             if (isUsernameTaken(username)) {
                 // Might be thrown if two users compete for registration (of the same username)
@@ -678,8 +721,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return (userNameTopic != null);
     }
 
-    @Override
-    public boolean isValidEmailAddress(String value) {
+    private boolean isValidEmailAddress(String value) {
         // ### Todo: Implement email-valid check into dmx-sendmail Service, utilizing
         // import javax.mail.internet.AddressException;
         // import javax.mail.internet.InternetAddress;
@@ -951,8 +993,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * @param message       String Text content of the message.
      * @param recipientValues     String of Email Address message is sent to **must not** be NULL.
      */
-    @Override
-    public void sendSystemMail(String subject, String message, String recipientValues) {
+    private void sendSystemMail(String subject, String message, String recipientValues) {
         String projectName = "TODO"; // TODO
         //String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
@@ -1017,6 +1058,20 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
 
         return filteredRestrictedAms;
+    }
+
+    private void transactional(Runnable r) {
+        DMXTransaction tx = dmx.beginTx();
+
+        try {
+            r.run();
+            tx.success();
+        } catch (Throwable t) {
+            log.warning("A custom transaction failed: " + t.getLocalizedMessage());
+            tx.failure();
+        } finally {
+            tx.finish();
+        }
     }
 
 }
