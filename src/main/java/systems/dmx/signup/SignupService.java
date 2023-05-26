@@ -1,7 +1,6 @@
 package systems.dmx.signup;
 
 
-import com.sun.jersey.api.view.Viewable;
 import java.net.URISyntaxException;
 import java.util.List;
 import javax.ws.rs.GET;
@@ -9,8 +8,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.osgi.framework.Bundle;
+
 import systems.dmx.core.Topic;
 import systems.dmx.core.service.Transactional;
 import systems.dmx.signup.configuration.ModuleConfiguration;
@@ -47,6 +45,12 @@ public interface SignupService {
 
     void updateDisplayName(String username, String displayName);
 
+    InitiatePasswordResetRequestResult requestInitiatePasswordResetWithName(String email, String name);
+
+    PasswordResetRequestResult requestPasswordReset(String token);
+
+    PasswordUpdateRequestResult requestPasswordChange(String token, String password);
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/custom-handle/{mailbox}/{displayname}/{password}")
@@ -70,14 +74,9 @@ public interface SignupService {
      * @param redirectUrl
      * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
      */
-    Response initiateRedirectPasswordReset(String email, String redirectUrl) throws URISyntaxException;
+    InitiatePasswordResetRequestResult requestInitiateRedirectPasswordReset(String email, String redirectUrl);
 
-    /**
-     * @param name
-     * @param email
-     * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
-     */
-    Response initiatePasswordResetWithName(String email, String name) throws URISyntaxException;
+    boolean isLdapAccountCreationEnabled();
 
     /**
      * Creates a new user account with mailbox. If configured, a custom workspace membership is created automatically.
