@@ -364,6 +364,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
                         email.trim());
+                return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
             }
         } catch (Exception ex) {
             log.log(Level.SEVERE, null, ex);
