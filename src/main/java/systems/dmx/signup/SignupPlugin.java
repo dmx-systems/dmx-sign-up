@@ -6,6 +6,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.Assoc;
+import systems.dmx.core.RelatedTopic;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.model.TopicModel;
@@ -224,8 +225,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public SignUpRequestResult requestCustomSignup(String mailbox, String displayName, String password) {
         if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
-            transactional(() -> createCustomUserAccount(mailbox, displayName, password));
-            log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+            try {
+                transactional(() -> createCustomUserAccount(mailbox, displayName, password));
+                log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
+            } catch (Exception e) {
+                return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+            }
             return handleAccountCreatedRedirect(mailbox);
         }
         return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
@@ -505,21 +510,26 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
             final long usernameTopicId = usernameTopic.getId();
             long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
-            dmx.getPrivilegedAccess().runInWorkspaceContext(displayNamesWorkspaceId, new Callable<Topic>() {
+            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
                     // create display name facet for username topic
                     facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
+
+                    // TODO: Not doable for anonymous user. Needs a privileged function.
                     facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET,
                             mf.newFacetValueModel(DISPLAY_NAME)
                                     .set(displayNameValue));
                     // automatically make users member in "Display Names" workspace
-                    accesscontrol.createMembership(username, displayNamesWorkspaceId);
+                    dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
                     log.info("Created membership for new user account in \"Display Names\" "
                             + "workspace (SharingMode.Collaborative)");
                     // Account creator should be member of "Display Names" ..
                     // or is "runInWorkspacecContext privileged to GET?
-                    return facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
+                    RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
+                    dmx.getPrivilegedAccess().assignToWorkspace(result, displayNamesWorkspaceId);
+
+                    return result;
                 }
             });
             return usernameTopic;
@@ -677,20 +687,22 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // 1) Creates a new username topic (in LDAP and/or DMX)
             final Topic usernameTopic = createUsername(creds);
             final String eMailAddressValue = mailbox;
-            // 2) create and associate e-mail address topic in "System" Workspace
-            long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
-            dmx.getPrivilegedAccess().runInWorkspaceContext(systemWorkspaceId, new Callable<Topic>() {
+
+            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    // TODO: When not-logged in, access to systems workspace fails. How to continue?
+                    // 2) create and associate e-mail address topic in "System" Workspace
+                    long systemWorkspaceId = dmx.getPrivilegedAccess().getSystemWorkspaceId();
                     Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
-                        new SimpleValue(eMailAddressValue)));
+                            new SimpleValue(eMailAddressValue)));
+                    dmx.getPrivilegedAccess().assignToWorkspace(eMailAddress, systemWorkspaceId);
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
                     dmx.fireEvent(USER_ACCOUNT_CREATE_LISTENER, usernameTopic);
                     // 4) associate email address to "username" topic too
-                    dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
+                    Assoc assoc = dmx.createAssoc(mf.newAssocModel(USER_MAILBOX_EDGE_TYPE,
                         mf.newTopicPlayerModel(eMailAddress.getId(), CHILD),
                         mf.newTopicPlayerModel(usernameTopic.getId(), PARENT)));
+                    dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspaceId);
                     // 5) create membership to custom workspace topic
                     if (customWorkspaceAssignmentTopic != null) {
                         accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
@@ -706,6 +718,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             sendNotificationMail(username, mailbox.trim());
             return username;
         } catch (Exception e) {
+            log.log(Level.WARNING, "Creating simple user account failed", e);
             throw new RuntimeException("Creating simple user account failed, username=\"" + username +
                 "\", mailbox=\"" + mailbox + "\"", e);
         }
@@ -1025,7 +1038,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public List<String> getAuthorizationMethods() {
         Map<String, String> knownAms = new HashMap<>();
-        Set<String> originalAms = new HashSet(accesscontrol.getAuthorizationMethods());
+        Set<String> originalAms = new HashSet<>(accesscontrol.getAuthorizationMethods());
         originalAms.add("Basic");
         for (String s : originalAms) {
             // key: lowercased
@@ -1061,6 +1074,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         } catch (Throwable t) {
             log.warning("A custom transaction failed: " + t.getLocalizedMessage());
             tx.failure();
+            throw t;
         } finally {
             tx.finish();
         }
