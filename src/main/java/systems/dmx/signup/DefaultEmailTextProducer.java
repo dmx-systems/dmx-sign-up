@@ -6,12 +6,18 @@ class DefaultEmailTextProducer implements EmailTextProducer {
 
     private String webAppTitle = "Sign-Up Plugin";
 
+    private String hostUrl;
+
     private ResourceBundle rb;
 
-    DefaultEmailTextProducer() {
+    DefaultEmailTextProducer(String hostUrl) {
+        this.hostUrl = hostUrl;
     }
 
-    private String getLinkHref(String href) {
+    private String getLinkHref(String key) {
+        // Implementation that works for default sign-up-ui plugin
+        String href = hostUrl + "sign-up-ui/password-reset/" + key;
+
         return "<a href=\"" + href + "\">" +
                 rb.getString("mail_confirmation_link_label") + "</a>";
     }
@@ -22,8 +28,8 @@ class DefaultEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
-    public String getConfirmationActiveMailMessage(String username, String href) {
-        String linkHref = getLinkHref(href);
+    public String getConfirmationActiveMailMessage(String username, String key) {
+        String linkHref = getLinkHref(key);
         return rb.getString("mail_hello") + " " + username + ",<br><br>" +
                 rb.getString("mail_confirmation_active_body") + "<br><br>" + linkHref + "<br><br>" +
                 rb.getString("mail_ciao");
@@ -35,8 +41,8 @@ class DefaultEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
-    public String getUserConfirmationProceedMailMessage(String username, String href) {
-        String linkHref = getLinkHref(href);
+    public String getUserConfirmationProceedMailMessage(String username, String key) {
+        String linkHref = getLinkHref(key);
 
         return rb.getString("mail_hello") + " " + username + ",<br><br>" +
                 rb.getString("mail_confirmation_proceed_1") + "<br>" + linkHref + "<br><br>" +
@@ -61,7 +67,7 @@ class DefaultEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
-    public String getAccountActiveEmailMessage(String username, String hostUrl) {
+    public String getAccountActiveEmailMessage(String username) {
         return rb.getString("mail_hello") +
                 " " + username + ",<br><br>your account on <a href=\"" + hostUrl + "\">" +
                 webAppTitle + "</a> is now active.<br><br>" + rb.getString("mail_ciao");
@@ -85,7 +91,7 @@ class DefaultEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
-    public String getPasswordResetMailMessage(String href, String addressee) {
+    public String getPasswordResetMailMessage(String addressee, String href) {
         return rb.getString("mail_hello") + "!<br><br>" + rb.getString("mail_pw_reset_body") + "<br>" +
                 "<a href=\"" + href + "\">" + href + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
                 rb.getString("mail_signature");

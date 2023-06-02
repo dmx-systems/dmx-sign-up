@@ -1,16 +1,14 @@
 package systems.dmx.signup;
 
-import java.util.ResourceBundle;
-
 public interface EmailTextProducer {
 
     String getConfirmationActiveMailSubject();
 
-    String getConfirmationActiveMailMessage(String username, String href);
+    String getConfirmationActiveMailMessage(String username, String key);
 
     String getConfirmationProceedMailSubject();
 
-    String getUserConfirmationProceedMailMessage(String username, String href);
+    String getUserConfirmationProceedMailMessage(String username, String key);
 
     String getApiUsageRevokedMailSubject();
 
@@ -18,7 +16,7 @@ public interface EmailTextProducer {
 
     String getAccountActiveEmailSubject();
 
-    String getAccountActiveEmailMessage(String username, String hostUrl);
+    String getAccountActiveEmailMessage(String username);
 
     String getApiUsageRequestedSubject();
 
@@ -26,7 +24,7 @@ public interface EmailTextProducer {
 
     String getPasswordResetMailSubject();
 
-    String getPasswordResetMailMessage(String href, String addressee);
+    String getPasswordResetMailMessage(String addressee, String key);
 
     String getAccountCreationSystemEmailSubject();
 

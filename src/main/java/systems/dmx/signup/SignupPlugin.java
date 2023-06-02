@@ -77,7 +77,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     HashMap<String, JSONObject> token = new HashMap<String, JSONObject>();
     HashMap<String, JSONObject> pwToken = new HashMap<String, JSONObject>();
 
-    EmailTextProducer emailTextProducer = new DefaultEmailTextProducer();
+    EmailTextProducer emailTextProducer = new DefaultEmailTextProducer(DMX_HOST_URL);
 
     @Override
     public void init() {
@@ -465,7 +465,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 return PasswordUpdateRequestResult.NO_TOKEN;
             }
         } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
+            log.log(Level.SEVERE, null, ex);
             return PasswordUpdateRequestResult.UNEXPECTED_ERROR;
         }
     }
@@ -590,7 +590,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     String subject = emailTextProducer.getAccountActiveEmailSubject();
-                    String message = emailTextProducer.getAccountActiveEmailMessage(username.toString(), DMX_HOST_URL);
+                    String message = emailTextProducer.getAccountActiveEmailMessage(username.toString());
                     sendSystemMail(subject, message, mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
@@ -950,24 +950,17 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
-            URL url = new URL(DMX_HOST_URL);
-            String href = url + "sign-up/password-reset/" + key;
-            log.info("The password reset mails token request URL should be: \n" + href);
-            try {
-                String addressee = username;
-                if (displayName != null && !displayName.isEmpty()) {
-                    addressee = displayName;
-                }
-                String subject = emailTextProducer.getPasswordResetMailSubject();
-                String message = emailTextProducer.getPasswordResetMailMessage(href, addressee);
-                sendSystemMail(subject,
-                        message, mailbox);
-            } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
-                    "\"Password Reset\" mail, caused by: " + ex.getMessage());
+            String addressee = username;
+            if (displayName != null && !displayName.isEmpty()) {
+                addressee = displayName;
             }
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
+            String subject = emailTextProducer.getPasswordResetMailSubject();
+            String message = emailTextProducer.getPasswordResetMailMessage(addressee, key);
+            sendSystemMail(subject,
+                    message, mailbox);
+        } catch (Exception ex) {
+            log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
+                "\"Password Reset\" mail, caused by: " + ex.getMessage());
         }
     }
 
