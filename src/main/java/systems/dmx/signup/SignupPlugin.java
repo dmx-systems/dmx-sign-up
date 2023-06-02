@@ -524,6 +524,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             });
             return usernameTopic;
         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to create custom account", e);
             throw new RuntimeException("Creating custom user account failed, mailbox=\"" + mailbox +
                 "\", displayName=\"" + displayName + "\"", e);
         }
@@ -681,6 +682,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             dmx.getPrivilegedAccess().runInWorkspaceContext(systemWorkspaceId, new Callable<Topic>() {
                 @Override
                 public Topic call() {
+                    // TODO: When not-logged in, access to systems workspace fails. How to continue?
                     Topic eMailAddress = dmx.createTopic(mf.newTopicModel(USER_MAILBOX_TYPE_URI,
                         new SimpleValue(eMailAddressValue)));
                     // 3) fire custom event ### this is useless since fired by "anonymous" (this request scope)
@@ -950,14 +952,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private void sendPasswordResetMail(String key, String username, String mailbox, String displayName) {
         try {
-            String addressee = username;
-            if (displayName != null && !displayName.isEmpty()) {
-                addressee = displayName;
-            }
+            String addressee = (displayName != null && !displayName.isEmpty()) ? displayName : username;
             String subject = emailTextProducer.getPasswordResetMailSubject();
             String message = emailTextProducer.getPasswordResetMailMessage(addressee, key);
-            sendSystemMail(subject,
-                    message, mailbox);
+            sendSystemMail(subject, message, mailbox);
         } catch (Exception ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
                 "\"Password Reset\" mail, caused by: " + ex.getMessage());

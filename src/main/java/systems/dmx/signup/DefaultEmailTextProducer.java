@@ -14,13 +14,16 @@ class DefaultEmailTextProducer implements EmailTextProducer {
         this.hostUrl = hostUrl;
     }
 
-    private String getLinkHref(String key) {
-        // Implementation that works for default sign-up-ui plugin
-        String href = hostUrl + "sign-up-ui/password-reset/" + key;
+    private String getPasswordResetUrl(String key) {
+        return hostUrl + "sign-up-ui/password-reset/" + key;
+    }
 
+    private String getConfirmationLink(String key) {
+        String href = hostUrl + "sign-up-ui/confirm/" + key;
         return "<a href=\"" + href + "\">" +
                 rb.getString("mail_confirmation_link_label") + "</a>";
     }
+
 
     @Override
     public String getConfirmationActiveMailSubject() {
@@ -29,7 +32,7 @@ class DefaultEmailTextProducer implements EmailTextProducer {
 
     @Override
     public String getConfirmationActiveMailMessage(String username, String key) {
-        String linkHref = getLinkHref(key);
+        String linkHref = getConfirmationLink(key);
         return rb.getString("mail_hello") + " " + username + ",<br><br>" +
                 rb.getString("mail_confirmation_active_body") + "<br><br>" + linkHref + "<br><br>" +
                 rb.getString("mail_ciao");
@@ -42,7 +45,7 @@ class DefaultEmailTextProducer implements EmailTextProducer {
 
     @Override
     public String getUserConfirmationProceedMailMessage(String username, String key) {
-        String linkHref = getLinkHref(key);
+        String linkHref = getConfirmationLink(key);
 
         return rb.getString("mail_hello") + " " + username + ",<br><br>" +
                 rb.getString("mail_confirmation_proceed_1") + "<br>" + linkHref + "<br><br>" +
@@ -91,9 +94,10 @@ class DefaultEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
-    public String getPasswordResetMailMessage(String addressee, String href) {
+    public String getPasswordResetMailMessage(String addressee, String key) {
+        String href = getPasswordResetUrl(key);
         return rb.getString("mail_hello") + "!<br><br>" + rb.getString("mail_pw_reset_body") + "<br>" +
-                "<a href=\"" + href + "\">" + href + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
+                "<a href=\"" + key + "\">" + key + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
                 rb.getString("mail_signature");
     }
 
