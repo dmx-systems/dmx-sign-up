@@ -165,6 +165,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 ## Version history
 
 **3.0.0-SNAPSHOT** -- Upcoming
+
 * all UI-related code moved into its own plugin
 * Compatible with DMX 5.3
 
