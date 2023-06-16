@@ -1,28 +1,16 @@
 
 # DMX Sign-up
 
-This plugin introduces a configurable user registration process for DMX _User Accounts_. The plugin can be configured so users need to opt-in, utilizing confirmation emails (active for 60mins).
+This plugin introduces service function for configurable user registration process for DMX _User Accounts_. 
 
-Most (if not all) user facing message are translatable by now. A german language version of this bundle can be build from source after setting the language option to `de` using the `plugin.properties` file.
+The plugin can be configured so users need to opt-in, utilizing confirmation emails (active for 60mins).
+
 
 This plugin adds:
 *   A "User Mailbox" association type to associate "Email Address" w. "User Accounts".
-*   A `Sign-up`-link next to the `Login`-button in the DMX Webclient
-*   A `Sign-up Configuration` topic associated to the `DMX Sign up` Plugin topic
-     (part of the "System" workspace and thus editable by all members of it)
-*   A `Forgot password?` link to the `Login`-dialog in the DMX Webclient
 
 The special features of the **self-registration ui** is comprised of:
-*   Username existence check
-*   Email existence check
-*   Simple GUI-Notification mechanism
-*   Minimal CSS Definition
 *   Administration workspace members can create accounts without email confirmation
-
-The special features of the **login ui** is comprised of:
-*   Simple GUI-Notification mechanism
-*   Automatic redirect
-*   Minimal CSS Definition
 
 The **special logic** of this plugin is comprised of:
 *   Optionally: Setup an email based confirmation workflow for new accounts<br/>
@@ -40,14 +28,13 @@ Email address topics of new user accounts are all placed in the "Administration"
 
 ## Requirements
 
-DMX 5.1: DMX is a platform for collaboration and knowledge management.
+DMX 5.3: DMX is a platform for collaboration and knowledge management.
 https://github.com/dmx-systems/dmx-platform
 
 To be able to install this module you first and additionally have to install the following DMX Plugins.
 
-*    `dmx-thymeleaf-0.9.3+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-thymeleaf)
 *    `dmx-sendmail-2.0.2+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
-*    `dmx-ldap-0.5.4-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
+*    Optional: `dmx-ldap-0.5.4-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
 
 You can find the respective plugin version and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
 
@@ -127,20 +114,6 @@ click on the link that is contained in the account creation/password reset reque
 The module configuration is done through a configuration topic in DMX itself. However during the *first deployment* default values for the topic can be provided through the platform configuration through
 the following properties:
 ```
-dmx.signup.config_project_title =
-dmx.signup.config_webapp_title =
-dmx.signup.config_webapp_logo_path = 
-dmx.signup.config_custom_css_path = 
-dmx.signup.config_read_more_url = 
-dmx.signup.config_pages_footer = 
-dmx.signup.config_tos_label = 
-dmx.signup.config_tos_detail = 
-dmx.signup.config_pd_label = 
-dmx.signup.config_pd_detail = 
-dmx.signup.start_page_url = 
-dmx.signup.home_page_url = 
-dmx.signup.loading_app_hint = 
-dmx.signup.logging_out_hint = 
 dmx.signup.config_api_enabled = false 
 dmx.signup.config_api_description =
 dmx.signup.config_api_details =
@@ -190,6 +163,10 @@ When the property is not set, all known auth methods are allowed and their order
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+
+**3.0.0-SNAPSHOT** -- Upcoming
+* all UI-related code moved into its own plugin
+* Compatible with DMX 5.3
 
 **2.1.0-SNAPSHOT** -- Upcoming
 
