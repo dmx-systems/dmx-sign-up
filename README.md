@@ -164,12 +164,12 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 
-**3.0.0-SNAPSHOT** -- Upcoming
+**3.0.0** -- Upcoming
 
-* all UI-related code moved into its own plugin
+* All UI-related code moved into its own plugin
 * Compatible with DMX 5.3
 
-**2.1.0-SNAPSHOT** -- Upcoming
+**2.1.0** -- Upcoming
 
 * Account creation through LDAP plugin
 * True optional dependency on `dmx-ldap-0.6.1+` plugin
