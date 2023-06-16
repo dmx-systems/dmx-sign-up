@@ -3,10 +3,8 @@ package systems.dmx.signup.migrations;
 import java.util.logging.Logger;
 
 import systems.dmx.core.model.ChildTopicsModel;
-import systems.dmx.core.model.TopicModel;
 import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Migration;
-import systems.dmx.signup.Constants;
 import systems.dmx.workspaces.WorkspacesService;
 
 public class Migration2 extends Migration {
@@ -22,7 +20,7 @@ public class Migration2 extends Migration {
     private static final String MIGRATION2_CONFIG_PROJECT_TITLE = "dmx.signup.config_project_title";
     private static final String MIGRATION2_CONFIG_WEBAPP_TITLE = "dmx.signup.config_webapp_title";
     private static final String MIGRATION2_CONFIG_LOGO_PATH = "dmx.signup.config_webapp_logo_path";
-    private static final String MIGRATION2_CONFIG_CSS_PATH = "dmx.signup.config_custom_css_path";
+    private static final String MIGRATION2_CONFIG_CUSTOM_CSS_PATH = "dmx.signup.config_custom_css_path";
     private static final String MIGRATION2_CONFIG_READ_MORE_URL = "dmx.signup.config_read_more_url";
     private static final String MIGRATION2_CONFIG_PAGES_FOOTER = "dmx.signup.config_pages_footer";
     private static final String MIGRATION2_CONFIG_TOS_LABEL = "dmx.signup.config_tos_label";
@@ -30,16 +28,16 @@ public class Migration2 extends Migration {
     private static final String MIGRATION2_CONFIG_PD_LABEL = "dmx.signup.config_pd_label";
     private static final String MIGRATION2_CONFIG_PD_DETAILS = "dmx.signup.config_pd_detail";
 
-    private static final String DEFAULT_CONFIG_PROJECT_TITLE = System.getProperty(Constants.CONFIG_PROJECT_TITLE, "My DMX");
-    private static final String DEFAULT_CONFIG_WEBAPP_TITLE = System.getProperty(Constants.CONFIG_WEBAPP_TITLE, "My DMX");
-    private static final String DEFAULT_CONFIG_LOGO_PATH = System.getProperty(Constants.CONFIG_LOGO_PATH, "/systems.dmx.sign-up/dmx-logo.svg");
-    private static final String DEFAULT_CONFIG_CUSTOM_CSS_PATH = System.getProperty(Constants.CONFIG_CUSTOM_CSS_PATH, "/systems.dmx.sign-up/style/style.css");
-    private static final String DEFAULT_CONFIG_READ_MORE_URL = System.getProperty(Constants.CONFIG_READ_MORE_URL, "...");
-    private static final String DEFAULT_CONFIG_PAGES_FOOTER = System.getProperty(Constants.CONFIG_PAGES_FOOTER, "standard");
-    private static final String DEFAULT_CONFIG_TOS_LABEL = System.getProperty(Constants.CONFIG_TOS_LABEL, "Terms of Service");
-    private static final String DEFAULT_CONFIG_TOS_DETAILS = System.getProperty(Constants.CONFIG_TOS_DETAILS, "...");
-    private static final String DEFAULT_CONFIG_PD_LABEL = System.getProperty(Constants.CONFIG_PD_LABEL, "I understand that any private information I give to this site may be made publicly available.");
-    private static final String DEFAULT_CONFIG_PD_DETAILS = System.getProperty(Constants.CONFIG_PD_DETAILS, "...");
+    private static final String DEFAULT_CONFIG_PROJECT_TITLE = System.getProperty(MIGRATION2_CONFIG_PROJECT_TITLE, "My DMX");
+    private static final String DEFAULT_CONFIG_WEBAPP_TITLE = System.getProperty(MIGRATION2_CONFIG_WEBAPP_TITLE, "My DMX");
+    private static final String DEFAULT_CONFIG_LOGO_PATH = System.getProperty(MIGRATION2_CONFIG_LOGO_PATH, "/systems.dmx.sign-up/dmx-logo.svg");
+    private static final String DEFAULT_CONFIG_CUSTOM_CSS_PATH = System.getProperty(MIGRATION2_CONFIG_CUSTOM_CSS_PATH, "/systems.dmx.sign-up/style/style.css");
+    private static final String DEFAULT_CONFIG_READ_MORE_URL = System.getProperty(MIGRATION2_CONFIG_READ_MORE_URL, "...");
+    private static final String DEFAULT_CONFIG_PAGES_FOOTER = System.getProperty(MIGRATION2_CONFIG_PAGES_FOOTER, "standard");
+    private static final String DEFAULT_CONFIG_TOS_LABEL = System.getProperty(MIGRATION2_CONFIG_TOS_LABEL, "Terms of Service");
+    private static final String DEFAULT_CONFIG_TOS_DETAILS = System.getProperty(MIGRATION2_CONFIG_TOS_DETAILS, "...");
+    private static final String DEFAULT_CONFIG_PD_LABEL = System.getProperty(MIGRATION2_CONFIG_PD_LABEL, "I understand that any private information I give to this site may be made publicly available.");
+    private static final String DEFAULT_CONFIG_PD_DETAILS = System.getProperty(MIGRATION2_CONFIG_PD_DETAILS, "...");
 
     @Override
     public void run() {
@@ -48,7 +46,7 @@ public class Migration2 extends Migration {
         ctm.set(MIGRATION2_CONFIG_PROJECT_TITLE, DEFAULT_CONFIG_PROJECT_TITLE);
         ctm.set(MIGRATION2_CONFIG_WEBAPP_TITLE, DEFAULT_CONFIG_WEBAPP_TITLE);
         ctm.set(MIGRATION2_CONFIG_LOGO_PATH, DEFAULT_CONFIG_LOGO_PATH);
-        ctm.set(MIGRATION2_CONFIG_CSS_PATH, DEFAULT_CONFIG_CUSTOM_CSS_PATH);
+        ctm.set(MIGRATION2_CONFIG_CUSTOM_CSS_PATH, DEFAULT_CONFIG_CUSTOM_CSS_PATH);
         ctm.set(MIGRATION2_CONFIG_READ_MORE_URL, DEFAULT_CONFIG_READ_MORE_URL);
         ctm.set(MIGRATION2_CONFIG_PAGES_FOOTER, DEFAULT_CONFIG_PAGES_FOOTER);
         ctm.set(MIGRATION2_CONFIG_TOS_LABEL, DEFAULT_CONFIG_TOS_LABEL);

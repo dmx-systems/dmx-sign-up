@@ -7,16 +7,13 @@ import static systems.dmx.accesscontrol.Constants.USERNAME;
 import systems.dmx.core.Assoc;
 import static systems.dmx.core.Constants.CHILD;
 import static systems.dmx.core.Constants.PARENT;
+import static systems.dmx.signup.Constants.*;
+
 import systems.dmx.core.RelatedTopic;
 import systems.dmx.core.Topic;
 import systems.dmx.core.model.SimpleValue;
 import systems.dmx.core.service.Inject;
 import systems.dmx.core.service.Migration;
-import static systems.dmx.signup.Constants.*;
-import static systems.dmx.signup.Constants.CONFIG_CUSTOM_CSS_PATH;
-import static systems.dmx.signup.Constants.SIGNUP_SYMBOLIC_NAME;
-import static systems.dmx.signup.Constants.SIGN_UP_CONFIG_TYPE_URI;
-import static systems.dmx.signup.Constants.USER_MAILBOX_EDGE_TYPE;
 import systems.dmx.workspaces.WorkspacesService;
 
 /**
@@ -25,6 +22,17 @@ import systems.dmx.workspaces.WorkspacesService;
 public class Migration10 extends Migration {
 
     private Logger logger = Logger.getLogger(getClass().getName());
+
+    private static final String MIGRATION10_CONFIG_PROJECT_TITLE = "dmx.signup.config_project_title";
+    private static final String MIGRATION10_CONFIG_WEBAPP_TITLE = "dmx.signup.config_webapp_title";
+    private static final String MIGRATION10_CONFIG_LOGO_PATH = "dmx.signup.config_webapp_logo_path";
+    private static final String MIGRATION10_CONFIG_CUSTOM_CSS_PATH = "dmx.signup.config_custom_css_path";
+    private static final String MIGRATION10_CONFIG_READ_MORE_URL = "dmx.signup.config_read_more_url";
+    private static final String MIGRATION10_CONFIG_PAGES_FOOTER = "dmx.signup.config_pages_footer";
+    private static final String MIGRATION10_CONFIG_TOS_LABEL = "dmx.signup.config_tos_label";
+    private static final String MIGRATION10_CONFIG_TOS_DETAILS = "dmx.signup.config_tos_detail";
+    private static final String MIGRATION10_CONFIG_PD_LABEL = "dmx.signup.config_pd_label";
+    private static final String MIGRATION10_CONFIG_PD_DETAILS = "dmx.signup.config_pd_detail";
 
     @Inject
     private WorkspacesService wsService;
@@ -38,16 +46,16 @@ public class Migration10 extends Migration {
         Topic standardConfiguration = dmx.getTopicByUri("dmx.signup.default_configuration");
         wsService.assignToWorkspace(standardConfiguration, administrationWsId);
         standardConfiguration.loadChildTopics();
-        RelatedTopic webAppTitle = standardConfiguration.getChildTopics().getTopic(CONFIG_WEBAPP_TITLE);
-        RelatedTopic logoPath = standardConfiguration.getChildTopics().getTopic(CONFIG_LOGO_PATH);
-        RelatedTopic cssPath = standardConfiguration.getChildTopics().getTopic(CONFIG_CUSTOM_CSS_PATH);
-        RelatedTopic projectTitle = standardConfiguration.getChildTopics().getTopic(CONFIG_PROJECT_TITLE);
-        RelatedTopic tosLabel = standardConfiguration.getChildTopics().getTopic(CONFIG_TOS_LABEL);
-        RelatedTopic tosDetail = standardConfiguration.getChildTopics().getTopic(CONFIG_TOS_DETAILS);
-        RelatedTopic pdLabel = standardConfiguration.getChildTopics().getTopic(CONFIG_PD_LABEL);
-        RelatedTopic pdDetail = standardConfiguration.getChildTopics().getTopic(CONFIG_PD_DETAILS);
-        RelatedTopic readMoreUrl = standardConfiguration.getChildTopics().getTopic(CONFIG_READ_MORE_URL);
-        RelatedTopic pagesFooter = standardConfiguration.getChildTopics().getTopic(CONFIG_PAGES_FOOTER);
+        RelatedTopic webAppTitle = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_WEBAPP_TITLE);
+        RelatedTopic logoPath = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_LOGO_PATH);
+        RelatedTopic cssPath = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_CUSTOM_CSS_PATH);
+        RelatedTopic projectTitle = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_PROJECT_TITLE);
+        RelatedTopic tosLabel = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_TOS_LABEL);
+        RelatedTopic tosDetail = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_TOS_DETAILS);
+        RelatedTopic pdLabel = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_PD_LABEL);
+        RelatedTopic pdDetail = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_PD_DETAILS);
+        RelatedTopic readMoreUrl = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_READ_MORE_URL);
+        RelatedTopic pagesFooter = standardConfiguration.getChildTopics().getTopic(MIGRATION10_CONFIG_PAGES_FOOTER);
         // RelatedTopic apiDescr = standardConfiguration.getChildTopics().getTopic("dmx.signup.config_api_description");
         // RelatedTopic apiDetails = standardConfiguration.getChildTopics().getTopic("dmx.signup.config_api_details");
         // RelatedTopic apiEnabled = standardConfiguration.getChildTopics().getTopic("dmx.signup.config_api_enabled");

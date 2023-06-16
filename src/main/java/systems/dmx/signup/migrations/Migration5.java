@@ -23,13 +23,13 @@ public class Migration5 extends Migration {
     private static final String MIGRATION5_CONFIG_LOADING_APP_HINT = "dmx.signup.loading_app_hint";
     private static final String MIGRATION5_CONFIG_LOGGING_OUT_HINT = "dmx.signup.logging_out_hint";
 
-    private static final String DEFAULT_START_PAGE_URL = System.getProperty(Constants.CONFIG_START_PAGE_URL, "/systems.dmx.webclient/");
+    private static final String DEFAULT_START_PAGE_URL = System.getProperty(MIGRATION5_CONFIG_START_PAGE_URL, "/systems.dmx.webclient/");
 
-    private static final String DEFAULT_HOME_PAGE_URL = System.getProperty(Constants.CONFIG_HOME_PAGE_URL, "/systems.dmx.webclient/");
+    private static final String DEFAULT_HOME_PAGE_URL = System.getProperty(MIGRATION5_CONFIG_HOME_PAGE_URL, "/systems.dmx.webclient/");
 
-    private static final String DEFAULT_LOADING_APP_HINT = System.getProperty(Constants.CONFIG_LOADING_APP_HINT, "Loading DMX Webclient");
+    private static final String DEFAULT_LOADING_APP_HINT = System.getProperty(MIGRATION5_CONFIG_LOADING_APP_HINT, "Loading DMX Webclient");
 
-    private static final String DEFAULT_LOGGING_OUT_HINT = System.getProperty(Constants.CONFIG_LOGGING_OUT_HINT, "Logging out..");
+    private static final String DEFAULT_LOGGING_OUT_HINT = System.getProperty(MIGRATION5_CONFIG_LOGGING_OUT_HINT, "Logging out..");
 
     @Override
     public void run() {
