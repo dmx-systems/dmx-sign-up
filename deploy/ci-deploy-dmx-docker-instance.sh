@@ -47,6 +47,7 @@ test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-
 chmod +x deploy/scripts/dmxstate.sh
 test -d deploy/dmx/${TIER}/plugins/ || mkdir deploy/dmx/${TIER}/plugins/
 if [ -f target/*.jar ]; then
+    echo "copying jar file to deploy/dmx/${TIER}/plugins/"
     cp target/*.jar deploy/dmx/${TIER}/plugins/
 fi
 echo "PLUGINS: ${PLUGINS}"
