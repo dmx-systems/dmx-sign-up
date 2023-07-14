@@ -1003,7 +1003,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         //String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
         String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
-        sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, recipientValues);
+        sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, null, recipientValues);
     }
 
     private Assoc getDefaultAssociation(long topic1, long topic2) {
