@@ -33,8 +33,8 @@ https://github.com/dmx-systems/dmx-platform
 
 To be able to install this module you first and additionally have to install the following DMX Plugins.
 
-*    `dmx-sendmail-2.0.2+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
-*    Optional: `dmx-ldap-0.5.4-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
+*    `dmx-sendmail-2.1.0+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
+*    Optional: `dmx-ldap-0.6.2-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
 
 You can find the respective plugin version and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
 
@@ -167,16 +167,16 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 **3.0.0** -- Upcoming
 
 * All UI-related code moved into its own plugin
+
+**2.1.0** -- Jul, 14, 2023
+
 * Compatible with DMX 5.3
-
-**2.1.0** -- Upcoming
-
 * Account creation through LDAP plugin
-* True optional dependency on `dmx-ldap-0.6.1+` plugin
+* True optional dependency on `dmx-ldap-0.6.2+` plugin
 * Configure workspace whose users can create new users
 * Configure module configuration through property configuration
 * Validity of account creation and password reset token configurable
-
+* 
 **2.0.1** -- Jun 30, 2021
 
 * Compatible with DMX 5.2
