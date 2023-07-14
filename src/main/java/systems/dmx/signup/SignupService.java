@@ -43,12 +43,13 @@ public interface SignupService {
     PasswordResetRequestResult requestPasswordReset(String token);
 
     PasswordUpdateRequestResult requestPasswordChange(String token, String password);
-
+    
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
     @Transactional
-    Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
+    Topic handleCustomAJAXSignupRequest(@PathParam("username") String username,
+                                        @PathParam("mailbox") String mailbox,
                                         @PathParam("displayname") String displayName,
                                         @PathParam("password") String password) throws URISyntaxException;
 
@@ -58,9 +59,9 @@ public interface SignupService {
      */
     String createAPIWorkspaceMembershipRequest();
 
-    SignUpRequestResult requestCustomSignup(String mailbox, String displayName, String password);
+    SignUpRequestResult requestCustomSignup(String username, String mailbox, String displayName, String password);
 
-    SignUpRequestResult requestSignUp(String username, String password, String mailbox, boolean skipConfirmation);
+    SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation);
 
     ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key);
 
