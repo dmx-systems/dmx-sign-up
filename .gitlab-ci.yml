@@ -48,6 +48,7 @@ copy-to-release:
 
 # 4) Install in docker-container
 install-in-container:
+  allow_failure: true
   stage: install
   except:
     - tags

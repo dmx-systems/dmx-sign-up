@@ -40,14 +40,14 @@ Email address topics of new user accounts are all placed in the "Administration"
 
 ## Requirements
 
-DMX 5.1: DMX is a platform for collaboration and knowledge management.
+DMX 5.3: DMX is a platform for collaboration and knowledge management.
 https://github.com/dmx-systems/dmx-platform
 
 To be able to install this module you first and additionally have to install the following DMX Plugins.
 
 *    `dmx-thymeleaf-0.9.3+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-thymeleaf)
-*    `dmx-sendmail-2.0.2+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
-*    `dmx-ldap-0.5.4-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
+*    `dmx-sendmail-2.1.0+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-sendmail)
+*    `dmx-ldap-0.6.2-SNAPSHOT`+`-Bundle - Build from [sources](https://git.dmx.systems/dmx-plugins/dmx-ldap)
 
 You can find the respective plugin version and its dependencies for download at [https://download.dmx.systems/plugins/](https://download.dmx.systems/plugins/).
 
@@ -191,10 +191,11 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 
-**2.1.0-SNAPSHOT** -- Upcoming
+**2.1.0** -- Jul, 14, 2023
 
+* Compatible with DMX 5.3
 * Account creation through LDAP plugin
-* True optional dependency on `dmx-ldap-0.6.1+` plugin
+* True optional dependency on `dmx-ldap-0.6.2+` plugin
 * Configure workspace whose users can create new users
 * Configure module configuration through property configuration
 * Validity of account creation and password reset token configurable
