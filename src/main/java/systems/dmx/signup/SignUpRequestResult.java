@@ -4,8 +4,15 @@ public class SignUpRequestResult {
 
     public final Code code;
 
+    public final String username;
+
     public SignUpRequestResult(Code code) {
+        this(code, null);
+    }
+
+    public SignUpRequestResult(Code code, String username) {
         this.code = code;
+        this.username = username;
     }
 
     public enum Code {

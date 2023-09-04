@@ -307,11 +307,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (SignUpConfigOptions.DMX_ACCOUNTS_ENABLED) {
             log.info("DMX Config: The new account is now ENABLED, redirecting to OK page.");
             // redirecting user to the "your account is now active" page
-            return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_CREATED);
+            return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_CREATED, username);
         } else {
             log.info("DMX Config: The new account is now DISABLED, redirecting to PENDING page.");
             // redirecting to page displaying "your account was created but needs to be activated"
-            return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING);
+            return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING, username);
         }
     }
 
