@@ -56,6 +56,7 @@ dmx.signup.account_creation_password_handling = generated
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 dmx.signup.token_expiration_time = 2
+dmx.signup.username_policy = unconfined
 ```
 
 Legacy wise, the rest of the plugin options are stored in DB. The central topic for configuring the sign-up plugin is of type `Sign-up Configuration`. Editing this topic via the DMX Webclient allows you to interactively configure the appearance of the custom login and self-registration dialogs.
@@ -108,6 +109,23 @@ dmx.signup.token_expiration_time = 2
 
 The default value is 2, so a user has two hours from the moment of creating the account/requesting the password reset to
 click on the link that is contained in the account creation/password reset request email. 
+
+### Configure username policy
+
+The sign-up plugin supports three different policies regarding username handling
+
+| Value                   | Description                                                                           |
+|-------------------------|---------------------------------------------------------------------------------------|
+| unconfined              | Username, email address and display name can be chosen freely of each other           |
+| username_is_email       | Only email adress and display name can be set, the former turns into the DMX username |
+| username_is_displayname | Only user name and email adress can be set, the former becomes also the display name  |
+
+The policy is chosen by setting the configuration key
+```
+dmx.signup.username_policy = unconfined | username_is_email | username_is_displayname
+```
+
+to any of the possible values. The default value is ```unconfined```. 
 
 ### Optional module configuration
 

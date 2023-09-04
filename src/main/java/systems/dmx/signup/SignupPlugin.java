@@ -23,6 +23,9 @@ import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.configuration.SignUpConfigOptions;
+import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
+import systems.dmx.signup.mapper.NewAccountDataMapper;
+import systems.dmx.signup.model.NewAccountData;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -75,10 +78,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Context
     UriInfo uri;
 
-    HashMap<String, JSONObject> token = new HashMap<String, JSONObject>();
-    HashMap<String, JSONObject> pwToken = new HashMap<String, JSONObject>();
+    HashMap<String, JSONObject> token = new HashMap<>();
+    HashMap<String, JSONObject> pwToken = new HashMap<>();
 
     EmailTextProducer emailTextProducer = new DefaultEmailTextProducer(DMX_HOST_URL);
+
+    private NewAccountDataMapper newAccountDataMapper = new NewAccountDataMapper();
+
+    private IsValidEmailAdressMapper isValidEmailAdressMapper = new IsValidEmailAdressMapper();
 
     @Override
     public void init() {
@@ -87,6 +94,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         // Log configuration settings
         log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
             + "  dmx.signup.account_creation_password_handling: " + CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING + "\n"
+            + "  dmx.signup.username_policy: " + CONFIG_USERNAME_POLICY + "\n"
             + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
             + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
             + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
@@ -222,11 +230,19 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    private NewAccountData mapToNewAccountData(String username, String mailbox, String displayName) {
+        return newAccountDataMapper.map(CONFIG_USERNAME_POLICY, username, mailbox, displayName);
+    }
+
     @Override
-    public SignUpRequestResult requestCustomSignup(String mailbox, String displayName, String password) {
+    public SignUpRequestResult requestCustomSignup(String username, String mailbox, String displayName, String password) {
+        if (!isValidEmailAdressMapper.map(mailbox)) {
+            return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+        }
+
         if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
             try {
-                transactional(() -> createCustomUserAccount(mailbox, displayName, password));
+                transactional(() -> createCustomUserAccount(mapToNewAccountData(username, mailbox, displayName), password));
                 log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
             } catch (Exception e) {
                 return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
@@ -238,15 +254,21 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
 
     @Override
-    public SignUpRequestResult requestSignUp(String username, String password, String mailbox, boolean skipConfirmation) {
+    public SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation) {
         if (SignUpConfigOptions.CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
         }
+
+        if (!isValidEmailAdressMapper.map(mailbox)) {
+            return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+        }
+
+        NewAccountData newAccountData = mapToNewAccountData(username, mailbox, displayName);
         try {
             if (SignUpConfigOptions.CONFIG_EMAIL_CONFIRMATION) {
-                return handleSignUpWithEmailConfirmation(username, password, mailbox, skipConfirmation);
+                return handleSignUpWithEmailConfirmation(newAccountData, password, skipConfirmation);
             } else {
-                return handleSignUpWithDirectAccountCreation(username, password, mailbox);
+                return handleSignUpWithDirectAccountCreation(newAccountData, password);
             }
         } catch (URISyntaxException e) {
             log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
@@ -254,29 +276,27 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
     }
     private SignUpRequestResult handleSignUpWithDirectAccountCreation(
-            String username,
-            String password,
-            String mailbox) throws URISyntaxException {
+            NewAccountData newAccountData,
+            String password) throws URISyntaxException {
         // ensures that logged in user is an admin or account creation is allowed for everyone
         if (isSelfRegistrationEnabled() || hasAccountCreationPrivilege()) {
-            createSimpleUserAccount(username, password, mailbox);
-            return handleAccountCreatedRedirect(username);
+            createSimpleUserAccount(newAccountData.username, password, newAccountData.email);
+            return handleAccountCreatedRedirect(newAccountData.username);
         } else {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
         }
     }
 
     private SignUpRequestResult handleSignUpWithEmailConfirmation(
-            String username,
+            NewAccountData newAccountData,
             String password,
-            String mailbox,
             boolean skipConfirmation) {
         if (skipConfirmation && hasAccountCreationPrivilege()) {
             if (SignUpConfigOptions.CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
                 log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
                         "skipping confirmation mail.");
-                createSimpleUserAccount(username, password, mailbox);
-                return handleAccountCreatedRedirect(username);
+                createSimpleUserAccount(newAccountData.username, password, newAccountData.email);
+                return handleAccountCreatedRedirect(newAccountData.username);
             } else {
                 // skipping confirmation is only allowed for admins
                 return new SignUpRequestResult(SignUpRequestResult.Code.ADMIN_PRIVILEGE_MISSING);
@@ -284,7 +304,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         } else {
             log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
                     "confirmation mail.");
-            sendUserValidationToken(username, password, mailbox);
+            sendUserValidationToken(newAccountData.username, password, newAccountData.email);
             // redirect user to a "token-info" page
             return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_EMAIL_CONFIRMATION_NEEDED);
         }
@@ -361,6 +381,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+name+"\"");
         try {
             String emailAddressValue = email.trim();
+            if (!isValidEmailAdressMapper.map(emailAddressValue)) {
+                return InitiatePasswordResetRequestResult.UNEXPECTED_ERROR;
+            }
+
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
@@ -489,24 +513,25 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/custom-handle/{mailbox}/{displayname}/{password}")
+    @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
     @Transactional
     @Override
-    public Topic handleCustomAJAXSignupRequest(@PathParam("mailbox") String mailbox,
+    public Topic handleCustomAJAXSignupRequest(@PathParam("username") String username,
+                                               @PathParam("mailbox") String mailbox,
                                                @PathParam("displayname") String displayName,
                                                @PathParam("password") String password) throws URISyntaxException {
         checkAccountCreation();
-        Topic username = createCustomUserAccount(mailbox, displayName, password); // throws if account creation fails
+        Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, mailbox, displayName), password);
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
-        return username;
+        return usernameTopic;
     }
 
-    private Topic createCustomUserAccount(String mailbox, String displayName, String password) {
+    private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
         try {
-            // 1) Custom sign-up request means "mailbox" = "username"
-            String username = createSimpleUserAccount(mailbox.trim(), password, mailbox.trim());
+            // 1) NewAccountData is set according to username policy
+            String username = createSimpleUserAccount(newAccountData.username.trim(), password, newAccountData.email.trim());
             // 2) create and assign displayname topic to "System" workspace
-            final String displayNameValue = displayName.trim();
+            final String displayNameValue = newAccountData.displayName.trim();
             final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
             final long usernameTopicId = usernameTopic.getId();
             long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
@@ -535,8 +560,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             return usernameTopic;
         } catch (Exception e) {
             log.log(Level.WARNING, "Unable to create custom account", e);
-            throw new RuntimeException("Creating custom user account failed, mailbox=\"" + mailbox +
-                "\", displayName=\"" + displayName + "\"", e);
+            throw new RuntimeException("Creating custom user account failed, mailbox=\"" + newAccountData.email +
+                "\", displayName=\"" + newAccountData.displayName + "\"", e);
         }
     }
 
@@ -735,13 +760,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         String value = username.trim();
         Topic userNameTopic = accesscontrol.getUsernameTopic(value);
         return (userNameTopic != null);
-    }
-
-    private boolean isValidEmailAddress(String value) {
-        // ### Todo: Implement email-valid check into dmx-sendmail Service, utilizing
-        // import javax.mail.internet.AddressException;
-        // import javax.mail.internet.InternetAddress;
-        return true;
     }
 
     // --- Private Helpers --- //
