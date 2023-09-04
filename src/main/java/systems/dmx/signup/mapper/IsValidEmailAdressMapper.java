@@ -11,7 +11,7 @@ public class IsValidEmailAdressMapper {
 
     public boolean map(String maybeEmail) {
         return pattern.matcher(maybeEmail).matches();
-        /*
+        /* needs some OSGi magic to work
         try {
             InternetAddress emailAddress = new InternetAddress(maybeEmail);
             emailAddress.validate();
