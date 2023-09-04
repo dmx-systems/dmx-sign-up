@@ -40,9 +40,9 @@ public interface SignupService {
 
     InitiatePasswordResetRequestResult requestInitiatePasswordResetWithName(String email, String name);
 
-    PasswordResetRequestResult requestPasswordReset(String token);
+    PasswordResetRequestResult requestPasswordReset(String tokenKey);
 
-    PasswordUpdateRequestResult requestPasswordChange(String token, String password);
+    PasswordUpdateRequestResult requestPasswordChange(String tokenKey, String password);
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -58,8 +58,6 @@ public interface SignupService {
      * @return  String  Workspace Topic ID
      */
     String createAPIWorkspaceMembershipRequest();
-
-    SignUpRequestResult requestCustomSignup(String username, String mailbox, String displayName, String password);
 
     SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation);
 

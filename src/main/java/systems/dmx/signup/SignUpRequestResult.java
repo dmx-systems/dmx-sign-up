@@ -14,6 +14,8 @@ public class SignUpRequestResult {
         SUCCESS_EMAIL_CONFIRMATION_NEEDED,
         SUCCESS_ACCOUNT_PENDING,
         SUCCESS_ACCOUNT_CREATED,
+
+        ERROR_INVALID_EMAIL,
         UNEXPECTED_ERROR
     }
 }

@@ -26,6 +26,8 @@ import systems.dmx.signup.configuration.SignUpConfigOptions;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.model.NewAccountData;
+import systems.dmx.signup.model.PasswordResetToken;
+import systems.dmx.signup.model.NewAccountToken;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -78,8 +80,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Context
     UriInfo uri;
 
-    HashMap<String, JSONObject> token = new HashMap<>();
-    HashMap<String, JSONObject> pwToken = new HashMap<>();
+    HashMap<String, NewAccountToken> newAccountTokens = new HashMap<>();
+    HashMap<String, PasswordResetToken> passwordResetTokens = new HashMap<>();
 
     EmailTextProducer emailTextProducer = new DefaultEmailTextProducer(DMX_HOST_URL);
 
@@ -235,32 +237,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public SignUpRequestResult requestCustomSignup(String username, String mailbox, String displayName, String password) {
-        if (!isValidEmailAdressMapper.map(mailbox)) {
-            return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
-        }
-
-        if (hasAccountCreationPrivilege() || isSelfRegistrationEnabled()) {
-            try {
-                transactional(() -> createCustomUserAccount(mapToNewAccountData(username, mailbox, displayName), password));
-                log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
-            } catch (Exception e) {
-                return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
-            }
-            return handleAccountCreatedRedirect(mailbox);
-        }
-        return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
-    }
-
-
-    @Override
     public SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation) {
-        if (SignUpConfigOptions.CONFIG_ACCOUNT_CREATION == AccountCreation.DISABLED || !hasAccountCreationPrivilege()) {
+        if (!isSelfRegistrationEnabled() && !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
         }
 
         if (!isValidEmailAdressMapper.map(mailbox)) {
-            return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+            return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_INVALID_EMAIL);
         }
 
         NewAccountData newAccountData = mapToNewAccountData(username, mailbox, displayName);
@@ -280,7 +263,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             String password) throws URISyntaxException {
         // ensures that logged in user is an admin or account creation is allowed for everyone
         if (isSelfRegistrationEnabled() || hasAccountCreationPrivilege()) {
-            createSimpleUserAccount(newAccountData.username, password, newAccountData.email);
+            try {
+                transactional(() -> createCustomUserAccount(newAccountData, password));
+            } catch (Exception e) {
+                return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+            }
             return handleAccountCreatedRedirect(newAccountData.username);
         } else {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
@@ -295,7 +282,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             if (SignUpConfigOptions.CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
                 log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator " +
                         "skipping confirmation mail.");
-                createSimpleUserAccount(newAccountData.username, password, newAccountData.email);
+                try {
+                    transactional(() -> createCustomUserAccount(newAccountData, password));
+                } catch (Exception e) {
+                    return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
+                }
                 return handleAccountCreatedRedirect(newAccountData.username);
             } else {
                 // skipping confirmation is only allowed for admins
@@ -304,7 +295,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         } else {
             log.info("Sign-up Configuration: Email based confirmation workflow active, send out " +
                     "confirmation mail.");
-            sendUserValidationToken(newAccountData.username, password, newAccountData.email);
+            String tokenKey = createUserValidationToken(newAccountData, password);
+            sendConfirmationMail(tokenKey, newAccountData.displayName, newAccountData.email);
+
             // redirect user to a "token-info" page
             return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_EMAIL_CONFIRMATION_NEEDED);
         }
@@ -325,35 +318,37 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-        if (!token.containsKey(key)) {
+        if (!newAccountTokens.containsKey(key)) {
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.INVALID_TOKEN);
         }
         // 2) Process available token and remove it from stack
-        String username;
-        JSONObject input = token.get(key);
-        token.remove(key);
+        NewAccountToken token = newAccountTokens.remove(key);
         // 3) Create the user account and show ok OR present an error message.
         try {
-            username = input.getString("username");
-            if (input.getLong("expiration") > new Date().getTime()) {
-                log.log(Level.INFO, "Trying to create user account for {0}", input.getString("mailbox"));
-                createSimpleUserAccount(username, input.getString("password"), input.getString("mailbox"));
+            if (token.expiration.isAfter(Instant.now())) {
+                log.log(Level.INFO, "Trying to create user account for {0}", token.accountData.email);
+
+                try {
+                    transactional(() -> createCustomUserAccount(token.accountData, token.password));
+                } catch (Exception e) {
+                    return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.UNEXPECTED_ERROR);
+                }
             } else {
                 return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.LINK_EXPIRED);
             }
-        } catch (JSONException ex) {
+        } catch (RuntimeException ex) {
             log.log(Level.SEVERE, null, ex);
             log.log(Level.SEVERE, "Account creation failed due to {0} caused by {1}",
                     new Object[]{ex.getMessage(), ex.getCause().toString()});
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.UNEXPECTED_ERROR);
 
         }
-        log.log(Level.INFO, "Account succesfully created for username: {0}", username);
+        log.log(Level.INFO, "Account succesfully created for username: {0}", token.accountData.username);
         if (!SignUpConfigOptions.DMX_ACCOUNTS_ENABLED) {
             log.log(Level.INFO, "> Account activation by an administrator remains PENDING ");
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING);
         }
-        return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS, username);
+        return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS, token.accountData.username);
     }
 
 
@@ -402,32 +397,21 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public PasswordResetRequestResult requestPasswordReset(String token) {
-        try {
-            // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-            if (!pwToken.containsKey(token)) {
-                return new PasswordResetRequestResult(PasswordResetRequestResult.Code.INVALID_TOKEN);
-            }
-            // 2) Process available token and remove it from stack
-            JSONObject input = pwToken.get(token);
-            // 3) Update the user account credentials OR present an error message.
-            if (input != null && input.getLong("expiration") > new Date().getTime()) {
-                String username = input.getString("username");
-                String email = input.getString("email");
-                String displayName = input.optString("name", "");
-                String redirectUrl = input.optString("redirectUrl", null);
-                return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, input.toString(), username, email, displayName, redirectUrl);
-            } else {
-                String username = input.getString("username");
-                log.warning("The link to reset the password for " + username + " has expired.");
-                return new PasswordResetRequestResult(PasswordResetRequestResult.Code.LINK_EXPIRED, input.toString());
-            }
-        } catch (JSONException ex) {
-            log.severe("Sorry, an error occured during retriving your token. Please try again. " + ex.getMessage());
-            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.UNEXPECTED_ERROR);
+    public PasswordResetRequestResult requestPasswordReset(String tokenKey) {
+        // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
+        if (!passwordResetTokens.containsKey(tokenKey)) {
+            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.INVALID_TOKEN);
+        }
+        // 2) Process available token and remove it from stack
+        PasswordResetToken token = passwordResetTokens.get(tokenKey);
+        // 3) Update the user account credentials OR present an error message.
+        if (token != null && token.expiration.isAfter(Instant.now())) {
+            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, token.accountData.username, token.accountData.email, token.accountData.displayName, token.redirectUrl);
+        } else {
+            log.warning("The link to reset the password for " + token.accountData.username + " has expired.");
+            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.LINK_EXPIRED);
         }
     }
-
 
     @GET
     @Path("/self-registration-active")
@@ -461,41 +445,36 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public PasswordUpdateRequestResult requestPasswordChange(String token, String password) {
+    public PasswordUpdateRequestResult requestPasswordChange(String tokenKey, String password) {
         log.info("Processing Password Update Request Token... ");
-        try {
-            JSONObject entry = pwToken.get(token);
-            if (entry != null) {
-                Credentials newCreds = new Credentials("dummy", "pass");
-                newCreds.username = entry.getString("username").trim();
-                if (!isLdapAccountCreationEnabled()) {
-                    newCreds.password = password;
-                    // Change password stored in "User Account" topic
-                    dmx.getPrivilegedAccess().changePassword(newCreds);
-                    log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
-                } else {
-                    String plaintextPassword = Base64.base64Decode(password);
-                    log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
-                            "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
-                    // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
-                    newCreds.plaintextPassword = plaintextPassword;
-                    newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
-                    if (ldapPluginService.get().changePassword(newCreds) != null) {
-                        log.info("If no previous errors are reported here or in the LDAP-service log, the " +
-                                "credentials for user " + newCreds.username + " should now have been changed succesfully.");
-                    } else {
-                        log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
-                        return PasswordUpdateRequestResult.PASSWORD_CHANGE_FAILED;
-                    }
-                }
-                pwToken.remove(token);
-                return PasswordUpdateRequestResult.SUCCESS;
+        PasswordResetToken token = passwordResetTokens.get(tokenKey);
+        if (token != null) {
+            Credentials newCreds = new Credentials("dummy", "pass");
+            newCreds.username = token.accountData.username;
+            if (!isLdapAccountCreationEnabled()) {
+                newCreds.password = password;
+                // Change password stored in "User Account" topic
+                dmx.getPrivilegedAccess().changePassword(newCreds);
+                log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
             } else {
-                return PasswordUpdateRequestResult.NO_TOKEN;
+                String plaintextPassword = Base64.base64Decode(password);
+                log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
+                        "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
+                newCreds.plaintextPassword = plaintextPassword;
+                newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
+                if (ldapPluginService.get().changePassword(newCreds) != null) {
+                    log.info("If no previous errors are reported here or in the LDAP-service log, the " +
+                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
+                } else {
+                    log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
+                    return PasswordUpdateRequestResult.PASSWORD_CHANGE_FAILED;
+                }
             }
-        } catch (JSONException ex) {
-            log.log(Level.SEVERE, null, ex);
-            return PasswordUpdateRequestResult.UNEXPECTED_ERROR;
+            passwordResetTokens.remove(token);
+            return PasswordUpdateRequestResult.SUCCESS;
+        } else {
+            return PasswordUpdateRequestResult.NO_TOKEN;
         }
     }
 
@@ -538,6 +517,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
+                    // TODO: Short-cut until display name handling is fixed
+                    if (true) {
+                        return null;
+                    }
+
                     // create display name facet for username topic
                     facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
 
@@ -832,11 +816,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return false;
     }
 
-    private void sendUserValidationToken(String username, String password, String mailbox) {
-        String tokenKey = createUserValidationToken(username, password, mailbox);
-        sendConfirmationMail(tokenKey, username, mailbox.trim());
-    }
-
     private void sendPasswordResetToken(String mailbox, String displayName, String redirectUrl) {
         String username = dmx.getPrivilegedAccess().getUsername(mailbox);
         // Todo: Would need privileged access to "Display Name" to display it in password-update dialog
@@ -844,49 +823,35 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         sendPasswordResetMail(tokenKey, username, mailbox.trim(), displayName);
     }
 
-    private String createUserValidationToken(String username, String password, String mailbox) {
-        try {
-            String tokenKey = UUID.randomUUID().toString();
-            long valid = calculateTokenExpiration();
-            JSONObject tokenValue = new JSONObject()
-                .put("username", username.trim())
-                .put("mailbox", mailbox.trim())
-                .put("password", password)
-                .put("expiration", valid);
-            token.put(tokenKey, tokenValue);
-            log.log(Level.INFO, "Set up key {0} for {1} sending confirmation mail valid till {3}",
-                    new Object[]{tokenKey, mailbox, new Date(valid).toString()});
-            // ### TODO: if sending confirmation mail fails users should know about that and
-            // get to see the "failure" screen next (with a proper message)
-            return tokenKey;
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            throw new RuntimeException(ex);
-        }
+    private String createUserValidationToken(NewAccountData newAccountData, String password) {
+        String tokenKey = UUID.randomUUID().toString();
+        Instant expiration = calculateTokenExpiration();
+        NewAccountToken token = new NewAccountToken(
+                newAccountData, password, expiration
+        );
+        newAccountTokens.put(tokenKey, token);
+        log.log(Level.INFO, "Set up key {0} for {1} sending confirmation mail valid till {3}",
+                new Object[]{ tokenKey, newAccountData.email, expiration });
+
+        return tokenKey;
     }
 
-    private long calculateTokenExpiration() {
-        return Instant.now().plus(CONFIG_TOKEN_EXPIRATION_DURATION).toEpochMilli();
+    private Instant calculateTokenExpiration() {
+        return Instant.now().plus(CONFIG_TOKEN_EXPIRATION_DURATION);
     }
 
     private String createPasswordResetToken(String username, String mailbox, String name, String redirectUrl) {
-        try {
-            String tokenKey = UUID.randomUUID().toString();
-            long valid = calculateTokenExpiration();
-            JSONObject tokenValue = new JSONObject()
-                .put("username", username.trim())
-                .put("mailbox", mailbox.trim())
-                .put("name", (name != null) ? name.trim() : "")
-                .put("expiration", valid)
-                .put("redirectUrl", redirectUrl);
-            pwToken.put(tokenKey, tokenValue);
-            log.log(Level.INFO, "Set up pwToken {0} for {1} send passwort reset mail valid till {3}",
-                new Object[]{tokenKey, mailbox, new Date(valid).toString()});
-            return tokenKey;
-        } catch (JSONException ex) {
-            Logger.getLogger(SignupPlugin.class.getName()).log(Level.SEVERE, null, ex);
-            throw new RuntimeException(ex);
-        }
+        String tokenKey = UUID.randomUUID().toString();
+        Instant expiration = calculateTokenExpiration();
+        PasswordResetToken token = new PasswordResetToken(
+                new NewAccountData(username, mailbox, name),
+                expiration,
+                redirectUrl
+        );
+        passwordResetTokens.put(tokenKey, token);
+        log.log(Level.INFO, "Set up pwToken {0} for {1} send passwort reset mail valid till {3}",
+            new Object[]{tokenKey, mailbox, expiration});
+        return tokenKey;
     }
 
     private void createApiMembershipRequestNoteAssociation(Topic usernameTopic, Topic membershipNote) {
@@ -958,18 +923,16 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     private void sendConfirmationMail(String key, String username, String mailbox) {
         try {
             URL url = new URL(DMX_HOST_URL);
-            log.info("The confirmation mails token request URL should be:" + "\n" + url + "sign-up/confirm/" + key);
             // Localize "sentence" structure for german, maybe via Formatter
             try {
-                String href = url + "sign-up/confirm/" + key;
                 if (DMX_ACCOUNTS_ENABLED) {
                     String mailSubject = emailTextProducer.getConfirmationActiveMailSubject();
-                    String message = emailTextProducer.getConfirmationActiveMailMessage(username, href);
+                    String message = emailTextProducer.getConfirmationActiveMailMessage(username, key);
                     sendSystemMail(mailSubject, message, mailbox
                     );
                 } else {
                     String mailSubject = emailTextProducer.getConfirmationProceedMailSubject();
-                    String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, href);
+                    String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, key);
                     sendSystemMail(mailSubject, message, mailbox);
                 }
             } catch (Exception ex) {
