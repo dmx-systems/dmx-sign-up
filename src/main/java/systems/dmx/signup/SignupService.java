@@ -38,11 +38,11 @@ public interface SignupService {
 
     void updateDisplayName(String username, String displayName);
 
-    InitiatePasswordResetRequestResult requestInitiatePasswordResetWithName(String email, String name);
+    InitiatePasswordResetRequestResult requestInitiatePasswordReset(String email, String displayName);
 
-    PasswordResetRequestResult requestPasswordReset(String tokenKey);
+    PasswordResetRequestResult requestPasswordReset(String key);
 
-    PasswordUpdateRequestResult requestPasswordChange(String tokenKey, String password);
+    PasswordChangeRequestResult requestPasswordChange(String key, String password);
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -61,7 +61,7 @@ public interface SignupService {
 
     SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation);
 
-    ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key);
+    ProcessSignUpRequestResult requestProcessSignUp(String key);
 
     /**
      * Sends out a valid password-reset token (if the email address is known to the system).

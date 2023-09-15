@@ -316,7 +316,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public ProcessSignUpRequestResult requestProcessSignUp(@PathParam("token") String key) {
+    public ProcessSignUpRequestResult requestProcessSignUp(String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
         if (!newAccountTokens.containsKey(key)) {
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.INVALID_TOKEN);
@@ -364,6 +364,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // ### Todo: Add/include return Url to token (!)
             // Note: Here system can't know "display name" (anonymous has
             // no read permission on it) and thus can't pass it on
+            // TODO: use privileged API to get display name
             sendPasswordResetToken(emailAddressValue, null, redirectUrl);
             return InitiatePasswordResetRequestResult.SUCCESS;
         }
@@ -372,8 +373,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public InitiatePasswordResetRequestResult requestInitiatePasswordResetWithName(String email, String name) {
-        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+name+"\"");
+    public InitiatePasswordResetRequestResult requestInitiatePasswordReset(String email, String displayName) {
+        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+ displayName +"\"");
         try {
             String emailAddressValue = email.trim();
             if (!isValidEmailAdressMapper.map(emailAddressValue)) {
@@ -383,7 +384,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             boolean emailExists = dmx.getPrivilegedAccess().emailAddressExists(emailAddressValue);
             if (emailExists) {
                 log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
-                sendPasswordResetToken(emailAddressValue, name, null);
+                sendPasswordResetToken(emailAddressValue, displayName, null);
                 return InitiatePasswordResetRequestResult.SUCCESS;
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
@@ -397,15 +398,16 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public PasswordResetRequestResult requestPasswordReset(String tokenKey) {
+    public PasswordResetRequestResult requestPasswordReset(String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
-        if (!passwordResetTokens.containsKey(tokenKey)) {
+        if (!passwordResetTokens.containsKey(key)) {
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.INVALID_TOKEN);
         }
         // 2) Process available token and remove it from stack
-        PasswordResetToken token = passwordResetTokens.get(tokenKey);
+        PasswordResetToken token = passwordResetTokens.get(key);
         // 3) Update the user account credentials OR present an error message.
         if (token != null && token.expiration.isAfter(Instant.now())) {
+            passwordResetTokens.remove(key);
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, token.accountData.username, token.accountData.email, token.accountData.displayName, token.redirectUrl);
         } else {
             log.warning("The link to reset the password for " + token.accountData.username + " has expired.");
@@ -445,9 +447,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public PasswordUpdateRequestResult requestPasswordChange(String tokenKey, String password) {
+    public PasswordChangeRequestResult requestPasswordChange(String key, String password) {
         log.info("Processing Password Update Request Token... ");
-        PasswordResetToken token = passwordResetTokens.get(tokenKey);
+        PasswordResetToken token = passwordResetTokens.get(key);
         if (token != null) {
             Credentials newCreds = new Credentials("dummy", "pass");
             newCreds.username = token.accountData.username;
@@ -468,13 +470,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                             "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                 } else {
                     log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
-                    return PasswordUpdateRequestResult.PASSWORD_CHANGE_FAILED;
+                    return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
                 }
             }
             passwordResetTokens.remove(token);
-            return PasswordUpdateRequestResult.SUCCESS;
+            return PasswordChangeRequestResult.SUCCESS;
         } else {
-            return PasswordUpdateRequestResult.NO_TOKEN;
+            return PasswordChangeRequestResult.NO_TOKEN;
         }
     }
 

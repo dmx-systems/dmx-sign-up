@@ -1,6 +1,6 @@
 package systems.dmx.signup;
 
-public enum PasswordUpdateRequestResult {
+public enum PasswordChangeRequestResult {
     SUCCESS,
     PASSWORD_CHANGE_FAILED,
     NO_TOKEN,
