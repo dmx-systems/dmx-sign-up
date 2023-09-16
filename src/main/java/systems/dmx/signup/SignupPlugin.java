@@ -58,6 +58,7 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
  * @author Malte Rei&szlig;ig et al
 **/
 @Path("/sign-up")
+@Produces(MediaType.APPLICATION_JSON)
 public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic {
 
     private static final Logger log = Logger.getLogger(SignupPlugin.class.getName());
@@ -155,7 +156,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      */
     @GET
     @Path("/check/{username}")
-    @Produces(MediaType.APPLICATION_JSON)
     public String getUsernameAvailability(@PathParam("username") String username) {
         JSONObject response = new JSONObject();
         try {
@@ -218,7 +218,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      */
     @GET
     @Path("/check/mailbox/{email}")
-    @Produces(MediaType.APPLICATION_JSON)
     public String getMailboxAvailability(@PathParam("email") String email) {
         JSONObject response = new JSONObject();
         try {
@@ -370,9 +369,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
     }
 
+    @GET
+    @Path("/password-reset/{email}")
     @Override
-    public InitiatePasswordResetRequestResult requestInitiatePasswordReset(String email, String displayName) {
-        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \""+ displayName +"\"");
+    public InitiatePasswordResetRequestResult requestInitiatePasswordReset(@PathParam("email") String email,
+                                                                           @QueryParam("name") String displayName) {
+        log.info("Password reset requested for user with Email: \"" + email + "\" and Name: \"" + displayName + "\"");
         try {
             String emailAddressValue = email.trim();
             if (!isValidEmailAdressMapper.map(emailAddressValue)) {
@@ -386,7 +388,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 return InitiatePasswordResetRequestResult.SUCCESS;
             } else {
                 log.info("Email based password reset workflow not do'able, Email Address does NOT EXIST => " +
-                        email.trim());
+                    emailAddressValue.trim());
                 return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
             }
         } catch (Exception ex) {
@@ -416,7 +418,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @GET
     @Path("/self-registration-active")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getSelfRegistrationStatus() {
         return Response.ok("" + isSelfRegistrationEnabled()).build();
     }
@@ -427,10 +428,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * @param password
      * @return Returns the correct template for the input.
      */
+    // TODO: drop this method. Is is neither in use nor it is needed. It basically makes requestPasswordChange() RESTful
+    // but does not generate a proper HTTP response anyways. Instead requestPasswordChange() should be made RESTful in a
+    // proper way, that is including the result code. jri 2023/09/16
     @GET
     @Path("/password-reset/{token}/{password}")
     @Transactional
-    @Produces(MediaType.APPLICATION_JSON)
     public Response processAjaxPasswordUpdateRequest(@PathParam("token") String token,
                                                      @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
@@ -460,13 +463,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             } else {
                 String plaintextPassword = Base64.base64Decode(password);
                 log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
-                        "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                    "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
                 // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                 newCreds.plaintextPassword = plaintextPassword;
                 newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
                 if (ldapPluginService.get().changePassword(newCreds) != null) {
                     log.info("If no previous errors are reported here or in the LDAP-service log, the " +
-                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
+                        "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                 } else {
                     log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
                     return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
@@ -492,7 +495,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * @return
      */
     @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
     @Transactional
     @Override

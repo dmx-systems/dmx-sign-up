@@ -47,7 +47,8 @@ public interface SignupService {
      */
     String createAPIWorkspaceMembershipRequest();
 
-    SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation);
+    SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password,
+                                      boolean skipConfirmation);
 
     ProcessSignUpRequestResult requestProcessSignUp(String key);
 

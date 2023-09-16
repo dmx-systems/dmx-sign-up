@@ -1,7 +1,21 @@
 package systems.dmx.signup;
 
-public enum InitiatePasswordResetRequestResult {
+import systems.dmx.core.JSONEnabled;
+
+import org.codehaus.jettison.json.JSONObject;
+
+public enum InitiatePasswordResetRequestResult implements JSONEnabled {
+
     SUCCESS,
     EMAIL_UNKNOWN,
-    UNEXPECTED_ERROR
+    UNEXPECTED_ERROR;
+
+    @Override
+    public JSONObject toJSON() {
+        try {
+            return new JSONObject().put("result", name());
+        } catch (Exception e) {
+            throw new RuntimeException("Serialization failed", e);
+        }
+    }
 }
