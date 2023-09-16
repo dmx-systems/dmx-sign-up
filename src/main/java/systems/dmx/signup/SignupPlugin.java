@@ -406,7 +406,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         // 3) Update the user account credentials OR present an error message.
         if (token != null && token.expiration.isAfter(Instant.now())) {
             passwordResetTokens.remove(key);
-            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, token.accountData.username, token.accountData.email, token.accountData.displayName, token.redirectUrl);
+            return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, token.accountData.username,
+                token.accountData.email, token.accountData.displayName, token.redirectUrl);
         } else {
             log.warning("The link to reset the password for " + token.accountData.username + " has expired.");
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.LINK_EXPIRED);
@@ -508,7 +509,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
         try {
             // 1) NewAccountData is set according to username policy
-            String username = createSimpleUserAccount(newAccountData.username.trim(), password, newAccountData.email.trim());
+            String username = createSimpleUserAccount(newAccountData.username.trim(), password,
+                newAccountData.email.trim());
             // 2) create and assign displayname topic to "System" workspace
             final String displayNameValue = newAccountData.displayName.trim();
             final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
@@ -577,10 +579,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 // cookie set (at the requesting client) which workspace this assoc will be assigned to
                 createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
             } else {
-                log.info("Revoke Request for API Workspace Membership by user \"" +
-                    usernameTopic.getSimpleValue().toString() + "\"");
+                String username = usernameTopic.getSimpleValue().toString();
+                log.info("Revoke Request for API Workspace Membership by user \"" + username + "\"");
                 String api_usage_revoked = emailTextProducer.getApiUsageRevokedMailSubject();
-                String message = emailTextProducer.getApiUsageRevokedMailText(usernameTopic.getSimpleValue().toString());
+                String message = emailTextProducer.getApiUsageRevokedMailText(username);
                 sendSystemMailboxNotification(api_usage_revoked, message);
                 // 2.1) fails in all cases where user has no write access to the workspace the association was created
                 // in dmx.deleteAssociation(requestRelation.getId());
