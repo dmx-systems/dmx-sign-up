@@ -237,15 +237,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password, boolean skipConfirmation) {
+    public SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password,
+                                             boolean skipConfirmation) {
         if (!isSelfRegistrationEnabled() && !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
         }
-
         if (!isValidEmailAdressMapper.map(mailbox)) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_INVALID_EMAIL);
         }
-
         NewAccountData newAccountData = mapToNewAccountData(username, mailbox, displayName);
         try {
             if (SignUpConfigOptions.CONFIG_EMAIL_CONFIRMATION) {
@@ -353,8 +352,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
 
     @Override
-    public InitiatePasswordResetRequestResult requestInitiateRedirectPasswordReset(@PathParam("email") String email,
-                                                                                   @PathParam("redirectUrl") String redirectUrl) {
+    public InitiatePasswordResetRequestResult requestInitiateRedirectPasswordReset(String email, String redirectUrl) {
         log.info("Password reset requested for user with Email: \"" + email + "\" wishing to redirect to: \"" +
             redirectUrl + "\"");
         String emailAddressValue = email.trim();
