@@ -3,14 +3,8 @@ package systems.dmx.signup;
 
 import java.net.URISyntaxException;
 import java.util.List;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 import systems.dmx.core.Topic;
-import systems.dmx.core.service.Transactional;
 import systems.dmx.signup.configuration.ModuleConfiguration;
 
 /**
@@ -44,14 +38,8 @@ public interface SignupService {
 
     PasswordChangeRequestResult requestPasswordChange(String key, String password);
     
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
-    @Transactional
-    Topic handleCustomAJAXSignupRequest(@PathParam("username") String username,
-                                        @PathParam("mailbox") String mailbox,
-                                        @PathParam("displayname") String displayName,
-                                        @PathParam("password") String password) throws URISyntaxException;
+    Topic handleCustomAJAXSignupRequest(String username, String mailbox, String displayName, String password)
+        throws URISyntaxException;
 
     /**
      *
@@ -89,5 +77,4 @@ public interface SignupService {
     List<String> getAuthorizationMethods();
 
     ModuleConfiguration getConfiguration();
-
 }
