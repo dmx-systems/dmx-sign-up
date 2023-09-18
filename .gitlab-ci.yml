@@ -30,6 +30,7 @@ copy-to-ci:
     - maven-build
   only:
     - master
+    - main
     - dm4
 
 # 3) Copies tagged RELEASE builds into download.dmx.systems/plugins/ directory
@@ -52,6 +53,7 @@ install-in-container:
   except:
     - tags
     - master
+    - main
   tags:
     ## requires shell-docker runner
     - shell-docker
