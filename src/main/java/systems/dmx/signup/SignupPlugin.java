@@ -364,6 +364,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
     }
 
+    // Note: called by anonymous (a user forgot his password), so it must be @GET.
+    // For anonymous @POST/@PUT would be rejected by DMX platform's request filter.
     @GET
     @Path("/password-reset/{email}")
     @Override
@@ -416,34 +418,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return Response.ok("" + isSelfRegistrationEnabled()).build();
     }
 
-    // TODO: drop this method. It is neither in use nor it is needed. It basically makes requestPasswordChange() RESTful
-    // but does not generate a proper HTTP response anyways. Instead requestPasswordChange() should be made RESTful in a
-    // proper way, that is including the result code. jri 2023/09/16
-    /**
-     * Updates the user password.
-     * @param token
-     * @param password
-     * @return Returns the correct template for the input.
-     */
+    // Note: called by anonymous (a user forgot his password), so it must be @GET.
+    // For anonymous @POST/@PUT would be rejected by DMX platform's request filter.
     @GET
-    @Path("/password-reset/{token}/{password}")
+    @Path("/password-reset/{key}/{password}")
     @Transactional
-    public Response processAjaxPasswordUpdateRequest(@PathParam("token") String token,
-                                                     @PathParam("password") String password) {
-        log.info("Processing Password Update Request Token... ");
-        switch (requestPasswordChange(token, password)) {
-            case SUCCESS:
-                return Response.ok().build();
-            case PASSWORD_CHANGE_FAILED:
-            case NO_TOKEN:
-            case UNEXPECTED_ERROR:
-            default:
-                return Response.serverError().build();
-        }
-    }
-
     @Override
-    public PasswordChangeRequestResult requestPasswordChange(String key, String password) {
+    public PasswordChangeRequestResult requestPasswordChange(@PathParam("key") String key,
+                                                             @PathParam("password") String password) {
         log.info("Processing Password Update Request Token... ");
         PasswordResetToken token = passwordResetTokens.get(key);
         if (token != null) {
@@ -476,18 +458,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    /**
-     * A HTTP resource for JS clients to create a new user account with a display name, email address as username and
-     * password.
-     *
-     * Requires the currently logged in user to be a member of the administration workspace or a member of a designated
-     * workspace (specified through the configuration).
-     *
-     * @param mailbox       String must be unique
-     * @param displayName   String
-     * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
-     * @return
-     */
     @GET
     @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
     @Transactional

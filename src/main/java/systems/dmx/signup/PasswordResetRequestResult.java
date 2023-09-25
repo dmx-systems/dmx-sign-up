@@ -13,7 +13,8 @@ public class PasswordResetRequestResult {
         this(code, null, null, null, null);
     }
 
-    public PasswordResetRequestResult(Code code, String username, String email, String displayName, String redirectUrl) {
+    public PasswordResetRequestResult(Code code, String username, String email, String displayName,
+                                      String redirectUrl) {
         this.code = code;
         this.username = username;
         this.email = email;
@@ -24,8 +25,7 @@ public class PasswordResetRequestResult {
     public enum Code {
         SUCCESS,
         INVALID_TOKEN,
-
-        LINK_EXPIRED, UNEXPECTED_ERROR
-
+        LINK_EXPIRED,
+        UNEXPECTED_ERROR
     }
 }
