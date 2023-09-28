@@ -405,7 +405,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         PasswordResetToken token = passwordResetTokens.get(key);
         // 3) Update the user account credentials OR present an error message.
         if (token != null && token.expiration.isAfter(Instant.now())) {
-            passwordResetTokens.remove(key);
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.SUCCESS, token.accountData.username,
                 token.accountData.email, token.accountData.displayName, token.redirectUrl);
         } else {
