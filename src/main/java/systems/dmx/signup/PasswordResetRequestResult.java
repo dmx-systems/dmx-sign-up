@@ -1,6 +1,10 @@
 package systems.dmx.signup;
 
-public class PasswordResetRequestResult {
+import systems.dmx.core.JSONEnabled;
+
+import org.codehaus.jettison.json.JSONObject;
+
+public class PasswordResetRequestResult implements JSONEnabled {
 
     public final Code code;
 
@@ -27,5 +31,14 @@ public class PasswordResetRequestResult {
         INVALID_TOKEN,
         LINK_EXPIRED,
         UNEXPECTED_ERROR
+    }
+
+    @Override
+    public JSONObject toJSON() {
+        try {
+            return new JSONObject().put("result", code.name());
+        } catch (Exception e) {
+            throw new RuntimeException("Serialization failed", e);
+        }
     }
 }

@@ -393,8 +393,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return InitiatePasswordResetRequestResult.UNEXPECTED_ERROR;
     }
 
+    @GET
+    @Path("/token/{key}")
     @Override
-    public PasswordResetRequestResult requestPasswordReset(String key) {
+    public PasswordResetRequestResult requestPasswordReset(@PathParam("key") String key) {
         // 1) Assert token exists: It may not exist due to e.g. bundle refresh, system restart, token invalid
         if (!passwordResetTokens.containsKey(key)) {
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.INVALID_TOKEN);
@@ -412,6 +414,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    // TODO: drop this HTTP-facade. Instead make isSelfRegistrationEnabled() RESTful in a JAX-RS fashion.
+    // Possibly extend platform's dmx-webservice module with a provider class for "boolean" type (jri 2023/09/28)
     @GET
     @Path("/self-registration-active")
     public Response getSelfRegistrationStatus() {
