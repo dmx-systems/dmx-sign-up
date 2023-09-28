@@ -454,7 +454,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
                 }
             }
-            passwordResetTokens.remove(token);
+            passwordResetTokens.remove(key);
             return PasswordChangeRequestResult.SUCCESS;
         } else {
             return PasswordChangeRequestResult.NO_TOKEN;
