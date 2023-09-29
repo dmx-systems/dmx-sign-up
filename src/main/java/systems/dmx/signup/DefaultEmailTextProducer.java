@@ -95,9 +95,9 @@ class DefaultEmailTextProducer implements EmailTextProducer {
 
     @Override
     public String getPasswordResetMailMessage(String addressee, String key) {
-        String href = getPasswordResetUrl(key);
+        String resetUrl = getPasswordResetUrl(key);
         return rb.getString("mail_hello") + "!<br><br>" + rb.getString("mail_pw_reset_body") + "<br>" +
-                "<a href=\"" + key + "\">" + key + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
+                "<a href=\"" + resetUrl + "\">" + key + "</a><br><br>" + rb.getString("mail_cheers") + "<br>" +
                 rb.getString("mail_signature");
     }
 
