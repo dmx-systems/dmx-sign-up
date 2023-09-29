@@ -114,15 +114,15 @@ click on the link that is contained in the account creation/password reset reque
 
 The sign-up plugin supports three different policies regarding username handling
 
-| Value                   | Description                                                                           |
-|-------------------------|---------------------------------------------------------------------------------------|
-| unconfined              | Username, email address and display name can be chosen freely of each other           |
-| username_is_email       | Only email adress and display name can be set, the former turns into the DMX username |
-| username_is_displayname | Only user name and email adress can be set, the former becomes also the display name  |
+| Value                      | Description                                                                           |
+|----------------------------|---------------------------------------------------------------------------------------|
+| unconfined                 | Username, email address and display name can be chosen freely of each other           |
+| username_is_email          | Only email adress and display name can be set, the former turns into the DMX username |
+| displayname_is_username  _ | Only display name and email adress can be set, the former becomes the DMX username.   |
 
 The policy is chosen by setting the configuration key
 ```
-dmx.signup.username_policy = unconfined | username_is_email | username_is_displayname
+dmx.signup.username_policy = unconfined | username_is_email | displayname_is_username
 ```
 
 to any of the possible values. The default value is ```unconfined```. 
@@ -185,6 +185,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 **3.0.0** -- Upcoming
 
 * All UI-related code moved into its own plugin
+* Introduced username policies
 
 **2.1.0** -- Jul, 14, 2023
 

@@ -1,7 +1,7 @@
 package systems.dmx.signup.configuration;
 
 public enum UsernamePolicy {
-    UNCONFINED, USERNAME_IS_DISPLAYNAME, USERNAME_IS_EMAIL;
+    UNCONFINED, DISPLAYNAME_IS_USERNAME_, USERNAME_IS_EMAIL;
 
     static UsernamePolicy fromStringOrAgnostic(String value) {
         try {
