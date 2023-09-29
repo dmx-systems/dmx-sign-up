@@ -66,7 +66,6 @@ public interface SignupService {
      *
      * Parts of the given arguments might be ignored depending on the configured username policy.
      *
-     *
      * Requires the currently logged in user to be a member of the administration workspace or a member of a designated
      * workspace (specified through the configuration).
      *
@@ -74,11 +73,12 @@ public interface SignupService {
      * email confirmation or self sign-up has been configured. As such this method is supposed to be employed only
      * for setting up user in an automated way. E.g. test users for a staging environment.
      *
-     * @param mailbox       String must be unique
-     * @param displayName   String
-     * @param password      String For LDAP window.btoa encoded and for DMX -SHA-256- encoded
+     * @param username Username of the new user.
+     * @param mailbox Email address of the new user.
+     * @param displayName Display name of the new user.
+     * @param password Password of the new user.
      *
-     * @return
+     * @return Username Topic of the newly created user or null.
      */
     Topic createUserAccount(String username, String mailbox, String displayName, String password);
 
