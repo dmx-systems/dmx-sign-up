@@ -409,6 +409,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 token.accountData.email, token.accountData.displayName, token.redirectUrl);
         } else {
             log.warning("The link to reset the password for " + token.accountData.username + " has expired.");
+            passwordResetTokens.remove(key);
             return new PasswordResetRequestResult(PasswordResetRequestResult.Code.LINK_EXPIRED);
         }
     }
