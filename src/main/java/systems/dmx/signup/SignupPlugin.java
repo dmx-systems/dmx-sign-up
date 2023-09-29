@@ -883,24 +883,19 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private void sendConfirmationMail(String key, String username, String mailbox) {
         try {
-            URL url = new URL(DMX_HOST_URL);
-            // Localize "sentence" structure for german, maybe via Formatter
-            try {
-                if (DMX_ACCOUNTS_ENABLED) {
-                    String mailSubject = emailTextProducer.getConfirmationActiveMailSubject();
-                    String message = emailTextProducer.getConfirmationActiveMailMessage(username, key);
-                    sendSystemMail(mailSubject, message, mailbox);
-                } else {
-                    String mailSubject = emailTextProducer.getConfirmationProceedMailSubject();
-                    String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, key);
-                    sendSystemMail(mailSubject, message, mailbox);
-                }
-            } catch (Exception ex) {
-                log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
-                    "\"Email Confirmation\" mail, caused by: " + ex.getMessage());
+            if (DMX_ACCOUNTS_ENABLED) {
+                String mailSubject = emailTextProducer.getConfirmationActiveMailSubject();
+                String message = emailTextProducer.getConfirmationActiveMailMessage(username, key);
+                sendSystemMail(mailSubject, message, mailbox);
+            } else {
+                String mailSubject = emailTextProducer.getConfirmationProceedMailSubject();
+                String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, key);
+                sendSystemMail(mailSubject, message, mailbox);
             }
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
+        } catch (RuntimeException ex) {
+            log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
+                    "\"Email Confirmation\" mail, caused by: " + ex.getMessage());
+            throw ex;
         }
     }
 
@@ -910,9 +905,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             String subject = emailTextProducer.getPasswordResetMailSubject();
             String message = emailTextProducer.getPasswordResetMailMessage(addressee, key);
             sendSystemMail(subject, message, mailbox);
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
                 "\"Password Reset\" mail, caused by: " + ex.getMessage());
+            throw ex;
         }
     }
 
