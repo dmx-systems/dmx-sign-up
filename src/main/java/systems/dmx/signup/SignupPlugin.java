@@ -462,14 +462,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    @GET
-    @Path("/custom-handle/{username}/{mailbox}/{displayname}/{password}")
+    @POST
+    @Path("/user-account/{username}/{mailbox}/{displayname}/{password}")
     @Transactional
     @Override
-    public Topic handleCustomAJAXSignupRequest(@PathParam("username") String username,
-                                               @PathParam("mailbox") String mailbox,
-                                               @PathParam("displayname") String displayName,
-                                               @PathParam("password") String password) throws URISyntaxException {
+    public Topic createUserAccount(@PathParam("username") String username,
+                                   @PathParam("mailbox") String mailbox,
+                                   @PathParam("displayname") String displayName,
+                                   @PathParam("password") String password) {
         checkAccountCreation();
         Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, mailbox, displayName), password);
         log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);

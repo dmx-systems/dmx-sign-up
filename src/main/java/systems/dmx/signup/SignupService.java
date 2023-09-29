@@ -62,12 +62,17 @@ public interface SignupService {
     PasswordChangeRequestResult requestPasswordChange(String key, String password);
     
     /**
-     * Creates a user account with display name, email address as username and password. FIXDOC
+     * Creates a user account with display name, email address as username and password.
      *
-     * TODO: rename to createUserAccount() (jri 2023/09/25)
+     * Parts of the given arguments might be ignored depending on the configured username policy.
+     *
      *
      * Requires the currently logged in user to be a member of the administration workspace or a member of a designated
-     * workspace (specified through the configuration). FIXDOC
+     * workspace (specified through the configuration).
+     *
+     * This function skips any kind of token handling and creates the user right away regardless of whether
+     * email confirmation or self sign-up has been configured. As such this method is supposed to be employed only
+     * for setting up user in an automated way. E.g. test users for a staging environment.
      *
      * @param mailbox       String must be unique
      * @param displayName   String
@@ -75,8 +80,7 @@ public interface SignupService {
      *
      * @return
      */
-    Topic handleCustomAJAXSignupRequest(String username, String mailbox, String displayName, String password)
-        throws URISyntaxException;
+    Topic createUserAccount(String username, String mailbox, String displayName, String password);
 
     /**
      * @return  String  Workspace Topic ID
