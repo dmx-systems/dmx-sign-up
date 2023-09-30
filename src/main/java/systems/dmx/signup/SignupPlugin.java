@@ -462,7 +462,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    @POST
+    @GET
     @Path("/user-account/{username}/{mailbox}/{displayname}/{password}")
     @Transactional
     @Override
