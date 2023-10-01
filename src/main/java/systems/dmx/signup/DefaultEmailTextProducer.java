@@ -24,6 +24,10 @@ class DefaultEmailTextProducer implements EmailTextProducer {
                 rb.getString("mail_confirmation_link_label") + "</a>";
     }
 
+    @Override
+    public boolean isHtml() {
+        return true;
+    }
 
     @Override
     public String getConfirmationActiveMailSubject() {

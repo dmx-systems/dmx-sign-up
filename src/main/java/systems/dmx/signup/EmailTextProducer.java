@@ -2,6 +2,8 @@ package systems.dmx.signup;
 
 public interface EmailTextProducer {
 
+    boolean isHtml();
+
     String getConfirmationActiveMailSubject();
 
     String getConfirmationActiveMailMessage(String username, String key);

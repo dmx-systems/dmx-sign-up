@@ -931,16 +931,18 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     /**
      *
-     * @param subject       String Subject text for the message.
-     * @param message       String Text content of the message.
-     * @param recipientValues     String of Email Address message is sent to **must not** be NULL.
+     * @param subject           String Subject text for the message.
+     * @param message           String Text content of the message.
+     * @param recipientValues   String of Email Address message is sent to **must not** be NULL.
      */
     private void sendSystemMail(String subject, String message, String recipientValues) {
-        String projectName = "TODO"; // TODO
-        //String projectName = activeModuleConfiguration.getProjectTitle();
+        String projectName = "TODO";                    // TODO?
+        // String projectName = activeModuleConfiguration.getProjectTitle();
         String sender = CONFIG_FROM_MAILBOX;
-        String mailBody = message; // + "\n\n" + DMX_HOST_URL + "\n\n"
-        sendmail.doEmailRecipientAs(sender, projectName, subject, mailBody, null, recipientValues);
+        boolean isHtml = emailTextProducer.isHtml();
+        String textMessage = isHtml ? null : message;   // + "\n\n" + DMX_HOST_URL + "\n\n"     // TODO?
+        String htmlMessage = isHtml ? message : null;   // + "\n\n" + DMX_HOST_URL + "\n\n"     // TODO?
+        sendmail.doEmailRecipientAs(sender, projectName, subject, textMessage, htmlMessage, recipientValues);
     }
 
     private Assoc getDefaultAssociation(long topic1, long topic2) {
