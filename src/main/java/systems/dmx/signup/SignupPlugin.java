@@ -470,9 +470,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                                    @PathParam("mailbox") String mailbox,
                                    @PathParam("displayname") String displayName,
                                    @PathParam("password") String password) {
+        log.info("Creating user account with display name \"" + displayName + "\" and email address \"" + mailbox +
+            "\"");
         checkAccountCreation();
         Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, mailbox, displayName), password);
-        log.info("Created new user account for user with display \"" + displayName + "\" and mailbox " + mailbox);
         return usernameTopic;
     }
 
@@ -489,10 +490,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
-                    // TODO: Short-cut until display name handling is fixed
-                    if (true) {
-                        return null;
-                    }
                     // create display name facet for username topic
                     facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
                     // TODO: Not doable for anonymous user. Needs a privileged function.
@@ -646,7 +643,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             if (isUsernameTaken(username)) {
                 // Might be thrown if two users compete for registration (of the same username)
                 // within the same 60 minutes (tokens validity timespan). First confirming, wins.
-                throw new RuntimeException("Username was already registered and confirmed!");
+                throw new RuntimeException("Username \"" + username + "\" was already registered and confirmed");
             }
             Credentials creds;
             // When the "Basic" method is used the password is already in -SHA256- form for all other
@@ -913,6 +910,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    /**
+     * Sends an email to the admin (as configured by "dmx.signup.admin_mailbox") about successful account creation.
+     */
     private void sendNotificationMail(String username, String mailbox) {
         if (CONFIG_ADMIN_MAILBOX != null && !CONFIG_ADMIN_MAILBOX.isEmpty()) {
             try {
@@ -924,8 +924,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     "\"system mailbox\" about account creation, caused by: " + ex.getMessage());
             }
         } else {
-            log.info("ADMIN: No \"Admin Mailbox\" configured: A new user account (" + username + ") was created but" +
-                " no notification could be sent.");
+            log.warning("\"dmx.signup.admin_mailbox\" is not configured; mail about account creation (\"" + username +
+                "\") could not be sent");
         }
     }
 
