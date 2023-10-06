@@ -222,7 +222,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         JSONObject response = new JSONObject();
         try {
             response.put("isAvailable", true);
-            if (isMailboxTaken(email)) {
+            if (isEmailAddressTaken(email)) {
                 response.put("isAvailable", false);
             }
             return response.toString();
@@ -698,7 +698,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public boolean isMailboxTaken(String email) {
+    public boolean isEmailAddressTaken(String email) {
         String value = email.toLowerCase().trim();
         return dmx.getPrivilegedAccess().emailAddressExists(value);
     }

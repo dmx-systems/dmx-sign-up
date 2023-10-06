@@ -111,7 +111,7 @@ public interface SignupService {
 
     boolean isLdapAccountCreationEnabled();
 
-    boolean isMailboxTaken(String value);
+    boolean isEmailAddressTaken(String value);
 
     boolean isUsernameTaken(String value);
 
