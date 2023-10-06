@@ -443,8 +443,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
             } else {
                 String plaintextPassword = Base64.base64Decode(password);
-                log.info("Change password attempt for \"" + newCreds.username + "\". password-value string " +
-                    "provided by client \"" + password + "\", plaintextPassword: \"" + plaintextPassword + "\"");
+                log.info("Change password attempt for \"" + newCreds.username + "\".");
                 // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
                 newCreds.plaintextPassword = plaintextPassword;
                 newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
