@@ -16,6 +16,11 @@ import systems.dmx.signup.configuration.ModuleConfiguration;
 
 public interface SignupService {
 
+    /**
+     * Sets the {@link EmailTextProducer} instance that is called whenever email subjects and bodies need to be created.
+     *
+     * @param emailTextProducer New instance to set - must not be null
+     */
     void setEmailTextProducer(EmailTextProducer emailTextProducer);
 
     String getSystemEmailContactOrEmpty();

@@ -35,9 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -84,7 +82,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     HashMap<String, NewAccountToken> newAccountTokens = new HashMap<>();
     HashMap<String, PasswordResetToken> passwordResetTokens = new HashMap<>();
 
-    EmailTextProducer emailTextProducer = new DefaultEmailTextProducer(DMX_HOST_URL);
+    EmailTextProducer emailTextProducer = new InternalEmailTextProducer();
 
     private NewAccountDataMapper newAccountDataMapper = new NewAccountDataMapper();
 
@@ -114,6 +112,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @Override
     public void setEmailTextProducer(EmailTextProducer emailTextProducer) {
+        if (emailTextProducer == null) {
+            throw new IllegalArgumentException("New instance cannot be null");
+        }
         this.emailTextProducer = emailTextProducer;
     }
 
@@ -576,7 +577,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     String subject = emailTextProducer.getAccountActiveEmailSubject();
                     String message = emailTextProducer.getAccountActiveEmailMessage(username.toString());
-                    sendSystemMail(subject, message, mailboxValue);
+                    sendMail(subject, message, mailboxValue);
                     log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
             }
@@ -594,7 +595,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (!CONFIG_ADMIN_MAILBOX.isEmpty()) {
             String recipient = CONFIG_ADMIN_MAILBOX;
             try {
-                sendSystemMail(subject, message, recipient);
+                sendMail(subject, message, recipient);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
                     "notification mail to the \"System Mailbox\", caused by: " + ex.getMessage());
@@ -606,7 +607,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private void sendUserMailboxNotification(String mailbox, String subject, String message) {
         try {
-            sendSystemMail(subject, message, mailbox);
+            sendMail(subject, message, mailbox);
         } catch (Exception ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out a " +
                 "notification mail to User \"" + mailbox + "\", caused by: " + ex.getMessage());
@@ -884,11 +885,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             if (DMX_ACCOUNTS_ENABLED) {
                 String mailSubject = emailTextProducer.getConfirmationActiveMailSubject();
                 String message = emailTextProducer.getConfirmationActiveMailMessage(username, key);
-                sendSystemMail(mailSubject, message, mailbox);
+                sendMail(mailSubject, message, mailbox);
             } else {
                 String mailSubject = emailTextProducer.getConfirmationProceedMailSubject();
                 String message = emailTextProducer.getUserConfirmationProceedMailMessage(username, key);
-                sendSystemMail(mailSubject, message, mailbox);
+                sendMail(mailSubject, message, mailbox);
             }
         } catch (RuntimeException ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
@@ -902,7 +903,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             String addressee = (displayName != null && !displayName.isEmpty()) ? displayName : username;
             String subject = emailTextProducer.getPasswordResetMailSubject();
             String message = emailTextProducer.getPasswordResetMailMessage(addressee, key);
-            sendSystemMail(subject, message, mailbox);
+            sendMail(subject, message, mailbox);
         } catch (RuntimeException ex) {
             log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED sending out the " +
                 "\"Password Reset\" mail, caused by: " + ex.getMessage());
@@ -918,7 +919,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             try {
                 String subject = emailTextProducer.getAccountCreationSystemEmailSubject();
                 String message = emailTextProducer.getAccountCreationSystemEmailMessage(username, mailbox);
-                sendSystemMail(subject, message, CONFIG_ADMIN_MAILBOX);
+                sendMail(subject, message, CONFIG_ADMIN_MAILBOX);
             } catch (Exception ex) {
                 log.severe("There seems to be an issue with your mail (SMTP) setup, we FAILED notifying the " +
                     "\"system mailbox\" about account creation, caused by: " + ex.getMessage());
@@ -935,9 +936,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
      * @param message           String Text content of the message.
      * @param recipientValues   String of Email Address message is sent to **must not** be NULL.
      */
-    private void sendSystemMail(String subject, String message, String recipientValues) {
-        String projectName = "TODO";                    // TODO?
-        // String projectName = activeModuleConfiguration.getProjectTitle();
+    private void sendMail(String subject, String message, String recipientValues) {
+        String projectName = "TODO"; // TODO?
         String sender = CONFIG_FROM_MAILBOX;
         boolean isHtml = emailTextProducer.isHtml();
         String textMessage = isHtml ? null : message;   // + "\n\n" + DMX_HOST_URL + "\n\n"     // TODO?
