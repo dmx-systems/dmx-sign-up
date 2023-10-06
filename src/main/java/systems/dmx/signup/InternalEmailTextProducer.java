@@ -8,6 +8,12 @@ public class InternalEmailTextProducer implements EmailTextProducer {
     }
 
     @Override
+    public boolean isHtml() {
+        fail();
+        return false;
+    }
+
+    @Override
     public String getConfirmationActiveMailSubject() {
         return fail();
     }
