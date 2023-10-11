@@ -88,6 +88,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private IsValidEmailAdressMapper isValidEmailAdressMapper = new IsValidEmailAdressMapper();
 
+    // --- Hooks --- //
+
     @Override
     public void init() {
         initOptionalServices();
@@ -110,6 +112,15 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    // TODO: use platform's shutdown() hook instead, importing BundleContext and calling super not necessary then
+    @Override
+    public void stop(BundleContext context) {
+        ldapPluginService.release();
+        super.stop(context);
+    }
+
+    // --- SignupService Implementation --- //
+
     @Override
     public void setEmailTextProducer(EmailTextProducer emailTextProducer) {
         if (emailTextProducer == null) {
@@ -127,12 +138,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         ldapPluginService = new OptionalService<>(getBundleContext(), () -> LDAPPluginService.class);
     }
 
-    @Override
-    public void stop(BundleContext context) {
-        ldapPluginService.release();
-        super.stop(context);
-    }
-
     /**
      * Custom event fired by sign-up module up on successful user account creation.
      *
@@ -145,29 +150,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             ((UserAccountCreateListener) listener).userAccountCreated((Topic) params[0]);
         }
     };
-
-    // --- Plugin Service Implementation --- //
-    /**
-     * A HTTP resource allowing existence checks for given username strings.
-     * @param username
-     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
-     *
-     * If the username is already taken isAvailable is set to false.
-     */
-    @GET
-    @Path("/check/{username}")
-    public String getUsernameAvailability(@PathParam("username") String username) {
-        JSONObject response = new JSONObject();
-        try {
-            response.put("isAvailable", true);
-            if (isUsernameTaken(username)) {
-                response.put("isAvailable", false);
-            }
-            return response.toString();
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @GET
     @Path("/display-name/{username}")
@@ -256,6 +238,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
         return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
     }
+
     private SignUpRequestResult handleSignUpWithDirectAccountCreation(
             NewAccountData newAccountData,
             String password) throws URISyntaxException {
@@ -559,6 +542,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    // --- Listeners --- //
+
     @Override
     public void postUpdateTopic(Topic topic, ChangeReport report, TopicModel updateModel)  {
         if (topic.getTypeUri().equals(SIGN_UP_CONFIG_TYPE_URI)) {
@@ -703,11 +688,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return dmx.getPrivilegedAccess().emailAddressExists(value);
     }
 
+    @GET
+    @Path("/username/{username}/taken")
     @Override
-    public boolean isUsernameTaken(String username) {
-        String value = username.trim();
-        Topic userNameTopic = accesscontrol.getUsernameTopic(value);
-        return (userNameTopic != null);
+    public boolean isUsernameTaken(@PathParam("username") String username) {
+        return accesscontrol.getUsernameTopic(username.trim()) != null;
     }
 
     // --- Private Helpers --- //
@@ -924,8 +909,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     "\"system mailbox\" about account creation, caused by: " + ex.getMessage());
             }
         } else {
-            log.warning("\"dmx.signup.admin_mailbox\" is not configured; mail about account creation (\"" + username +
-                "\") could not be sent");
+            log.warning("\"dmx.signup.admin_mailbox\" is not configured; welcome mail could not be sent to " + mailbox);
         }
     }
 
