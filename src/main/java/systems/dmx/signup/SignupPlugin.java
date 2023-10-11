@@ -192,27 +192,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    /**
-     * A HTTP resource allowing existence check fors the given email address string.
-     * @param email
-     * @return A String being a JSONObject with an "isAvailable" property being either "true" or "false".
-     * If the email address is already known in the system isAvailable is set to false.
-     */
-    @GET
-    @Path("/check/mailbox/{email}")
-    public String getMailboxAvailability(@PathParam("email") String email) {
-        JSONObject response = new JSONObject();
-        try {
-            response.put("isAvailable", true);
-            if (isEmailAddressTaken(email)) {
-                response.put("isAvailable", false);
-            }
-            return response.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private NewAccountData mapToNewAccountData(String username, String mailbox, String displayName) {
         return newAccountDataMapper.map(CONFIG_USERNAME_POLICY, username, mailbox, displayName);
     }
@@ -503,8 +482,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     /**
+     * TODO: drop this method? Does any application uses it? Drop entire concept "API Workspace"?
+     * TODO: otherwise: revise return value, make properly RESTful
+     * TODO: move API docs to *Interface*
+     *
      * A HTTP resource to associate the requesting username with
      * the "Custom Membership Request" note topic and to inform the administrators by email.
+     *
      * @return String containing a JSONObject with an "membership_created" r´property representing the relation.
      */
     @POST
@@ -682,10 +666,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
+    @GET
+    @Path("/email/{email}/taken")
     @Override
-    public boolean isEmailAddressTaken(String email) {
-        String value = email.toLowerCase().trim();
-        return dmx.getPrivilegedAccess().emailAddressExists(value);
+    public boolean isEmailAddressTaken(@PathParam("email") String email) {
+        return dmx.getPrivilegedAccess().emailAddressExists(email.toLowerCase().trim());
     }
 
     @GET
