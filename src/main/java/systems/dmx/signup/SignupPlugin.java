@@ -1,8 +1,5 @@
 package systems.dmx.signup;
 
-import com.sun.jersey.core.util.Base64;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.Assoc;
@@ -437,7 +434,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
         try {
             // 1) NewAccountData is set according to username policy
-            String username = createSimpleUserAccount(newAccountData.username.trim(), password,
+            String username = createSimpleUserAccount(newAccountData.username.trim(), password.trim(),
                 newAccountData.email.trim());
             // 2) create and assign displayname topic to "System" workspace
             final String displayNameValue = newAccountData.displayName.trim();
@@ -594,14 +591,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING == AccountCreation.PasswordHandling.EDITABLE;
     }
 
-    private Topic createUsername(Credentials credentials) throws Exception {
-        if (isLdapAccountCreationEnabled()) {
-            return ldapPluginService.get().createUser(credentials);
-        } else {
-            return accesscontrol._createUserAccount(credentials);
-        }
-    }
-
     private String createSimpleUserAccount(String username, String password, String mailbox) {
         try {
             if (isUsernameTaken(username)) {
@@ -609,20 +598,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 // within the same 60 minutes (tokens validity timespan). First confirming, wins.
                 throw new RuntimeException("Username \"" + username + "\" was already registered and confirmed");
             }
-            Credentials creds;
-            // When the "Basic" method is used the password is already in -SHA256- form for all other
-            // methods it is simply base64-encoded
-            if (!isLdapAccountCreationEnabled()) {
-                creds = new Credentials(new JSONObject()
-                    .put("username", username.trim())
-                    .put("password", password.trim()));
-            } else {
-                String plaintextPassword = Base64.base64Decode(password);
-                creds = new Credentials(username.trim(), plaintextPassword);
-                // Retroactively provides plaintext password in credentials
-                creds.password = plaintextPassword;
-            }
             // 1) Creates a new username topic (in LDAP and/or DMX)
+            Credentials creds = new Credentials(username, password);
             final Topic usernameTopic = createUsername(creds);
             final String eMailAddressValue = mailbox;
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
@@ -658,6 +635,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             log.log(Level.WARNING, "Creating simple user account failed", e);
             throw new RuntimeException("Creating simple user account failed, username=\"" + username +
                 "\", mailbox=\"" + mailbox + "\"", e);
+        }
+    }
+
+    private Topic createUsername(Credentials credentials) throws Exception {
+        if (isLdapAccountCreationEnabled()) {
+            return ldapPluginService.get().createUser(credentials);
+        } else {
+            return accesscontrol._createUserAccount(credentials);
         }
     }
 
