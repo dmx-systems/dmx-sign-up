@@ -396,17 +396,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         log.info("Processing Password Update Request Token... ");
         PasswordResetToken token = passwordResetTokens.get(key);
         if (token != null) {
-            Credentials newCreds = new Credentials("dummy", "pass");
-            newCreds.username = token.accountData.username;
+            Credentials newCreds = new Credentials(token.accountData.username, password);
             if (!isLdapAccountCreationEnabled()) {
-                newCreds.password = password;
                 // Change password stored in "User Account" topic
                 dmx.getPrivilegedAccess().changePassword(newCreds);
                 log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
             } else {
                 log.info("Change password attempt for \"" + newCreds.username + "\".");
                 // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
-                newCreds.password = Base64.base64Decode(password);
                 if (ldapPluginService.get().changePassword(newCreds) != null) {
                     log.info("If no previous errors are reported here or in the LDAP-service log, the " +
                         "credentials for user " + newCreds.username + " should now have been changed succesfully.");
