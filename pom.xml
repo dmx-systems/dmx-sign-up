@@ -53,7 +53,7 @@
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-ldap</artifactId>
-            <version>0.6.2</version>
+            <version>0.6.3-SNAPSHOT</version>
             <optional>true</optional>
         </dependency>
     </dependencies>
