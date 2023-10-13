@@ -60,9 +60,9 @@ public interface SignupService {
      * TODO: rename to changePassword() (jri 2023/09/25)
      *
      * @param key           the key to access the password-reset token
-     * @param password      the new password
+     * @param password      the new password in plain text
      *
-     * @return Returns the correct template for the input       FIXDOC
+     * @return    a result code, one of SUCCESS, PASSWORD_CHANGE_FAILED, NO_TOKEN, UNEXPECTED_ERROR
      */
     PasswordChangeRequestResult requestPasswordChange(String key, String password);
     

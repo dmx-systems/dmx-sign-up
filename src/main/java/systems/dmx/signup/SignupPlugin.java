@@ -404,11 +404,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 dmx.getPrivilegedAccess().changePassword(newCreds);
                 log.info("Credentials for user " + newCreds.username + " were changed succesfully.");
             } else {
-                String plaintextPassword = Base64.base64Decode(password);
                 log.info("Change password attempt for \"" + newCreds.username + "\".");
                 // The tendu-way (but with base64Decode, as sign-up frontend encodes password using window.btoa)
-                newCreds.plaintextPassword = plaintextPassword;
-                newCreds.password = password; // should not be in effect since latest dmx-ldap SNAPSHOT
+                newCreds.password = Base64.base64Decode(password);
                 if (ldapPluginService.get().changePassword(newCreds) != null) {
                     log.info("If no previous errors are reported here or in the LDAP-service log, the " +
                         "credentials for user " + newCreds.username + " should now have been changed succesfully.");
@@ -625,7 +623,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 String plaintextPassword = Base64.base64Decode(password);
                 creds = new Credentials(username.trim(), plaintextPassword);
                 // Retroactively provides plaintext password in credentials
-                creds.plaintextPassword = plaintextPassword;
+                creds.password = plaintextPassword;
             }
             // 1) Creates a new username topic (in LDAP and/or DMX)
             final Topic usernameTopic = createUsername(creds);
