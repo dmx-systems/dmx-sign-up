@@ -394,7 +394,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         PasswordResetTokenData tokenData = passwordResetTokenData.get(token);
         if (tokenData != null) {
             Credentials newCreds = new Credentials(tokenData.accountData.username, password);
-            newCreds.plaintextPassword = password;
             if (!isLdapAccountCreationEnabled()) {
                 // Change password stored in "User Account" topic
                 dmx.getPrivilegedAccess().changePassword(newCreds);
@@ -603,8 +602,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
             // 1) Creates a new username topic (in LDAP and/or DMX)
             Credentials creds = new Credentials(username, password);
-            // Retroactively provides plaintext password in credentials
-            creds.plaintextPassword = password;
             final Topic usernameTopic = createUsername(creds);
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
