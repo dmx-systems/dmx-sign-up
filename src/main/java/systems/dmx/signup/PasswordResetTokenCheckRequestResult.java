@@ -4,7 +4,7 @@ import systems.dmx.core.JSONEnabled;
 
 import org.codehaus.jettison.json.JSONObject;
 
-public class PasswordResetRequestResult implements JSONEnabled {
+public class PasswordResetTokenCheckRequestResult implements JSONEnabled {
 
     public final Code code;
 
@@ -13,12 +13,12 @@ public class PasswordResetRequestResult implements JSONEnabled {
     public final String displayName;
     public final String redirectUrl;
 
-    public PasswordResetRequestResult(Code code) {
+    public PasswordResetTokenCheckRequestResult(Code code) {
         this(code, null, null, null, null);
     }
 
-    public PasswordResetRequestResult(Code code, String username, String email, String displayName,
-                                      String redirectUrl) {
+    public PasswordResetTokenCheckRequestResult(Code code, String username, String email, String displayName,
+                                                String redirectUrl) {
         this.code = code;
         this.username = username;
         this.email = email;

@@ -2,15 +2,15 @@ package systems.dmx.signup.model;
 
 import java.time.Instant;
 
-public class PasswordResetToken {
+public class NewAccountTokenData {
 
     public NewAccountData accountData;
+    public String password;
     public Instant expiration;
-    public String redirectUrl;
 
-    public PasswordResetToken(NewAccountData accountData, Instant expiration, String redirectUrl) {
+    public NewAccountTokenData(NewAccountData accountData, String password, Instant expiration) {
         this.accountData = accountData;
+        this.password = password;
         this.expiration = expiration;
-        this.redirectUrl = redirectUrl;
     }
 }

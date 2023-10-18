@@ -43,28 +43,28 @@ public interface SignupService {
      *
      * TODO: rename to sendPasswordResetMail() (jri 2023/09/25)
      */
-    InitiatePasswordResetRequestResult requestInitiatePasswordReset(String email, String displayName);
+    InitiatePasswordResetRequestResult requestInitiatePasswordReset(String emailAddress, String displayName);
 
     /**
-     * Checks if the Password Reset Token stored under "key" is valid.
+     * Checks if the given password reset token can be used.
      *
      * TODO: rename to checkToken() (jri 2023/09/25)
      *
      * @returns     a result whose "code" is one of SUCCESS, INVALID_TOKEN, LINK_EXPIRED, UNEXPECTED_ERROR
      */
-    PasswordResetRequestResult requestPasswordReset(String key);
+    PasswordResetTokenCheckRequestResult requestPasswordResetTokenCheck(String token);
 
     /**
      * Changes the password of the user of the Password Reset Token stored under "key".
      *
      * TODO: rename to changePassword() (jri 2023/09/25)
      *
-     * @param key           the key to access the password-reset token
-     * @param password      the new password in plain text
+     * @param token     the token associated with a password change process
+     * @param password  the new password for the user in plaintext
      *
-     * @return    a result code, one of SUCCESS, PASSWORD_CHANGE_FAILED, NO_TOKEN, UNEXPECTED_ERROR
+     * @return A result whose "code" indicates the conclusion of the operation.
      */
-    PasswordChangeRequestResult requestPasswordChange(String key, String password);
+    PasswordChangeRequestResult requestPasswordChange(String token, String password);
     
     /**
      * Creates a user account with display name, email address as username and password.
@@ -79,13 +79,13 @@ public interface SignupService {
      * for setting up user in an automated way. E.g. test users for a staging environment.
      *
      * @param username Username of the new user.
-     * @param mailbox Email address of the new user.
+     * @param emailAddress Email address of the new user.
      * @param displayName Display name of the new user.
      * @param password Password of the new user.
      *
      * @return Username Topic of the newly created user or null.
      */
-    Topic createUserAccount(String username, String mailbox, String displayName, String password);
+    Topic createUserAccount(String username, String emailAddress, String displayName, String password);
 
     /**
      * @return  String  Workspace Topic ID

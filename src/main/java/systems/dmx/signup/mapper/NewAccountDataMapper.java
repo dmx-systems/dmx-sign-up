@@ -5,24 +5,24 @@ import systems.dmx.signup.model.NewAccountData;
 
 public class NewAccountDataMapper {
 
-    public NewAccountData map(UsernamePolicy policy, String username, String email, String displayName) {
+    public NewAccountData map(UsernamePolicy policy, String username, String emailAddress, String displayName) {
         switch (policy) {
             case UNCONFINED:
                 return new NewAccountData(
                         username,
-                        email,
+                        emailAddress,
                         displayName
                 );
             case DISPLAYNAME_IS_USERNAME_:
                 return new NewAccountData(
                         username,
-                        email,
+                        emailAddress,
                         username
                 );
             case USERNAME_IS_EMAIL:
                 return new NewAccountData(
-                        email,
-                        email,
+                        emailAddress,
+                        emailAddress,
                         displayName
                 );
         }
