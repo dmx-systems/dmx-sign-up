@@ -10,15 +10,15 @@
     <packaging>bundle</packaging>
 
     <parent>
-	<groupId>systems.dmx</groupId>
+    	<groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.3.2</version>
+        <version>5.3.3-SNAPSHOT</version>
     </parent>
 
     <properties>
         <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
-        <dmx.version>5.3.2</dmx.version>
-        <dmx-ldap.version>0.6.2</dmx-ldap.version>
+        <dmx.version>5.3.3-SNAPSHOT</dmx.version>
+        <dmx-ldap.version>0.6.3-SNAPSHOT</dmx-ldap.version>
     </properties>
 
     <dependencies>
