@@ -111,11 +111,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (CONFIG_ADMIN_MAILBOX == null || CONFIG_ADMIN_MAILBOX.isEmpty()) {
             log.warning("'dmx.signup.admin_mailbox' is not configured. Please correct this otherwise various notification emails cannot be send.");
         }
-
-        if (CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
-            log.info("Sign-up Configuration: Email based confirmation workflow active, Administrator skipping confirmation mail.");
-        }
-
     }
 
     // TODO: use platform's shutdown() hook instead, importing BundleContext and calling super not necessary then
@@ -449,9 +444,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 public Topic call() {
                     // create display name facet for username topic
                     facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
-                    // TODO: Not doable for anonymous user. Needs a privileged function.
+                    if (!hasAccountCreationPrivilege()) {
+                        // TODO: Not doable for anonymous user. Needs a privileged function.
+                        log.warning("Setting display name for self-registration not yet supported");
+                        return null;
+                    }
                     facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET, mf.newFacetValueModel(DISPLAY_NAME)
-                        .set(displayNameValue));
+                            .set(displayNameValue));
                     // automatically make users member in "Display Names" workspace
                     dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
                     log.info("Created membership for new user account in \"Display Names\" workspace " +
@@ -460,6 +459,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     // or is "runInWorkspacecContext privileged to GET?
                     RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
                     dmx.getPrivilegedAccess().assignToWorkspace(result, displayNamesWorkspaceId);
+
                     return result;
                 }
             });
@@ -498,7 +498,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // configured workspace)
             createApiWorkspaceMembership(usernameTopic); // might fail silently
             // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
-            Assoc requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
+            Assoc requestRelation = getMembershipAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
             if (requestRelation == null) {
                 // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace
                 // cookie set (at the requesting client) which workspace this assoc will be assigned to
@@ -716,7 +716,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             } else {
                 Topic usernameTopic = accesscontrol.getUsernameTopic();
                 Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
-                Assoc requestRelation = getDefaultAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
+                Assoc requestRelation = getMembershipAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
                 if (requestRelation != null) {
                     return true;
                 }
@@ -785,7 +785,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 log.info("Revoke Request for API Workspace Membership by user \"" +
                     usernameTopic.getSimpleValue().toString() + "\"");
                 if (accesscontrol.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
-                    Assoc assoc = getDefaultAssociation(usernameTopic.getId(), apiWorkspace.getId());
+                    Assoc assoc = getMembershipAssociation(usernameTopic.getId(), apiWorkspace.getId());
                     dmx.deleteAssoc(assoc.getId());
                 } else {
                     log.info("Skipped Revoke Request for non-existent API Workspace Membership for \"" +
@@ -883,8 +883,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         sendmail.doEmailRecipientAs(sender, projectName, subject, textMessage, htmlMessage, recipientValues);
     }
 
-    private Assoc getDefaultAssociation(long topic1, long topic2) {
-        return dmx.getAssocBetweenTopicAndTopic(ASSOCIATION,  topic1, topic2, DEFAULT, DEFAULT);
+    private Assoc getMembershipAssociation(long id1, long id2) {
+        return dmx.getAssocBetweenTopicAndTopic(ASSOCIATION,  id1, id2, DEFAULT, DEFAULT);
     }
 
     /**
