@@ -92,10 +92,10 @@ public interface SignupService {
      */
     String createAPIWorkspaceMembershipRequest();
 
-    SignUpRequestResult requestSignUp(String username, String mailbox, String displayName, String password,
+    SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String password,
                                       boolean skipConfirmation);
 
-    ProcessSignUpRequestResult requestProcessSignUp(String key);
+    ProcessSignUpRequestResult requestProcessSignUp(String token);
 
     /**
      * Sends out a valid password-reset token (if the email address is known to the system).
