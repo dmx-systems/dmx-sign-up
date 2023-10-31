@@ -2,6 +2,7 @@ package systems.dmx.signup;
 
 import org.osgi.framework.BundleContext;
 import systems.dmx.accesscontrol.AccessControlService;
+import systems.dmx.accesscontrol.event.PostLoginUser;
 import systems.dmx.core.Assoc;
 import systems.dmx.core.RelatedTopic;
 import systems.dmx.core.Topic;
@@ -54,7 +55,7 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 **/
 @Path("/sign-up")
 @Produces(MediaType.APPLICATION_JSON)
-public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic {
+public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic, PostLoginUser {
 
     private static final Logger log = Logger.getLogger(SignupPlugin.class.getName());
 
@@ -78,6 +79,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     HashMap<String, NewAccountTokenData> newAccountTokenData = new HashMap<>();
     HashMap<String, PasswordResetTokenData> passwordResetTokenData = new HashMap<>();
+
+    HashMap<String, String> deferredDisplayName = new HashMap<>();
 
     EmailTextProducer emailTextProducer = new InternalEmailTextProducer();
 
@@ -428,41 +431,47 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return usernameTopic;
     }
 
+    private void setupDisplayName(String username, String displayName) throws Exception {
+        // 2) create and assign displayname topic to "System" workspace
+        final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+        final long usernameTopicId = usernameTopic.getId();
+        long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
+
+        dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
+            @Override
+            public Topic call() {
+                // create display name facet for username topic
+                facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
+                facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET, mf.newFacetValueModel(DISPLAY_NAME)
+                        .set(displayName));
+                // automatically make users member in "Display Names" workspace
+                dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
+                log.info("Created membership for new user account in \"Display Names\" workspace " +
+                        "(SharingMode.Collaborative)");
+                // Account creator should be member of "Display Names"
+                RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
+                dmx.getPrivilegedAccess().assignToWorkspace(result, displayNamesWorkspaceId);
+
+                return result;
+            }
+        });
+    }
+
     private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
         try {
             // 1) NewAccountData is set according to username policy
             String username = createSimpleUserAccount(newAccountData.username, password,
                 newAccountData.emailAddress);
-            // 2) create and assign displayname topic to "System" workspace
-            final String displayNameValue = newAccountData.displayName;
-            final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
-            final long usernameTopicId = usernameTopic.getId();
-            long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
-            dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
-                @Override
-                public Topic call() {
-                    // create display name facet for username topic
-                    facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
-                    if (!hasAccountCreationPrivilege()) {
-                        // TODO: Not doable for anonymous user. Needs a privileged function.
-                        log.warning("Setting display name for self-registration not yet supported");
-                        return null;
-                    }
-                    facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET, mf.newFacetValueModel(DISPLAY_NAME)
-                            .set(displayNameValue));
-                    // automatically make users member in "Display Names" workspace
-                    dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
-                    log.info("Created membership for new user account in \"Display Names\" workspace " +
-                        "(SharingMode.Collaborative)");
-                    // Account creator should be member of "Display Names" ..
-                    // or is "runInWorkspacecContext privileged to GET?
-                    RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
-                    dmx.getPrivilegedAccess().assignToWorkspace(result, displayNamesWorkspaceId);
+            final String displayName = newAccountData.displayName;
 
-                    return result;
-                }
-            });
-            return usernameTopic;
+            if (hasAccountCreationPrivilege()) {
+                setupDisplayName(username, displayName);
+            } else {
+                // Diplayname needs to be set up on first login
+                deferredDisplayName.put(username, displayName);
+            }
+
+            return accesscontrol.getUsernameTopic(username);
         } catch (Exception e) {
             log.log(Level.WARNING, "Unable to create custom account", e);
             throw new RuntimeException("Creating custom user account failed, mailbox='" + newAccountData.emailAddress +
@@ -941,4 +950,22 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             tx.finish();
         }
     }
+
+    @Override
+    public void postLoginUser(String loggedInUserName) {
+        String displayName = deferredDisplayName.get(loggedInUserName);
+        if (accesscontrol.getUsername().equals(loggedInUserName)
+            && displayName != null) {
+            log.info("Handling deferred display name for user " + loggedInUserName);
+            transactional(() -> {
+                try {
+                    setupDisplayName(loggedInUserName, displayName);
+                    deferredDisplayName.remove(loggedInUserName);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to set up the deferred username for " + loggedInUserName, e);
+                }
+            });
+        }
+    }
+
 }
