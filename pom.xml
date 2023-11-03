@@ -16,10 +16,25 @@
     </parent>
 
     <properties>
-        <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
         <dmx.version>5.3.3-SNAPSHOT</dmx.version>
         <dmx-ldap.version>0.6.3-SNAPSHOT</dmx-ldap.version>
     </properties>
+
+    <profiles>
+        <profile>
+            <!-- Activate this profile to use the docker deployment included in the project -->
+            <id>docker</id>
+            <activation>
+                <property>
+                    <name>env.DMX_DEPLOYMENT</name>
+                    <value>docker</value>
+                </property>
+            </activation>
+            <properties>
+                <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
+            </properties>
+        </profile>
+    </profiles>
 
     <dependencies>
         <dependency>
