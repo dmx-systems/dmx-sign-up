@@ -17,7 +17,7 @@
 
     <properties>
         <dmx.version>5.3.3-SNAPSHOT</dmx.version>
-        <dmx-ldap.version>0.6.3-SNAPSHOT</dmx-ldap.version>
+        <dmx-ldap.version>0.7.0-SNAPSHOT</dmx-ldap.version>
     </properties>
 
     <profiles>

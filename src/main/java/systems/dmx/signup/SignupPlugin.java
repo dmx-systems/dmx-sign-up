@@ -16,7 +16,7 @@ import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
-import systems.dmx.ldap.service.LDAPPluginService;
+import systems.dmx.ldap.service.LDAPService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
@@ -72,7 +72,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Inject
     private WorkspacesService workspaces;
 
-    private OptionalService<LDAPPluginService> ldapPluginService;
+    private OptionalService<LDAPService> ldap;
 
     @Context
     UriInfo uri;
@@ -119,7 +119,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     // TODO: use platform's shutdown() hook instead, importing BundleContext and calling super not necessary then
     @Override
     public void stop(BundleContext context) {
-        ldapPluginService.release();
+        ldap.release();
         super.stop(context);
     }
 
@@ -139,7 +139,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     private void initOptionalServices() {
-        ldapPluginService = new OptionalService<>(getBundleContext(), () -> LDAPPluginService.class);
+        ldap = new OptionalService<>(getBundleContext(), () -> LDAPService.class);
     }
 
     /**
@@ -401,7 +401,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 // Change password stored in "User Account" topic
                 dmx.getPrivilegedAccess().changePassword(newCreds);
             } else {
-                if (ldapPluginService.get().changePassword(newCreds) != null) {
+                if (ldap.get().changePassword(newCreds) != null) {
                     log.info("If no previous errors are reported here or in the LDAP-service log, the " +
                         "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                 } else {
@@ -578,7 +578,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private boolean isLdapPluginAvailable() {
         try {
-            return ldapPluginService.get() != null;
+            return ldap.get() != null;
         } catch (NoClassDefFoundError error) {
             return false;
         }
@@ -595,7 +595,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private Topic createUsername(Credentials credentials) throws Exception {
         if (isLdapAccountCreationEnabled()) {
-            return ldapPluginService.get().createUser(credentials);
+            return ldap.get().createUser(credentials);
         } else {
             return accesscontrol._createUserAccount(credentials);
         }
