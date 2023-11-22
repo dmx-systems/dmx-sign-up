@@ -12,12 +12,12 @@
     <parent>
     	<groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.3.3-SNAPSHOT</version>
+        <version>5.3.3</version>
     </parent>
 
     <properties>
-        <dmx.version>5.3.3-SNAPSHOT</dmx.version>
-        <dmx-ldap.version>0.7.0-SNAPSHOT</dmx-ldap.version>
+        <dmx.version>5.3.3</dmx.version>
+        <dmx-ldap.version>0.7.0</dmx-ldap.version>
     </properties>
 
     <profiles>

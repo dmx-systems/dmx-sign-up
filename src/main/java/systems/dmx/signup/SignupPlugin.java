@@ -40,7 +40,8 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static systems.dmx.accesscontrol.Constants.*;
+import static systems.dmx.accesscontrol.Constants.LOGIN_ENABLED;
+import static systems.dmx.accesscontrol.Constants.USERNAME;
 import static systems.dmx.core.Constants.*;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
