@@ -181,9 +181,12 @@ When the property is not set, all known auth methods are allowed and their order
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+**3.0.1** -- TBD
 
-**3.0.0** -- Upcoming
+**3.0.0** -- Nov, 22, 2023
 
+* Compatible with DMX 5.3.3
+* Compatible with dmx-ldap 0.7.0
 * All UI-related code moved into its own plugin
 * Introduced username policies
 
