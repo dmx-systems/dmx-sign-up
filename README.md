@@ -182,8 +182,10 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 
-**3.0.0** -- Upcoming
+**3.0.0** -- Nov, 22, 2023
 
+* Compatible with DMX 5.3.3
+* Compatible with dmx-ldap 0.7.0
 * All UI-related code moved into its own plugin
 * Introduced username policies
 
