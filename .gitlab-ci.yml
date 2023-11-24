@@ -50,11 +50,12 @@ copy-to-release:
 # 4) Deploy into gitlab maven group repository
 deploy-to-gitlab-maven:
   stage: deploy
-  image: maven:3.6-jdk-11
+  except:
+      - tags
+    image: maven:3.6-jdk-11
   script:
-    - 'mvn -Pgitlab-maven-deployment deploy -s ci_settings.xml'
+    - 'mvn deploy -s ci_settings.xml'
   rules:
-    - when: manual
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 # 5) Install in docker-container
