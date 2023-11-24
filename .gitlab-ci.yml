@@ -52,9 +52,9 @@ deploy-to-gitlab-maven:
   stage: deploy
   image: maven:3.6-jdk-11
   script:
-    - 'mvn deploy -s ci_settings.xml'
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - 'mvn -Pgitlab-maven-deployment deploy -s ci_settings.xml'
+  only:
+    - main
 
 # 5) Install in docker-container
 install-in-container:
