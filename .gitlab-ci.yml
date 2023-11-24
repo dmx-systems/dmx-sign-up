@@ -50,9 +50,7 @@ copy-to-release:
 # 4) Deploy into gitlab maven group repository
 deploy-to-gitlab-maven:
   stage: deploy
-  except:
-      - tags
-    image: maven:3.6-jdk-11
+  image: maven:3.6-jdk-11
   script:
     - 'mvn deploy -s ci_settings.xml'
   rules:
