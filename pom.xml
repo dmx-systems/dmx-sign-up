@@ -34,6 +34,25 @@
                 <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
             </properties>
         </profile>
+        <profile>
+            <id>gitlab-maven-deployment</id>
+            <repositories>
+                <repository>
+                    <id>gitlab-maven</id>
+                    <url>${env.CI_API_V4_URL}/groups/17/-/packages/maven</url>
+                </repository>
+            </repositories>
+            <distributionManagement>
+                <repository>
+                    <id>gitlab-maven</id>
+                    <url>${env.CI_API_V4_URL}/groups/17/-/packages/maven</url>
+                </repository>
+                <snapshotRepository>
+                    <id>gitlab-maven</id>
+                    <url>${env.CI_API_V4_URL}/groups/17/-/packages/maven</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
     </profiles>
 
     <dependencies>
