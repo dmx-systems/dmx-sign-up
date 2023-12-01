@@ -18,6 +18,7 @@
     <properties>
         <dmx.version>5.3.3</dmx.version>
         <dmx-ldap.version>0.7.0</dmx-ldap.version>
+        <dmx-sendmail.version>2.1.1</dmx-sendmail.version>
     </properties>
 
     <profiles>
@@ -84,7 +85,7 @@
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-sendmail</artifactId>
-            <version>2.1.0</version>
+            <version>${dmx-sendmail.version}</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
