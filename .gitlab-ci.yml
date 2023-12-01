@@ -6,6 +6,8 @@ stages:
 # 1) Build every commit on every branch and add the COMMIT SHORT SHA as suffix
 maven-build:
   stage: build
+  tags:
+    - shell-docker
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install
