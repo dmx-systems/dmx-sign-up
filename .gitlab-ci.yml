@@ -8,7 +8,7 @@ stages:
 maven-build:
   stage: build
   tags:
-    - shell
+    - shell-docker
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install -DskipTests=true
