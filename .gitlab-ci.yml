@@ -8,7 +8,7 @@ stages:
 maven-build:
   stage: build
   tags:
-    - shell-docker
+    - shell
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install -DskipTests=true
@@ -107,7 +107,7 @@ install-in-container:
     - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
     - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
-    - if [ -z "$(ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=''; fi
+    - if [ -z "$(ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=""; fi
     - for plugin in "${PLUGINS[@]}"; do plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"; echo "installing ${plugin_version}"; wget -q "${plugin_version}" -P deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/; done
     - cp target/*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
   script:
