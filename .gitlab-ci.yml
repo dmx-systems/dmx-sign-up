@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
   - deploy
   - install
 
@@ -10,13 +11,32 @@ maven-build:
     - shell-docker
   script:
     - export MAVEN_OPTS='-Xmx128m'
-    - mvn clean install
+    - mvn clean install -DskipTests=true
   artifacts:
     paths:
-      - target/*.jar
+      - target
     name: ${CI_PROJECT_NAME}-${CI_COMMIT_SHORT_SHA}
 
-# 2) Copies SNAPSHOT builds on 'master' and 'dm4' branch into download.dmx.systems/ci/ directory
+# 2) Run SonarQube Tests
+sonarqube-check:
+  stage: test
+  tags:
+    ## requires shell-docker runner
+    - shell-docker
+  dependencies:
+    - maven-build
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=dmx-plugins_dmx-sign-up-ui_AYxEI3BYvTOXKGTcYQio
+  allow_failure: true
+
+# 3) Copies SNAPSHOT builds on 'main' and 'dm4' branch into download.dmx.systems/ci/ directory
 copy-to-ci:
   stage: deploy
   script:
@@ -35,7 +55,7 @@ copy-to-ci:
     - main
     - dm4
 
-# 3) Copies tagged RELEASE builds into download.dmx.systems/plugins/ directory
+# 4) Copies tagged RELEASE builds into download.dmx.systems/plugins/ directory
 copy-to-release:
   stage: deploy
   script:
@@ -56,15 +76,15 @@ deploy-to-gitlab-maven:
   script:
     - 'mvn -Pgitlab-maven-deployment deploy -s ci_settings.xml'
   only:
+    - master
     - main
+    - dm4
 
 # 5) Install in docker-container
 install-in-container:
   stage: install
   except:
     - tags
-    #- master
-    #- main
   tags:
     ## requires shell-docker runner
     - shell-docker
@@ -75,8 +95,11 @@ install-in-container:
     CONTAINER_NAME: "${CI_COMMIT_REF_SLUG}-container"
     WEB_URL: "${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}.ci.dmx.systems"
     CONFIG_DIR: 'deploy/.config'
-    DOCKER_COMPOSE_PROFILE: dev-ci
+    DOCKER_COMPOSE_PROFILE: 'dev-ci'
     ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.${DOCKER_COMPOSE_PROFILE}"
+    WEBDIR: 'https://download.dmx.systems/ci'                              # <= stable|latest
+    WEBCGI: 'https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'  # <= stable|latest
+    PLUGINS: "dmx-ldap dmx-sign-up dmx-sendmail dmx-thymeleaf"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
@@ -84,26 +107,29 @@ install-in-container:
     - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
     - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
+    - if [ -z "$(ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=''; fi
+    - for plugin in "${PLUGINS[@]}"; do plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"; echo "installing ${plugin_version}"; wget -q "${plugin_version}" -P deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/; done
     - cp target/*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
-    #- tree
   script:
-    - if [ "${CI_COMMIT_BRANCH}" == "master" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
+    - if [ "${CI_COMMIT_BRANCH}" == "master" ] || [ "${CI_COMMIT_BRANCH}" == "main" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
     - USER_ID="$( id -u )"
     - GROUP_ID="$( id -g )"
-    - DMX_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=dmx | grep PROXYPORT | grep -o '[^PROXYPORT$]*$' | sed s'/\s//g' )"
-    - MAIL_PORT="$( curl --silent --cookie-jar - https://${WEB_URL}/?proxyport=mail | grep PROXYPORT | grep -o '[^PROXYPORT$]*$' | sed s'/\s//g' )"
+    - DMX_PORT="$( get_port.sh ${WEB_URL}-dmx )"
+    - MAIL_PORT="$( get_port.sh ${WEB_URL}-mail )"
+    - LOGS_PORT="$( get_port.sh ${WEB_URL}-log )"
     - echo "CONTAINER_NAME=${CONTAINER_NAME}" >>"${ENV_FILE}"
     - echo "user_id=${USER_ID}" >>"${ENV_FILE}"
     - echo "group_id=${GROUP_ID}" >>"${ENV_FILE}"
     - echo "DMX_PORT=${DMX_PORT}" >>"${ENV_FILE}"
     - echo "MAIL_PORT=${MAIL_PORT}" >>"${ENV_FILE}"
+    - echo "LOGS_PORT=${LOGS_PORT}" >>"${ENV_FILE}"
     - cat "${ENV_FILE}"
     - echo "dmx.websockets.url = wss://${WEB_URL}/websocket" > deploy/dmx/${DOCKER_COMPOSE_PROFILE}/conf.d/config.properties.d/10_websocket_url
     - echo "dmx.host.url = https://${WEB_URL}/" > deploy/dmx/${DOCKER_COMPOSE_PROFILE}/conf.d/config.properties.d/10_host_url
-    - docker container ls | grep ${CONTAINER_NAME} && docker container stop ${CONTAINER_NAME} || true
-    - docker container ls -a | grep ${CONTAINER_NAME} && docker container rm ${CONTAINER_NAME} || true
-    - docker-compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml up --force-recreate -d
-    - deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30
+    - docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml down -v --remove-orphans
+    - docker compose pull
+    - docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml up --force-recreate -d
+    - deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || true
     ## TEST
     - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
     - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"

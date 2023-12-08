@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   dmx:
-    container_name: "${CONTAINER_NAME}"
+    container_name: "${CI_PROJECT_NAME}-dmx-container"
     restart: always
     image: container-registry.dmx.systems/dmx-contrib/dmx-docker/dmx-latest:latest
     ports:
@@ -17,15 +17,25 @@ services:
       - ./instance/dev-ci/filedir:/opt/dmx/dmx-filedir
       - ./instance/dev-ci/bundle-deploy:/opt/dmx/bundle-deploy
       - ./dmx/dev-ci/plugins:/opt/dmx/plugins:ro
-      - ./dmx/dev-ci/conf.d/config.properties.d:/opt/dmx/conf.d/config.properties.d:ro
-      - ./dmx/dev-ci/conf.d/logging.properties.d:/opt/dmx/conf.d/logging.properties.d:ro
+      - ./dmx/dev-ci/conf.d:/opt/dmx/conf.d:ro
     depends_on:
       - mailhog
 
   mailhog:
-    container_name: "${CONTAINER_NAME}-mailhog"
+    container_name: "${CI_PROJECT_NAME}-mailhog-container"
     restart: unless-stopped
     image: container-registry.dmx.systems/dmx-intern/docker-images/mailhog:latest
     ports:
       - "${MAIL_PORT}:8025"
+
+  dmxlog:
+    container_name: "${CI_PROJECT_NAME}-dmxlog-container"
+    restart: unless-stopped
+    image: container-registry.dmx.systems/dmx-intern/docker-images/busybox-httpd:latest
+    links:
+      - dmx
+    volumes:
+      - ./instance/dev-ci/logs:/home/static/logs:ro
+    ports:
+      - "${LOGS_PORT}:3000"
 
