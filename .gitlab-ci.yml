@@ -78,7 +78,8 @@ install-in-container:
     DOCKER_COMPOSE_PROFILE: dev-ci
     ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.${DOCKER_COMPOSE_PROFILE}"
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
+    #- docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" container-registry.dmx.systems/dmx-contrib/dmx-docker
+    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
     - test -f "${ENV_FILE}" || touch "${ENV_FILE}"
     - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
@@ -110,7 +111,6 @@ install-in-container:
     - echo "${HTTP_CODE}"
     - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test failed with error code ${RESULT}."; exit 1; fi
     - echo "You can now browse to https://${WEB_URL}/ for testing."
-
     - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
     - exit ${ERROR}
 
