@@ -106,7 +106,7 @@ install-in-container:
     - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
     - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
-    - if [ -z "$( ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins)" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
+    - if [ -z "$( ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins )" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
     - for plugin in "${PLUGINS[@]}"; do plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"; echo "installing ${plugin_version}"; wget -q "${plugin_version}" -P deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/; done
     - cp -v target/${CI_PROJECT_NAME}*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
   script:
@@ -132,8 +132,9 @@ install-in-container:
     - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
     - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
     - echo "${HTTP_CODE}"
-    - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test failed with error code ${RESULT}."; exit 1; fi
+    - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test for https://${WEB_URL}/ failed with error code ${RESULT}."; exit 1; fi
     - echo "You can now browse to https://${WEB_URL}/ for testing."
+    ## FIXME: Where woud ${LOG} come from?
     - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
     - exit ${ERROR}
 
