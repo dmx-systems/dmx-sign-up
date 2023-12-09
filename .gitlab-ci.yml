@@ -108,6 +108,7 @@ install-in-container:
     - chmod +x deploy/scripts/dmxstate.sh
     - if [ -z "$( ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins)" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
     - for plugin in "${PLUGINS[@]}"; do plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"; echo "installing ${plugin_version}"; wget -q "${plugin_version}" -P deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/; done
+    - find target/ -type f -name "*.jar"
     - cp target/*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
   script:
     - if [ "${CI_COMMIT_BRANCH}" == "master" ] || [ "${CI_COMMIT_BRANCH}" == "main" ]; then WEB_URL="${CI_PROJECT_NAME}.ci.dmx.systems"; fi
