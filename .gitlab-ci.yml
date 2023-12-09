@@ -92,14 +92,13 @@ install-in-container:
     - maven-build
   variables:
     COMPOSE_PROJECT_NAME: "${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}"
-    CONTAINER_NAME: "${CI_COMMIT_REF_SLUG}-container"
     WEB_URL: "${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}.ci.dmx.systems"
     CONFIG_DIR: 'deploy/.config'
     DOCKER_COMPOSE_PROFILE: 'dev-ci'
     ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.${DOCKER_COMPOSE_PROFILE}"
     WEBDIR: 'https://download.dmx.systems/ci'                              # <= stable|latest
     WEBCGI: 'https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'  # <= stable|latest
-    PLUGINS: "dmx-ldap dmx-sign-up dmx-sendmail dmx-thymeleaf"
+    PLUGINS: "dmx-ldap dmx-sendmail dmx-thymeleaf"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
@@ -117,7 +116,6 @@ install-in-container:
     - DMX_PORT="$( get_port.sh ${WEB_URL}-dmx )"
     - MAIL_PORT="$( get_port.sh ${WEB_URL}-mail )"
     - LOGS_PORT="$( get_port.sh ${WEB_URL}-log )"
-    - echo "CONTAINER_NAME=${CONTAINER_NAME}" >>"${ENV_FILE}"
     - echo "user_id=${USER_ID}" >>"${ENV_FILE}"
     - echo "group_id=${GROUP_ID}" >>"${ENV_FILE}"
     - echo "DMX_PORT=${DMX_PORT}" >>"${ENV_FILE}"
