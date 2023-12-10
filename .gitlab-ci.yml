@@ -98,7 +98,7 @@ install-in-container:
     ENV_FILE: "${CONFIG_DIR}/.env.${CI_COMMIT_REF_SLUG}.${DOCKER_COMPOSE_PROFILE}"
     WEBDIR: 'https://download.dmx.systems/ci'                              # <= stable|latest
     WEBCGI: 'https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'  # <= stable|latest
-    PLUGINS: "dmx-ldap dmx-sendmail dmx-thymeleaf"
+    #PLUGINS: "dmx-ldap dmx-sendmail dmx-thymeleaf"
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
     - test -d "${CONFIG_DIR}" || mkdir -p "${CONFIG_DIR}"
@@ -106,7 +106,9 @@ install-in-container:
     - test -d deploy/instance/${DOCKER_COMPOSE_PROFILE} || mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/conf deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs deploy/instance/${DOCKER_COMPOSE_PROFILE}/db deploy/instance/${DOCKER_COMPOSE_PROFILE}/filedir deploy/instance/${DOCKER_COMPOSE_PROFILE}/bundle-deploy
     - test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
     - chmod +x deploy/scripts/dmxstate.sh
-    - if [ -z "$( ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins )" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
+    - test -d deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins || mkdir deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
+    #- if [ -z "$( ls -A deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins )" ]; then declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
+    - if [ -f deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list ];  then PLUGINS="$(<deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list)"; declare -a PLUGINS=(${PLUGINS}); else declare -a PLUGINS=(); fi
     - for plugin in "${PLUGINS[@]}"; do plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"; echo "installing ${plugin_version}"; wget -q "${plugin_version}" -P deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/; done
     - cp -v target/${CI_PROJECT_NAME}*.jar deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
   script:
