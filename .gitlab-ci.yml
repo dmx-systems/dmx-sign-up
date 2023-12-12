@@ -33,8 +33,6 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script:
-    #- echo "CI_PROJECT_NAMESPACE=${CI_PROJECT_NAMESPACE} CI_PROJECT_NAME=${CI_PROJECT_NAME} SONAR_PROJECT_KEY=${SONAR_PROJECT_KEY}"
-    #- mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=dmx-plugins_dmx-sign-up_AYxdE6-TWz_jNrZo2i4B
     - mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=${CI_PROJECT_NAMESPACE}_${CI_PROJECT_NAME}_${SONAR_PROJECT_KEY}
   allow_failure: true
 
@@ -71,7 +69,7 @@ copy-to-release:
   only:
     - tags
 
-# 4) Deploy into gitlab maven group repository
+# 4) Deploy into gitlab maven repository
 deploy-to-gitlab-maven:
   stage: deploy
   image: maven:3.6-jdk-11
@@ -81,6 +79,7 @@ deploy-to-gitlab-maven:
     - master
     - main
     - dm4
+  allow_failure: true
 
 # 5) Install in docker-container
 install-in-container:
