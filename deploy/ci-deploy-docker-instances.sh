@@ -8,7 +8,7 @@
 
 ##  variables:
 if [ -z "${TIER}" ]; then
-    TIER='dev'
+    export TIER='dev'
 fi
 if [ -z "${COMPOSE_PROJECT_NAME}" ]; then
     COMPOSE_PROJECT_NAME="${CI_PROJECT_NAME}_${CI_COMMIT_REF_SLUG}"
@@ -88,7 +88,7 @@ else
     declare -a PLUGINS=()
 fi
 echo "PLUGINS: ${PLUGINS[@]}"
-for plugin in ${PLUGINS}; do
+for plugin in ${PLUGINS[@]}; do
     echo "getting latest version of ${plugin} plugin"
     plugin_version="$( wget -q -O - "${WEBCGI}/ci/${plugin}/${plugin}-latest.jar" )"
     echo "installing ${plugin_version}"
