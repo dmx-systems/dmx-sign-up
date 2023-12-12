@@ -174,7 +174,7 @@ docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_CO
 
 ## deploy containers
 test -d ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/ || echo "ERROR! Directory ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/ not found. Container up?"
-deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || sleep 1; cat ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log
+deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || sleep 2; cat ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log
 
 ## TEST
 EXTERNAL_TEST_URL="https://${WEB_URL}/core/topic/0"
