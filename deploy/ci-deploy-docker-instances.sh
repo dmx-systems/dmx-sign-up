@@ -74,14 +74,18 @@ for dmx_dir in "${DMX_DIRS[@]}"; do
         mkdir -p deploy/instance/${DOCKER_COMPOSE_PROFILE}/${dmx_dir}
     fi
 done
-test -f deploy/scripts/dmxstate.sh || curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
-chmod +x deploy/scripts/dmxstate.sh
+
+## fetch latest dmxstate.sh script
+if [ ! -f deploy/scripts/dmxstate.sh ]; then
+    curl --silent https://git.dmx.systems/dmx-contrib/dmx-state/-/raw/master/dmxstate.sh --create-dirs -o deploy/scripts/dmxstate.sh
+    chmod +x deploy/scripts/dmxstate.sh
+fi
 
 ## dmx plugins
 test -d deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins || mkdir deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
 if [ -f deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list ];  then 
     ## remove (ignore) existing plugins
-    find deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/*.jar -type f -delete
+    find deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/ -type f -name "*.jar" -delete
     PLUGINS="$(<deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list)"
     declare -a PLUGINS=(${PLUGINS})
 else 
