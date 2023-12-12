@@ -134,7 +134,7 @@ install-in-container:
     - EXTERNAL_TEST_URL="https://${WEB_URL}/core/topic/0"
     - count=0
     - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"
-    - while [ "${HTTP_CODE}" == "502" -a ${count} -lt 5 ]; do sleep 1; HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"; echo -n "."; count=$(( ${count} + 1 )); done; echo ""
+    - while [ "${HTTP_CODE}" == "502" -a ${count} -lt 10 ]; do sleep 1; HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"; echo -n "."; count=$(( ${count} + 1 )); done; echo ""
     - echo "${HTTP_CODE}"
     - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test for https://${WEB_URL}/ failed with error code ${HTTP_CODE}."; exit 1; fi
     - echo "You can now browse to https://${WEB_URL}/ for testing."
