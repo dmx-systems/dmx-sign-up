@@ -111,7 +111,7 @@ if [ -z "${DMX_PORT}" ]; then
 fi
 sleep 1
 LOGS_PORT="$( get_port.sh ${WEB_URL}-log )"
-if [ "$( echo "${PLUGINS}" | grep dmx-sendmail )" ]; then
+if [ "$( echo "${PLUGINS[@]}" | grep dmx-sendmail )" ]; then
     MAIL_PORT="$( get_port.sh ${WEB_URL}-mail )"
     echo "MAIL_PORT=${MAIL_PORT}" >>"${ENV_FILE}"
 else
@@ -170,7 +170,7 @@ docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_CO
 
 ## deploy containers
 test -d ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/ || echo "ERROR! Directory ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/ not found. Container up?"
-deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || cat ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log
+deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || sleep 1; cat ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log
 
 ## TEST
 EXTERNAL_TEST_URL="https://${WEB_URL}/core/topic/0"
