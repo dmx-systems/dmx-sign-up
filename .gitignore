@@ -12,3 +12,4 @@ commit-message.txt
 package-lock.json
 node_modules
 *.iml
+*.bak
