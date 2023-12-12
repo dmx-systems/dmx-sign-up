@@ -137,7 +137,4 @@ install-in-container:
     - echo "${HTTP_CODE}"
     - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test for https://${WEB_URL}/ failed with error code ${HTTP_CODE}."; exit 1; fi
     - echo "You can now browse to https://${WEB_URL}/ for testing."
-    ## FIXME: Where woud ${LOG} come from?
-    - if [ "${LOG}" ]; then echo "${LOG}"; ERROR=1; else ERROR=0; fi
-    - exit ${ERROR}
 
