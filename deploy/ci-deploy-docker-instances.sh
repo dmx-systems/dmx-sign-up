@@ -34,9 +34,11 @@ fi
 if [ -z "${WEBCGI}" ]; then
     WEBCGI='https://download.dmx.systems/cgi-bin/v1/latest-version.cgi?'        # <= stable|latest
 fi
-if [ -z "${DOCKER_COMPOSE_PROFILE}"; then
+if [ -z "${DOCKER_COMPOSE_PROFILE}" ]; then
     DOCKER_COMPOSE_PROFILE="${TIER}-ci"
 fi
+
+
 
 function mkpw() {
     local LEN="$( shuf -i12-16 -n1 )"
