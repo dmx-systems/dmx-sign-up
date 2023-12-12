@@ -143,9 +143,10 @@ done
 
 ## remove containers
 docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml down -v --remove-orphans || true
-for DOCKER_IMAGE in ${DOCKER_IMAGES}[@]; do
+for DOCKER_IMAGE in ${DOCKER_IMAGES[@]}; do
     for cont in ${CONTAINERS}; do
         if [ "$( docker image ls | grep "${DOCKER_IMAGE}" )" ]; then
+            echo "checking ${cont} ${DOCKER_IMAGE} ..."
             if [ "$( docker ps --filter "status=running" --filter "name=dmx" --format "{{.Names}}" | grep ${CI_PROJECT_NAME}-${TIER}-${cont}-container )" ]; then
                 docker container stop ${CI_PROJECT_NAME}-${TIER}-${cont}-container || true
                 if [ "$( docker container ls -a | grep ${CI_PROJECT_NAME}-${TIER}-${cont}-container )" ]; then 
