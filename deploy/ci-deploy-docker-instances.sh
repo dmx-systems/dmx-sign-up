@@ -83,10 +83,10 @@ fi
 
 ## dmx plugins
 test -d deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins || mkdir deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins
-if [ -f deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list ];  then 
+if [ -f deploy/ci-deploy-plugins.list ];  then 
     ## remove (ignore) existing plugins
     find deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins/ -type f -name "*.jar" -delete
-    PLUGINS="$(<deploy/dmx/${DOCKER_COMPOSE_PROFILE}/plugins.list)"
+    PLUGINS="$(<deploy/ci-deploy-plugins.list)"
     declare -a PLUGINS=(${PLUGINS})
 else 
     declare -a PLUGINS=()
