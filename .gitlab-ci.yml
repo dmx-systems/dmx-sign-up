@@ -8,7 +8,7 @@ stages:
 maven-build:
   stage: build
   tags:
-    - shell-docker
+    - shell
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install -DskipTests=true
@@ -21,8 +21,7 @@ maven-build:
 sonarqube-check:
   stage: test
   tags:
-    ## requires shell-docker runner
-    - shell-docker
+    - shell
   dependencies:
     - maven-build
   variables:
@@ -69,11 +68,11 @@ copy-to-release:
   only:
     - tags
 
-# 4) Deploy into gitlab maven repository
+# 5) Deploy into gitlab maven repository
 deploy-to-gitlab-maven:
   stage: deploy
   tags:
-    - shell-docker
+    - shell
   #image: maven:3.6-jdk-11
   script:
     - 'mvn -Pgitlab-maven-deployment deploy -s ci_settings.xml'
@@ -83,7 +82,7 @@ deploy-to-gitlab-maven:
     - dm4
   allow_failure: true
 
-# 5) Install in docker-container
+# 6) Install in docker-container
 install-in-container:
   stage: install
   except:
