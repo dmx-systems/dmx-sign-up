@@ -33,7 +33,7 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script:
-    - mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=dmx-plugins_dmx-sign-up-ui_AYxEI3BYvTOXKGTcYQio
+    - mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=dmx-plugins_dmx-sign-up_AYxdE6-TWz_jNrZo2i4B
   allow_failure: true
 
 # 3) Copies SNAPSHOT builds on 'main' and 'dm4' branch into download.dmx.systems/ci/ directory
