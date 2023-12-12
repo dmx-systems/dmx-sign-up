@@ -136,9 +136,11 @@ echo "dmx.host.url = https://${WEB_URL}" > deploy/dmx/${DOCKER_COMPOSE_PROFILE}/
 CONTAINERS='dmx dmxlog ldap mailhog'
 for cont in ${CONTAINERS}; do
     declare -a DOCKER_IMAGES
-    DOCKER_IMAGE="$( docker inspect ${CI_PROJECT_NAME}-${TIER}-${cont}-container | jq .[].Config.Image | sed 's/\"//g' )"
-    echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
-    DOCKER_IMAGES+="${DOCKER_IMAGE}"
+    if [ "$( docker container ls | grep ${CI_PROJECT_NAME}-${TIER}-${cont}-container )" ]; then
+        DOCKER_IMAGE="$( docker inspect ${CI_PROJECT_NAME}-${TIER}-${cont}-container | jq .[].Config.Image | sed 's/\"//g' )"
+        echo "DOCKER_IMAGE=${DOCKER_IMAGE}"
+        DOCKER_IMAGES+="${DOCKER_IMAGE}"
+    fi
 done
 
 ## remove containers
