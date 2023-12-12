@@ -181,7 +181,7 @@ deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0
 
 ## TEST
 EXTERNAL_TEST_URL="https://${WEB_URL}/core/topic/0"
-echo "Testing ${EXTERNAL_TEST_URL} "
+echo -n "Testing ${EXTERNAL_TEST_URL} "
 count=0
 HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"
 while [ "${HTTP_CODE}" == "502" -a ${count} -lt 10 ]; do 
