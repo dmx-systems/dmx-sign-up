@@ -131,10 +131,9 @@ install-in-container:
     - docker compose --env-file "${ENV_FILE}" --file deploy/docker-compose.${DOCKER_COMPOSE_PROFILE}.yaml up --force-recreate -d
     - deploy/scripts/dmxstate.sh ./deploy/instance/${DOCKER_COMPOSE_PROFILE}/logs/dmx0.log 30 || true
     ## TEST
-    - EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
-    - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
-    - while [ "${HTTP_CODE}" == "502" ]; do sleep 1; HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"; echo -n "."; done; echo ""
+    - EXTERNAL_TEST_URL="https://${WEB_URL}/core/topic/0"
+    - HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"
+    - while [ "${HTTP_CODE}" == "502" ]; do sleep 1; HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_TEST_URL} )"; echo -n "."; done; echo ""
     - echo "${HTTP_CODE}"
     - if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test for https://${WEB_URL}/ failed with error code ${HTTP_CODE}."; exit 1; fi
     - echo "You can now browse to https://${WEB_URL}/ for testing."
-
