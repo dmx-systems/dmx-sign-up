@@ -17,10 +17,16 @@ if [ "${CI_COMMIT_BRANCH}" != "${CI_COMMIT_REF_SLUG}" ]; then
     echo "CI_COMMIT_BRANCH: ${CI_COMMIT_BRANCH}"
     echo "CI_COMMIT_REF_SLUG: ${CI_COMMIT_REF_SLUG}"
 fi
-if [ -z "${WEB_URL}" ] && [ "${CI_COMMIT_BRANCH}" == "master" -o "${CI_COMMIT_BRANCH}" == "main" ]; then
-    WEB_URL="${CI_PROJECT_NAME}-${TIER}.ci.dmx.systems"
-elif [ -z "${WEB_URL}" ] && [ "${CI_COMMIT_BRANCH}" != "master" ]; then
-    WEB_URL="${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}-${TIER}.ci.dmx.systems"
+if [ -z "${DEPLOY_PREFIX}" ] && [ "${CI_COMMIT_BRANCH}" == "master" -o "${CI_COMMIT_BRANCH}" == "main" ]; then
+    DEPLOY_PREFIX="${CI_PROJECT_NAME}-${TIER}"
+    export DEPLOY_PREFIX="${DEPLOY_PREFIX}"
+elif [ -z "${DEPLOY_PREFIX}" ] && [ "${CI_COMMIT_BRANCH}" != "master" -a "${CI_COMMIT_BRANCH}" != "main" ]; then
+    DEPLOY_PREFIX="${CI_COMMIT_REF_SLUG}_${CI_PROJECT_NAME}-${TIER}"
+    export DEPLOY_PREFIX="${DEPLOY_PREFIX}"
+fi
+
+if [ -z "${WEB_URL}" ]; then
+    WEB_URL="${DEPLOY_PREFIX}.ci.dmx.systems"
 fi
 if [ -z "${CONFIG_DIR}" ]; then
     CONFIG_DIR='deploy/.config'
