@@ -79,11 +79,6 @@
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
-            <artifactId>dmx-thymeleaf</artifactId>
-            <version>0.9.3</version>
-        </dependency>
-        <dependency>
-            <groupId>systems.dmx</groupId>
             <artifactId>dmx-sendmail</artifactId>
             <version>${dmx-sendmail.version}</version>
         </dependency>
