@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -10,17 +10,22 @@
     <packaging>bundle</packaging>
 
     <parent>
-    	<groupId>systems.dmx</groupId>
+        <groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
         <version>5.3.3</version>
     </parent>
 
     <properties>
+        <dagger.version>2.48.1</dagger.version>
         <dmx.version>5.3.3</dmx.version>
         <dmx-ldap.version>0.7.0</dmx-ldap.version>
         <dmx-sendmail.version>2.1.1</dmx-sendmail.version>
+        <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
+        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <mockito.version>4.11.0</mockito.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
+        <junit-jupiter.version>5.9.2</junit-jupiter.version>
     </properties>
 
     <profiles>
@@ -91,10 +96,25 @@
     </profiles>
 
     <dependencies>
+        <!-- DMX 3rd party -->
+        <dependency>
+            <groupId>systems.dmx</groupId>
+            <artifactId>dmx-sendmail</artifactId>
+            <version>${dmx-sendmail.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>systems.dmx</groupId>
+            <artifactId>dmx-ldap</artifactId>
+            <version>${dmx-ldap.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- DMX -->
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-workspaces</artifactId>
-	    <version>${dmx.version}</version>
+            <version>${dmx.version}</version>
         </dependency>
         <dependency>
             <groupId>systems.dmx</groupId>
@@ -111,17 +131,58 @@
             <artifactId>dmx-facets</artifactId>
             <version>${dmx.version}</version>
         </dependency>
+
+        <!-- dependency injection -->
         <dependency>
-            <groupId>systems.dmx</groupId>
-            <artifactId>dmx-sendmail</artifactId>
-            <version>${dmx-sendmail.version}</version>
+            <groupId>com.google.dagger</groupId>
+            <artifactId>dagger</artifactId>
+            <version>${dagger.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.inject</groupId>
+            <artifactId>jakarta.inject-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- unit testing framework -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>systems.dmx</groupId>
-            <artifactId>dmx-ldap</artifactId>
-            <version>${dmx-ldap.version}</version>
-            <optional>true</optional>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
+
+        <!-- mocking framework -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- assertions -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.24.2</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -147,9 +208,34 @@
                         <Bundle-Activator>
                             systems.dmx.signup.SignupPlugin
                         </Bundle-Activator>
+                        <!-- embeds everything that is in provided scope -->
+                        <Embed-Dependency>*;scope=provided;inline=false</Embed-Dependency>
+                        <Embed-Directory>dependencies</Embed-Directory>
                     </instructions>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.dagger</groupId>
+                            <artifactId>dagger-compiler</artifactId>
+                            <version>${dagger.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.1</version>
+            </plugin>
+
         </plugins>
     </build>
 </project>

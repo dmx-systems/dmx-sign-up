@@ -21,6 +21,8 @@ import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.configuration.SignUpConfigOptions;
+import systems.dmx.signup.di.DaggerSignupComponent;
+import systems.dmx.signup.di.SignupComponent;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.model.NewAccountData;
@@ -85,11 +87,22 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     EmailTextProducer emailTextProducer = new InternalEmailTextProducer();
 
-    private NewAccountDataMapper newAccountDataMapper = new NewAccountDataMapper();
+    NewAccountDataMapper newAccountDataMapper;
 
-    private IsValidEmailAdressMapper isValidEmailAdressMapper = new IsValidEmailAdressMapper();
+    IsValidEmailAdressMapper isValidEmailAdressMapper;
 
     // --- Hooks --- //
+    private void runDependencyInjection() {
+        // DI:
+        SignupComponent component = DaggerSignupComponent.builder()
+                .coreService(dmx)
+                .accessControlService(accesscontrol)
+                .build();
+
+        newAccountDataMapper = component.newAccountDataMapper();
+        isValidEmailAdressMapper = component.isValidEmailAdressMapper();
+
+    }
 
     @Override
     public void init() {

@@ -1,11 +1,13 @@
 package systems.dmx.signup.mapper;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import java.util.regex.Matcher;
+import javax.inject.Inject;
 import java.util.regex.Pattern;
 
 public class IsValidEmailAdressMapper {
+
+    @Inject
+    public IsValidEmailAdressMapper() {}
+
     private String emailPattern = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
     private Pattern pattern = Pattern.compile(emailPattern);
 
