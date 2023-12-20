@@ -5,6 +5,7 @@ import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.core.service.CoreService;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
+import systems.dmx.signup.usecase.GetLdapServiceUseCase;
 
 import javax.inject.Singleton;
 
@@ -17,4 +18,5 @@ public interface SignupComponent {
 
     IsValidEmailAdressMapper isValidEmailAdressMapper();
 
+    GetLdapServiceUseCase getLdapServiceUseCase();
 }
