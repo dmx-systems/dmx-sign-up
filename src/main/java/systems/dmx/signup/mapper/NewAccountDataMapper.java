@@ -3,7 +3,12 @@ package systems.dmx.signup.mapper;
 import systems.dmx.signup.configuration.UsernamePolicy;
 import systems.dmx.signup.model.NewAccountData;
 
+import javax.inject.Inject;
+
 public class NewAccountDataMapper {
+
+    @Inject
+    public NewAccountDataMapper() {}
 
     public NewAccountData map(UsernamePolicy policy, String username, String emailAddress, String displayName) {
         switch (policy) {
