@@ -13,6 +13,7 @@ import systems.dmx.core.service.EventListener;
 import systems.dmx.core.service.*;
 import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
+import systems.dmx.core.service.event.AllPluginsActive;
 import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
@@ -28,6 +29,8 @@ import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.model.NewAccountData;
 import systems.dmx.signup.model.NewAccountTokenData;
 import systems.dmx.signup.model.PasswordResetTokenData;
+import systems.dmx.signup.usecase.GetLdapServiceUseCase;
+import systems.dmx.signup.usecase.OptionalService;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -58,16 +61,16 @@ import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 **/
 @Path("/sign-up")
 @Produces(MediaType.APPLICATION_JSON)
-public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic, PostLoginUser {
+public class SignupPlugin extends PluginActivator implements SignupService, PostUpdateTopic, PostLoginUser, AllPluginsActive {
 
-    private static final Logger log = Logger.getLogger(SignupPlugin.class.getName());
+    static final Logger logger = Logger.getLogger(SignupPlugin.class.getName());
 
     private ModuleConfiguration activeModuleConfiguration = null;
     private Topic customWorkspaceAssignmentTopic = null;
     private String systemEmailContact = null;
 
     @Inject
-    private AccessControlService accesscontrol;
+    AccessControlService accesscontrol;
     @Inject
     private FacetsService facets;
     @Inject
@@ -75,7 +78,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Inject
     private WorkspacesService workspaces;
 
-    private OptionalService<LDAPService> ldap;
+    OptionalService<LDAPService> ldap;
 
     @Context
     UriInfo uri;
@@ -91,6 +94,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     IsValidEmailAdressMapper isValidEmailAdressMapper;
 
+    GetLdapServiceUseCase getLdapServiceUseCase;
+
     // --- Hooks --- //
     private void runDependencyInjection() {
         // DI:
@@ -101,15 +106,25 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
         newAccountDataMapper = component.newAccountDataMapper();
         isValidEmailAdressMapper = component.isValidEmailAdressMapper();
-
+        getLdapServiceUseCase = component.getLdapServiceUseCase();
     }
 
     @Override
     public void init() {
-        initOptionalServices();
+        runDependencyInjection();
+
         reloadAssociatedSignupConfiguration();
+    }
+
+    @Override
+    public void allPluginsActive() {
+        ldap = getLdapServiceUseCase.invoke(getBundleContext());
         // Log configuration settings
-        log.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
+        logConfigurationSettings();
+    }
+
+    private void logConfigurationSettings() {
+        logger.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
             + "  dmx.signup.account_creation_password_handling: " + CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING + "\n"
             + "  dmx.signup.username_policy: " + CONFIG_USERNAME_POLICY + "\n"
             + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
@@ -120,13 +135,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
             + "  dmx.signup.token_expiration_time: " + CONFIG_TOKEN_EXPIRATION_DURATION.toHours() + "\n"
         );
-        log.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
+        logger.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
-            log.warning("LDAP Account creation configured but respective plugin not available!");
+            logger.warning("LDAP Account creation configured but respective plugin not available!");
         }
 
         if (CONFIG_ADMIN_MAILBOX == null || CONFIG_ADMIN_MAILBOX.isEmpty()) {
-            log.warning("'dmx.signup.admin_mailbox' is not configured. Please correct this otherwise various notification emails cannot be send.");
+            logger.warning("'dmx.signup.admin_mailbox' is not configured. Please correct this otherwise various notification emails cannot be send.");
         }
     }
 
@@ -150,10 +165,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public String getSystemEmailContactOrEmpty() {
         return (systemEmailContact == null) ? "" : systemEmailContact;
-    }
-
-    private void initOptionalServices() {
-        ldap = new OptionalService<>(getBundleContext(), () -> LDAPService.class);
     }
 
     /**
@@ -231,7 +242,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 return handleSignUpWithDirectAccountCreation(newAccountData, password);
             }
         } catch (URISyntaxException e) {
-            log.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
+            logger.log(Level.SEVERE, "Could not build response URI while handling sign-up request", e);
         }
         return new SignUpRequestResult(SignUpRequestResult.Code.UNEXPECTED_ERROR);
     }
@@ -258,7 +269,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             boolean skipConfirmation) {
         if (skipConfirmation && hasAccountCreationPrivilege()) {
             if (CONFIG_ACCOUNT_CREATION == AccountCreation.ADMIN) {
-                log.info("Sign-up Configuration: Email based confirmation workflow active but admin is " +
+                logger.info("Sign-up Configuration: Email based confirmation workflow active but admin is " +
                     "skipping confirmation mail.");
                 try {
                     transactional(() -> createCustomUserAccount(newAccountData, password));
@@ -267,12 +278,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 }
                 return handleAccountCreatedRedirect(newAccountData.username);
             } else {
-                log.warning("Non-privileged user attempted to skip confirmation email. Username: " + accesscontrol.getUsername());
+                logger.warning("Non-privileged user attempted to skip confirmation email. Username: " + accesscontrol.getUsername());
                 // skipping confirmation is only allowed for admins
                 return new SignUpRequestResult(SignUpRequestResult.Code.ADMIN_PRIVILEGE_MISSING);
             }
         } else {
-            log.fine("Sign-up Configuration: Email based confirmation workflow active. Sending out confirmation mail.");
+            logger.fine("Sign-up Configuration: Email based confirmation workflow active. Sending out confirmation mail.");
             String tokenKey = createUserValidationToken(newAccountData, password);
             sendConfirmationMail(tokenKey, newAccountData.displayName, newAccountData.emailAddress);
             // redirect user to a "token-info" page
@@ -282,10 +293,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private SignUpRequestResult handleAccountCreatedRedirect(String username) {
         if (DMX_ACCOUNTS_ENABLED) {
-            log.info("DMX Config: The new account is now ENABLED.");
+            logger.info("DMX Config: The new account is now ENABLED.");
             return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_CREATED, username);
         } else {
-            log.info("DMX Config: The new account is now DISABLED.");
+            logger.info("DMX Config: The new account is now DISABLED.");
             return new SignUpRequestResult(SignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING, username);
         }
     }
@@ -301,7 +312,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         // 3) Create the user account and show ok OR present an error message.
         try {
             if (tokenData.expiration.isAfter(Instant.now())) {
-                log.log(Level.INFO, "Trying to create user account for {0}", tokenData.accountData.emailAddress);
+                logger.log(Level.INFO, "Trying to create user account for {0}", tokenData.accountData.emailAddress);
                 try {
                     transactional(() -> createCustomUserAccount(tokenData.accountData, tokenData.password));
                 } catch (Exception e) {
@@ -311,12 +322,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.LINK_EXPIRED);
             }
         } catch (RuntimeException ex) {
-            log.log(Level.SEVERE, "Account creation failed", ex);
+            logger.log(Level.SEVERE, "Account creation failed", ex);
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.UNEXPECTED_ERROR);
         }
-        log.log(Level.INFO, "Account successfully created for username: {0}", tokenData.accountData.username);
+        logger.log(Level.INFO, "Account successfully created for username: {0}", tokenData.accountData.username);
         if (!DMX_ACCOUNTS_ENABLED) {
-            log.info("Account activation by an administrator remains PENDING ");
+            logger.info("Account activation by an administrator remains PENDING ");
             return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS_ACCOUNT_PENDING);
         }
         return new ProcessSignUpRequestResult(ProcessSignUpRequestResult.Code.SUCCESS, tokenData.accountData.username);
@@ -324,10 +335,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @Override
     public InitiatePasswordResetRequestResult requestInitiateRedirectPasswordReset(String emailAddress, String redirectUrl) {
-        log.info("Password reset requested for user with email address: '" + emailAddress + "' wishing to redirect to: '" +
+        logger.info("Password reset requested for user with email address: '" + emailAddress + "' wishing to redirect to: '" +
             redirectUrl + "'");
         if (dmx.getPrivilegedAccess().emailAddressExists(emailAddress)) {
-            log.info("Email based password reset workflow do'able, sending out passwort reset mail.");
+            logger.info("Email based password reset workflow do'able, sending out passwort reset mail.");
             // ### Todo: Add/include return Url to token (!)
             // Note: Here system can't know "display name" (anonymous has
             // no read permission on it) and thus can't pass it on
@@ -335,7 +346,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             sendPasswordResetToken(emailAddress, null, redirectUrl);
             return InitiatePasswordResetRequestResult.SUCCESS;
         }
-        log.warning("Email based password reset workflow not possible because email address is not known: " + emailAddress);
+        logger.warning("Email based password reset workflow not possible because email address is not known: " + emailAddress);
         return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
     }
 
@@ -346,22 +357,22 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public InitiatePasswordResetRequestResult requestInitiatePasswordReset(@PathParam("emailAddress") String emailAddress,
                                                                            @QueryParam("name") String displayName) {
-        log.info("Password reset requested for user with Email: '" + emailAddress + "' and display name: '" + displayName + "'");
+        logger.info("Password reset requested for user with Email: '" + emailAddress + "' and display name: '" + displayName + "'");
         try {
             if (!isValidEmailAdressMapper.map(emailAddress)) {
                 return InitiatePasswordResetRequestResult.UNEXPECTED_ERROR;
             }
             if (dmx.getPrivilegedAccess().emailAddressExists(emailAddress)) {
-                log.info("Email based password reset workflow possible, sending out passwort reset mail.");
+                logger.info("Email based password reset workflow possible, sending out passwort reset mail.");
                 sendPasswordResetToken(emailAddress, displayName, null);
                 return InitiatePasswordResetRequestResult.SUCCESS;
             } else {
-                log.info("Email based password reset workflow not possible because mail address not known: " +
+                logger.info("Email based password reset workflow not possible because mail address not known: " +
                         emailAddress);
                 return InitiatePasswordResetRequestResult.EMAIL_UNKNOWN;
             }
         } catch (Exception ex) {
-            log.log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, null, ex);
         }
         return InitiatePasswordResetRequestResult.UNEXPECTED_ERROR;
     }
@@ -385,7 +396,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 tokenData.accountData.emailAddress, tokenData.accountData.displayName, tokenData.redirectUrl);
         } else {
             // missing token data (token already used or token invalid) or expired validity
-            log.warning("The provided password reset token '" + token + "' has expired or is invalid");
+            logger.warning("The provided password reset token '" + token + "' has expired or is invalid");
             passwordResetTokenData.remove(token);
             return new PasswordResetTokenCheckRequestResult(PasswordResetTokenCheckRequestResult.Code.LINK_EXPIRED);
         }
@@ -407,7 +418,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public PasswordChangeRequestResult requestPasswordChange(@PathParam("token") String token,
                                                              @PathParam("password") String password) {
-        log.info("Processing Password Update Request Token... ");
+        logger.info("Processing Password Update Request Token... ");
         PasswordResetTokenData tokenData = passwordResetTokenData.get(token);
         if (tokenData != null) {
             Credentials newCreds = new Credentials(tokenData.accountData.username, password);
@@ -416,10 +427,10 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 dmx.getPrivilegedAccess().changePassword(newCreds);
             } else {
                 if (ldap.get().changePassword(newCreds) != null) {
-                    log.info("If no previous errors are reported here or in the LDAP-service log, the " +
+                    logger.info("If no previous errors are reported here or in the LDAP-service log, the " +
                         "credentials for user " + newCreds.username + " should now have been changed succesfully.");
                 } else {
-                    log.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
+                    logger.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
                     return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
                 }
             }
@@ -438,7 +449,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                                    @PathParam("emailAddress") String emailAddress,
                                    @PathParam("displayname") String displayName,
                                    @PathParam("password") String password) {
-        log.info("Creating user account with display name \"" + displayName + "\" and email address \"" + emailAddress +
+        logger.info("Creating user account with display name \"" + displayName + "\" and email address \"" + emailAddress +
             "\"");
         checkAccountCreation();
         Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, emailAddress, displayName), password);
@@ -460,7 +471,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                         .set(displayName));
                 // automatically make users member in "Display Names" workspace
                 dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
-                log.info("Created membership for new user account in \"Display Names\" workspace " +
+                logger.info("Created membership for new user account in \"Display Names\" workspace " +
                         "(SharingMode.Collaborative)");
                 // Account creator should be member of "Display Names"
                 RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
@@ -487,7 +498,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
             return accesscontrol.getUsernameTopic(username);
         } catch (Exception e) {
-            log.log(Level.WARNING, "Unable to create custom account", e);
+            logger.log(Level.WARNING, "Unable to create custom account", e);
             throw new RuntimeException("Creating custom user account failed, mailbox='" + newAccountData.emailAddress +
                 "', displayName='" + newAccountData.displayName + "'", e);
         }
@@ -527,7 +538,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
             } else {
                 String username = usernameTopic.getSimpleValue().toString();
-                log.info("Revoke Request for API Workspace Membership by user '" + username + "'");
+                logger.info("Revoke Request for API Workspace Membership by user '" + username + "'");
                 String api_usage_revoked = emailTextProducer.getApiUsageRevokedMailSubject();
                 String message = emailTextProducer.getApiUsageRevokedMailText(username);
                 sendSystemMailboxNotification(api_usage_revoked, message);
@@ -556,14 +567,14 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             Topic username = topic.getRelatedTopic("dmx.config.configuration", null, null, USERNAME);
             // Perform notification
             if (status && !DMX_ACCOUNTS_ENABLED) { // Enabled=true && new_accounts_are_enabled=false
-                log.info("Sign-up Notification: User Account \"" + username.getSimpleValue() + "\" is now ENABLED!");
+                logger.info("Sign-up Notification: User Account \"" + username.getSimpleValue() + "\" is now ENABLED!");
                 Topic mailbox = username.getRelatedTopic(USER_MAILBOX_EDGE_TYPE, null, null, USER_MAILBOX_TYPE_URI);
                 if (mailbox != null) { // for accounts created via sign-up plugin this will always evaluate to true
                     String mailboxValue = mailbox.getSimpleValue().toString();
                     String subject = emailTextProducer.getAccountActiveEmailSubject();
                     String message = emailTextProducer.getAccountActiveEmailMessage(username.toString());
                     sendMail(subject, message, mailboxValue);
-                    log.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
+                    logger.info("Send system notification mail to " + mailboxValue + " - The account is now active!");
                 }
             }
         }
@@ -586,7 +597,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     "notification mail to the admin", ex);
             }
         } else {
-            log.warning("Did not send notification mail to System Mailbox - Admin Mailbox configuration not ");
+            logger.warning("Did not send notification mail to System Mailbox - Admin Mailbox configuration not ");
         }
     }
 
@@ -645,18 +656,18 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                     if (customWorkspaceAssignmentTopic != null) {
                         accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
                             customWorkspaceAssignmentTopic.getId());
-                        log.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
+                        logger.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
                             "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
                     }
                     return emailAddressTopic;
                 }
             });
-            log.info("Created new user account for user '" + username + "' and " + emailAddress);
+            logger.info("Created new user account for user '" + username + "' and " + emailAddress);
             // 6) Inform administrations about successfull account creation
             sendNotificationMail(username, emailAddress);
             return username;
         } catch (Exception e) {
-            log.log(Level.WARNING, "Creating simple user account failed", e);
+            logger.log(Level.WARNING, "Creating simple user account failed", e);
             throw new RuntimeException("Creating simple user account failed, username='" + username +
                 "', mailbox='" + emailAddress + "'", e);
         }
@@ -757,7 +768,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         Instant expiration = calculateTokenExpiration();
         NewAccountTokenData token = new NewAccountTokenData(newAccountData, password, expiration);
         newAccountTokenData.put(tokenKey, token);
-        log.log(Level.INFO, "Set up key {0} for {1} sending confirmation mail valid till {3}",
+        logger.log(Level.INFO, "Set up key {0} for {1} sending confirmation mail valid till {3}",
             new Object[]{ tokenKey, newAccountData.emailAddress, expiration });
         return tokenKey;
     }
@@ -775,7 +786,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             redirectUrl
         );
         passwordResetTokenData.put(token, tokenData);
-        log.log(Level.INFO, "Set up password reset token data with token {0} for email address {1} valid until {3}",
+        logger.log(Level.INFO, "Set up password reset token data with token {0} for email address {1} valid until {3}",
             new Object[]{token, emailAddress, expiration});
         return token;
     }
@@ -785,7 +796,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             mf.newTopicPlayerModel(usernameTopic.getId(), DEFAULT),
             mf.newTopicPlayerModel(membershipNote.getId(), DEFAULT)));
         dmx.getPrivilegedAccess().assignToWorkspace(apiRequest, dmx.getPrivilegedAccess().getSystemWorkspaceId());
-        log.info("Request for new custom API Workspace Membership by user \"" +
+        logger.info("Request for new custom API Workspace Membership by user \"" +
             usernameTopic.getSimpleValue().toString() + "\"");
         String subject = emailTextProducer.getApiUsageRequestedSubject();
         String message = emailTextProducer.getApiUsageRequestedMessage(usernameTopic.getSimpleValue().toString());
@@ -797,23 +808,23 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // don't use this option in production
             Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
             if (apiWorkspace != null) {
-                log.info("Request for new custom API Workspace Membership by user \"" +
+                logger.info("Request for new custom API Workspace Membership by user \"" +
                     usernameTopic.getSimpleValue().toString() + "\"");
                 // Attempt to create a Workspace membership for this Assocation/Relation
                 accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId());
             } else {
-                log.info("Revoke Request for API Workspace Membership by user \"" +
+                logger.info("Revoke Request for API Workspace Membership by user \"" +
                     usernameTopic.getSimpleValue().toString() + "\"");
                 if (accesscontrol.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
                     Assoc assoc = getMembershipAssociation(usernameTopic.getId(), apiWorkspace.getId());
                     dmx.deleteAssoc(assoc.getId());
                 } else {
-                    log.info("Skipped Revoke Request for non-existent API Workspace Membership for \"" +
+                    logger.info("Skipped Revoke Request for non-existent API Workspace Membership for \"" +
                         usernameTopic.getSimpleValue().toString() + "\"");
                 }
             }
         } else {
-            log.info("No API Workspace Configured: You must enter the URI of a programmatically created workspace " +
+            logger.info("No API Workspace Configured: You must enter the URI of a programmatically created workspace " +
                 "topic into your current \"Signup Configuration\".");
         }
     }
@@ -829,17 +840,17 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         // load module configuration
         activeModuleConfiguration = loadConfiguration();
         if (!activeModuleConfiguration.isValid()) {
-            log.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
+            logger.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
             return;
         }
         activeModuleConfiguration.reload();
         // check for custom workspace assignment
         customWorkspaceAssignmentTopic = activeModuleConfiguration.getCustomWorkspaceAssignmentTopic();
         if (customWorkspaceAssignmentTopic != null) {
-            log.info("Configured Custom Sign-up Workspace => \"" + customWorkspaceAssignmentTopic.getSimpleValue() +
+            logger.info("Configured Custom Sign-up Workspace => \"" + customWorkspaceAssignmentTopic.getSimpleValue() +
                 "\"");
         }
-        log.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"", new Object[]{
+        logger.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"", new Object[]{
             activeModuleConfiguration.getConfigurationUri(),
             activeModuleConfiguration.getConfigurationName()
         });
@@ -957,7 +968,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             r.run();
             tx.success();
         } catch (Throwable t) {
-            log.warning("A custom transaction failed: " + t.getLocalizedMessage());
+            logger.warning("A custom transaction failed: " + t.getLocalizedMessage());
             tx.failure();
             throw t;
         } finally {
@@ -970,7 +981,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         String displayName = deferredDisplayName.get(loggedInUserName);
         if (accesscontrol.getUsername().equals(loggedInUserName)
             && displayName != null) {
-            log.info("Handling deferred display name for user " + loggedInUserName);
+            logger.info("Handling deferred display name for user " + loggedInUserName);
             transactional(() -> {
                 try {
                     setupDisplayName(loggedInUserName, displayName);

@@ -1,4 +1,4 @@
-package systems.dmx.signup;
+package systems.dmx.signup.usecase;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
@@ -35,13 +35,13 @@ public class OptionalService<T> {
         return tracker == null;
     }
 
-    void release() {
+    public void release() {
         if (tracker != null) {
             tracker.close();
         }
     }
 
-    T get() {
+    public T get() {
         if (tracker != null) {
             return tracker.getService();
         } else {
