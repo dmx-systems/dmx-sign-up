@@ -22,6 +22,7 @@ services:
       - ./dmx/dev-ci/conf.d:/opt/dmx/conf.d:ro
     depends_on:
       - mailhog
+      - ldap
 
   mailhog:
     container_name: "${DEPLOY_PREFIX}-mailhog-container"
