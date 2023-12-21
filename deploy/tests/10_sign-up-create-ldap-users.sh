@@ -67,7 +67,7 @@ for user in "${USERS[@]}"; do
     HTTP_CODE="$( echo "${LOGIN_RESPONSE}" | head -n1 | cut -d' ' -f2 )"
     if [ ${HTTP_CODE} -eq 200 ]; then
         SESSION_ID="$( echo "${LOGIN_RESPONSE}" | grep ^Set-Cookie: | cut -d';' -f1 | cut -d'=' -f2 )"
-        echo "INFO: Login ${MAILBOX} successful (id=${SESSION_ID}). (HTTP_CODE=${HTTP_CODE})"
+        echo "INFO: LDAP login ${MAILBOX} successful (id=${SESSION_ID}). (HTTP_CODE=${HTTP_CODE})"
     elif [ "${MAILBOX}" != "thiswontwork@example.org" ]; then
         echo "ERROR! LDAP login ${MAILBOX} failed! (HTTP_CODE=${HTTP_CODE})"
         exit 1
