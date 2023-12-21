@@ -69,11 +69,11 @@ for user in "${USERS[@]}"; do
         SESSION_ID="$( echo "${LOGIN_RESPONSE}" | grep ^Set-Cookie: | cut -d';' -f1 | cut -d'=' -f2 )"
         echo "INFO: Login ${MAILBOX} successful (id=${SESSION_ID}). (HTTP_CODE=${HTTP_CODE})"
     elif [ "${MAILBOX}" != "thiswontwork@example.org" ]; then
-        echo "ERROR! LDAP login ${MAILBOX} failed! (${HTTP_CODE})"
+        echo "ERROR! LDAP login ${MAILBOX} failed! (HTTP_CODE=${HTTP_CODE})"
         exit 1
     else
         ## user 'thiswontswork' is expected to fail
-        echo "INFO: LDAP login ${MAILBOX} failed! (${HTTP_CODE})"
+        echo "INFO: LDAP login ${MAILBOX} failed as expected. (HTTP_CODE=${HTTP_CODE})"
         exit 0
     fi
 done
