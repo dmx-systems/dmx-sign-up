@@ -39,6 +39,7 @@ else
 fi
 
 ## create users
+## POST /sign-up/user-account/{username}/{emailAddress}/{displayname}/{password}
 for user in "${USERS[@]}"; do
     echo "Creating LDAP account for ${user}"
     MAILNAME="$( echo "${user}" | tr '[:upper:]' '[:lower:]' | sed 's/\ /\_/g' )"
@@ -54,6 +55,7 @@ for user in "${USERS[@]}"; do
 done
 
 ## test ldap login
+USERS+=('thiswontwork')
 for user in "${USERS[@]}"; do
     MAILNAME="$( echo "${user}" | tr '[:upper:]' '[:lower:]' | sed 's/\ /\_/g' )"
     MAILBOX="${MAILNAME}@example.org"
@@ -65,10 +67,14 @@ for user in "${USERS[@]}"; do
     HTTP_CODE="$( echo "${LOGIN_RESPONSE}" | head -n1 | cut -d' ' -f2 )"
     if [ ${HTTP_CODE} -eq 200 ]; then
         SESSION_ID="$( echo "${LOGIN_RESPONSE}" | grep ^Set-Cookie: | cut -d';' -f1 | cut -d'=' -f2 )"
-        echo "login ${MAILBOX} successful (id=${SESSION_ID}). (HTTPCODE=${HTTPCODE})"
-    else
-        echo "login ${MAILBOX} failed! (HTTPCODE=${HTTPCODE})"
+        echo "INFO: Login ${MAILBOX} successful (id=${SESSION_ID}). (HTTP_CODE=${HTTP_CODE})"
+    elif [ "${MAILBOX}" != "thiswontwork" ]; then
+        echo "ERROR! LDAP login ${MAILBOX} failed! (${HTTP_CODE})"
         exit 1
+    else
+        ## user 'thiswontswork' is expected to fail
+        echo "INFO: LDAP login ${MAILBOX} failed! (${HTTP_CODE})"
+        exit 0
     fi
 done
 
