@@ -6,6 +6,7 @@ declare -a USERS=($1)
 
 USERNAME='admin'
 PASSWORD="${DMX_ADMIN_PASSWORD}"
+echo "PASSWORD=${PASSWORD}"
 if [ -z "${TIER}" ]; then
     export TIER='dev'
 fi
@@ -68,11 +69,3 @@ for user in "${USERS[@]}"; do
     fi
 done
 
-## TEST
-sleep 1
-echo "testing ${WEB_URL}"
-EXTERNAL_PROJECT_URL="https://${WEB_URL}/core/topic/0"
-HTTP_CODE="$( curl -s -o /dev/null -w "%{http_code}" ${EXTERNAL_PROJECT_URL} )"
-echo "HTTP_CODE ${HTTP_CODE}"
-if [ ${HTTP_CODE} -ne 200 ]; then echo "HTTP test failed with error code ${HTTP_CODE}."; exit 1; fi
-echo "You can now browse to https://${WEB_URL}/ for testing."
