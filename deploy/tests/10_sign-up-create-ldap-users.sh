@@ -10,6 +10,7 @@ fi
 
 USERNAME='admin'
 PASSWORD="${DMX_ADMIN_PASSWORD}"
+LDAPPASSWORD='testpass'
 #echo "PASSWORD=${PASSWORD}"
 if [ -z "${TIER}" ]; then
     export TIER='dev'
@@ -30,11 +31,11 @@ SESSION="$( curl -sS -H "${AUTH}" "${HOST}/${URL}" -i 2>&1 )"
 HTTPCODE="$( echo "${SESSION}" | grep HTTP | cut -d' ' -f2 )"
 
 if [ "${HTTPCODE}" != "200" -a "${HTTPCODE}" != "204" ]; then
-    echo "login ${USERNAME} failed! (HTTPCODE=${HTTPCODE})"
+    echo "ERROR! Login ${USERNAME} at ${HOST} failed! (HTTPCODE=${HTTPCODE})"
     exit 1
 else
     SESSIONID="$( echo "${SESSION}" | grep ^Set-Cookie: | cut -d';' -f1 | cut -d'=' -f2 )"
-    echo "login ${USERNAME} successful (SESSIONID: ${SESSIONID})."
+    echo "INFO: Login ${USERNAME} at ${HOST} successful. (SESSIONID=${SESSIONID})"
 fi
 
 ## create users
@@ -46,7 +47,7 @@ for user in "${USERS[@]}"; do
     DISPLAYNAME="${user}%20Testuser"
     # LDAPPASSWORDBASE64="$( echo -n "${LDAPPASSWORD}" | base64 )"
     URL="sign-up/user-account/${MAILBOX}/${MAILBOX}/${DISPLAYNAME}/${LDAPPASSWORD}"
-    echo "POST ${URL}"
+    echo "POST ${HOST}/${URL}"
     ## mind "Accept" header!
     RESULT="$( curl -sS -H "Cookie: JSESSIONID=${SESSIONID}" -H "Accept: application/json" -X POST "${HOST}/${URL}" -i 2>&1 )"
     echo "RESULT: ${RESULT}"
