@@ -2,11 +2,15 @@
 
 sleep 1
 
-declare -a USERS=($1)
+if [ -z "$1" ]; then
+    declare -a USERS=(testuser testuser1 testuser2)
+else
+    declare -a USERS=($1)
+fi
 
 USERNAME='admin'
 PASSWORD="${DMX_ADMIN_PASSWORD}"
-echo "PASSWORD=${PASSWORD}"
+#echo "PASSWORD=${PASSWORD}"
 if [ -z "${TIER}" ]; then
     export TIER='dev'
 fi
@@ -18,11 +22,9 @@ fi
 HOST="https://${WEB_URL}:443"
 ## Test access to Administration workspace to ensure login as admin was successful.
 URL='core/topic/uri/dmx.workspaces.administration'
-# URL='access-control/user/workspace'
 BASE64="$( echo -n "${USERNAME}:${PASSWORD}" | base64 )"
 AUTH="Authorization: Basic ${BASE64}"
-#SESSIONID="$( curl -sS -H "${AUTH}" "${HOST}/${URL}" -i 2>&1 | grep ^Set-Cookie: | cut -d';' -f1 | cut -d'=' -f2 )"
-echo "curl -sS -H "${AUTH}" "${HOST}/${URL}" -i 2>&1"
+#echo "curl -sS -H "${AUTH}" "${HOST}/${URL}" -i 2>&1"
 SESSION="$( curl -sS -H "${AUTH}" "${HOST}/${URL}" -i 2>&1 )"
 #echo "SESSION = ${SESSION}"
 HTTPCODE="$( echo "${SESSION}" | grep HTTP | cut -d' ' -f2 )"
