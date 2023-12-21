@@ -16,14 +16,15 @@ function mkpw() {
 }
 
 if [ -z "${DMX_ADMIN_PASSWORD}" ]; then
-    export DMX_ADMIN_PASSWORD="$( mkpw )"
     echo "DMX_ADMIN_PASSWORD=${DMX_ADMIN_PASSWORD}"
 fi
+export DMX_ADMIN_PASSWORD="$( mkpw )"
 
 if [ -z "${LDAP_ADMIN_PASSWORD}" ]; then
-    export LDAP_ADMIN_PASSWORD="$( mkpw )$( mkpw )"
     echo "LDAP_ADMIN_PASSWORD=${LDAP_ADMIN_PASSWORD}"
 fi
+export LDAP_ADMIN_PASSWORD="$( mkpw )$( mkpw )"
+
 if [ -z "${DMX_DIRS}" ]; then
     declare -a DMX_DIRS=(conf logs db filedir bundle-deploy bundle-available)
 fi
