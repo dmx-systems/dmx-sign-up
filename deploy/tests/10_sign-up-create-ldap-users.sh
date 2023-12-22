@@ -55,6 +55,7 @@ for user in "${USERS[@]}"; do
 done
 
 ## test ldap login
+sleep 1
 USERS+=('thiswontwork')
 for user in "${USERS[@]}"; do
     MAILNAME="$( echo "${user}" | tr '[:upper:]' '[:lower:]' | sed 's/\ /\_/g' )"
@@ -74,7 +75,6 @@ for user in "${USERS[@]}"; do
     else
         ## user 'thiswontswork' is expected to fail
         echo "INFO: LDAP login ${MAILBOX} failed as expected. (HTTP_CODE=${HTTP_CODE})"
-        exit 0
     fi
 done
 
