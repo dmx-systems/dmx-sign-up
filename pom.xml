@@ -147,6 +147,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- API documentation -->
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>2.2.19</version>
+        </dependency>
+
         <!-- unit testing framework -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -213,6 +220,27 @@
                         <Embed-Directory>dependencies</Embed-Directory>
                     </instructions>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>io.openapitools.swagger</groupId>
+                <artifactId>swagger-maven-plugin</artifactId>
+                <configuration>
+                    <resourcePackages>
+                        <resourcePackage>systems.dmx.signup</resourcePackage>
+                    </resourcePackages>
+                    <outputDirectory>${basedir}/src/main/resources/web</outputDirectory>
+                    <outputFilename>openapi</outputFilename>
+                    <outputFormats>JSON,YAML</outputFormats>
+                    <prettyPrint>true</prettyPrint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
