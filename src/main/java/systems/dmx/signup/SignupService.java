@@ -111,6 +111,9 @@ public interface SignupService {
 
     boolean isLdapAccountCreationEnabled();
 
+    /** Returns whether a password can be set during account creation or not. */
+    boolean isAccountCreationPasswordEditable();
+
     boolean isEmailAddressTaken(String value);
 
     boolean isUsernameTaken(String value);

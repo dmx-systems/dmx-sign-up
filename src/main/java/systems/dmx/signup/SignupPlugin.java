@@ -1,5 +1,6 @@
 package systems.dmx.signup;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.osgi.framework.BundleContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.accesscontrol.event.PostLoginUser;
@@ -445,6 +446,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Path("/user-account/{username}/{emailAddress}/{displayname}/{password}")
     @Transactional
     @Override
+    @Hidden
     public Topic createUserAccount(@PathParam("username") String username,
                                    @PathParam("emailAddress") String emailAddress,
                                    @PathParam("displayname") String displayName,
@@ -614,7 +616,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return CONFIG_CREATE_LDAP_ACCOUNTS && isLdapPluginAvailable();
     }
 
-    private boolean isAccountCreationPasswordEditable() {
+    @Override
+    public boolean isAccountCreationPasswordEditable() {
         return CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING == AccountCreation.PasswordHandling.EDITABLE;
     }
 
@@ -777,11 +780,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return Instant.now().plus(CONFIG_TOKEN_EXPIRATION_DURATION);
     }
 
-    private String createPasswordResetTokenData(String username, String emailAddress, String name, String redirectUrl) {
+    private String createPasswordResetTokenData(String username, String emailAddress, String displayName, String redirectUrl) {
         String token = UUID.randomUUID().toString();
         Instant expiration = calculateTokenExpiration();
         PasswordResetTokenData tokenData = new PasswordResetTokenData(
-            new NewAccountData(username, emailAddress, name),
+            new NewAccountData(username, emailAddress, displayName),
             expiration,
             redirectUrl
         );
