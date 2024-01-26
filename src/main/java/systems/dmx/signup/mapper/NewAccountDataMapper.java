@@ -18,7 +18,7 @@ public class NewAccountDataMapper {
                         emailAddress,
                         displayName
                 );
-            case DISPLAYNAME_IS_USERNAME_:
+            case DISPLAYNAME_IS_USERNAME:
                 return new NewAccountData(
                         username,
                         emailAddress,
