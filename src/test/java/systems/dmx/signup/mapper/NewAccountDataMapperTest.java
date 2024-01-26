@@ -30,7 +30,7 @@ class NewAccountDataMapperTest {
         return Stream.of(
                 args(UsernamePolicy.UNCONFINED, username, emailAddress, displayName),
                 args(UsernamePolicy.USERNAME_IS_EMAIL, emailAddress, emailAddress, displayName),
-                args(UsernamePolicy.DISPLAYNAME_IS_USERNAME, displayName, emailAddress, displayName)
+                args(UsernamePolicy.DISPLAYNAME_IS_USERNAME, username, emailAddress, username)
         );
     }
 

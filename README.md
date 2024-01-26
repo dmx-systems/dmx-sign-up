@@ -118,7 +118,7 @@ The sign-up plugin supports three different policies regarding username handling
 |-------------------------|---------------------------------------------------------------------------------------|
 | unconfined              | Username, email address and display name can be chosen freely of each other           |
 | username_is_email       | Only email adress and display name can be set, the former turns into the DMX username |
-| displayname_is_username | Only display name and email adress can be set, the former becomes the DMX username.   |
+| displayname_is_username | Only username name and email adress can be set, the former becomes the display name.  |
 
 The policy is chosen by setting the configuration key
 ```
