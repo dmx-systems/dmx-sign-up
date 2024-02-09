@@ -1,11 +1,10 @@
 package systems.dmx.signup;
 
 
+import systems.dmx.core.Topic;
+
 import java.net.URISyntaxException;
 import java.util.List;
-
-import systems.dmx.core.Topic;
-import systems.dmx.signup.configuration.ModuleConfiguration;
 
 /**
  * A plugin service to check username or mailbox availability and to send
@@ -90,7 +89,6 @@ public interface SignupService {
     /**
      * @return  String  Workspace Topic ID
      */
-    String createAPIWorkspaceMembershipRequest();
 
     SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String password,
                                       boolean skipConfirmation);
@@ -124,9 +122,5 @@ public interface SignupService {
 
     boolean hasAccountCreationPrivilege();
 
-    boolean isApiWorkspaceMember();
-
     List<String> getAuthorizationMethods();
-
-    ModuleConfiguration getConfiguration();
 }
