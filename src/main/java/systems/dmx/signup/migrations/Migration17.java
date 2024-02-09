@@ -212,7 +212,7 @@ public class Migration17 extends Migration {
     }
     
     private void purgeTopicType(String s) {
-        dmx.getTopicsByType(s).forEach((it) -> dmx.deleteTopic(it.getId()));
+        dmx.getTopicsByType(s).forEach(it -> dmx.deleteTopic(it.getId()));
         dmx.deleteTopicType(s);
     }
 

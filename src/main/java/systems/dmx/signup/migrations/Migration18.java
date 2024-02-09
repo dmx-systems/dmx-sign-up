@@ -9,6 +9,10 @@ public class Migration18 extends Migration {
     private Logger logger = Logger.getLogger(getClass().getName());
 
     private static final String MIGRATION18_SIGNUP_CONFIGURATION_TYPE_URI = "dmx.signup.configuration";
+    private static final String MIGRATION18_CONFIG_API_ENABLED = "dmx.signup.config_api_enabled";
+    private static final String MIGRATION18_CONFIG_API_DESCRIPTION = "dmx.signup.config_api_description";
+    private static final String MIGRATION18_CONFIG_API_DETAILS = "dmx.signup.config_api_details";
+    private static final String MIGRATION18_CONFIG_API_WORKSPACE_URI = "dmx.signup.config_api_workspace_uri";
 
     private static final String MIGRATION18_LEGACY_SIGNUP_CONFIGURATION_TYPE_URI = "dmx.signup.legacy_configuration";
     private static final String MIGRATION18_LEGACY_CONFIG_PROJECT_TITLE = "dmx.signup.legacy_config_project_title";
@@ -49,11 +53,16 @@ public class Migration18 extends Migration {
         purgeTopicType(MIGRATION18_LEGACY_CONFIG_LOADING_APP_HINT);
         purgeTopicType(MIGRATION18_LEGACY_CONFIG_LOGGING_OUT_HINT);
         purgeTopicType(MIGRATION18_LEGACY_SIGNUP_CONFIGURATION_TYPE_URI);
+
+        purgeTopicType(MIGRATION18_CONFIG_API_DETAILS);
+        purgeTopicType(MIGRATION18_CONFIG_API_DESCRIPTION);
+        purgeTopicType(MIGRATION18_CONFIG_API_ENABLED);
+        purgeTopicType(MIGRATION18_CONFIG_API_WORKSPACE_URI);
         purgeTopicType(MIGRATION18_SIGNUP_CONFIGURATION_TYPE_URI);
     }
     
     private void purgeTopicType(String s) {
-        dmx.getTopicsByType(s).forEach((it) -> dmx.deleteTopic(it.getId()));
+        dmx.getTopicsByType(s).forEach(it -> dmx.deleteTopic(it.getId()));
         dmx.deleteTopicType(s);
     }
 
