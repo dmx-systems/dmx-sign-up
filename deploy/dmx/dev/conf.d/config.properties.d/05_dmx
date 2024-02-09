@@ -1,0 +1,6 @@
+### DMX Configuration for Docker Environments ###
+
+# Sign-Up
+dmx.host.url = http://localhost:9080
+dmx.websockets.url = ws://localhost:9080/websocket
+

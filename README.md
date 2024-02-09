@@ -143,6 +143,24 @@ preserved in the web frontend. As such the property can also be used to enforce 
 
 When the property is not set, all known auth methods are allowed and their order is defined by the platform.
 
+## Legacy migrations
+
+Sign Up plugin 2.x contained configuration options stored in topics. Some of those options have become obsolete in
+version 3.x and also the idea of storing such values in topics is not desired anymore. For this the following migration
+path has been laid out.
+
+Version 3.0.x moves all the existing configuration values into a topic destined for keeping legacy values. This topic
+is then never touched at all and can be left or removed by the administrator. The topic type is for this is
+```
+  dmx.signup.legacy.configuration
+```
+
+Running version 3.1.x of the sign-up plugin will remove all configuration topics and topic types, including the legacy
+ones.
+
+Running version 3.2.x of the sign-up plugin will *not* have any migration code left and will never use configuration
+option in topics anymore.
+
 ## License
 
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
