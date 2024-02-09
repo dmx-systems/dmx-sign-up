@@ -21,7 +21,6 @@ import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
-import systems.dmx.signup.configuration.ModuleConfiguration;
 import systems.dmx.signup.configuration.SignUpConfigOptions;
 import systems.dmx.signup.di.DaggerSignupComponent;
 import systems.dmx.signup.di.SignupComponent;
@@ -48,7 +47,8 @@ import java.util.logging.Logger;
 
 import static systems.dmx.accesscontrol.Constants.LOGIN_ENABLED;
 import static systems.dmx.accesscontrol.Constants.USERNAME;
-import static systems.dmx.core.Constants.*;
+import static systems.dmx.core.Constants.CHILD;
+import static systems.dmx.core.Constants.PARENT;
 import static systems.dmx.signup.Constants.*;
 import static systems.dmx.signup.configuration.SignUpConfigOptions.*;
 
@@ -66,8 +66,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     static final Logger logger = Logger.getLogger(SignupPlugin.class.getName());
 
-    private ModuleConfiguration activeModuleConfiguration = null;
-    private Topic customWorkspaceAssignmentTopic = null;
     private String systemEmailContact = null;
 
     @Inject
@@ -113,8 +111,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public void init() {
         runDependencyInjection();
-
-        reloadAssociatedSignupConfiguration();
     }
 
     @Override
@@ -511,58 +507,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         return (ws != null) ? ws.getId() : -1;
     }
 
-    /**
-     * TODO: drop this method? Does any application uses it? Drop entire concept "API Workspace"?
-     * TODO: otherwise: revise return value, make properly RESTful
-     * TODO: move API docs to *Interface*
-     *
-     * A HTTP resource to associate the requesting username with
-     * the "Custom Membership Request" note topic and to inform the administrators by email.
-     *
-     * @return String containing a JSONObject with an "membership_created" r´property representing the relation.
-     */
-    @POST
-    @Path("/confirm/membership/custom")
-    @Transactional
-    @Override
-    public String createAPIWorkspaceMembershipRequest() {
-        Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
-        if (apiMembershipRequestNote != null && accesscontrol.getUsername() != null) {
-            Topic usernameTopic = accesscontrol.getUsernameTopic();
-            // 1) Try to manage workspace membership directly (success depends on ACL and the SharingMode of the
-            // configured workspace)
-            createApiWorkspaceMembership(usernameTopic); // might fail silently
-            // 2) Store API Membership Request in a Note (residing in the "System" workspace) association
-            Assoc requestRelation = getMembershipAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
-            if (requestRelation == null) {
-                // ### Fixme: For the moment it depends on (your web application, more specifically) the workspace
-                // cookie set (at the requesting client) which workspace this assoc will be assigned to
-                createApiMembershipRequestNoteAssociation(usernameTopic, apiMembershipRequestNote);
-            } else {
-                String username = usernameTopic.getSimpleValue().toString();
-                logger.info("Revoke Request for API Workspace Membership by user '" + username + "'");
-                String api_usage_revoked = emailTextProducer.getApiUsageRevokedMailSubject();
-                String message = emailTextProducer.getApiUsageRevokedMailText(username);
-                sendSystemMailboxNotification(api_usage_revoked, message);
-                // 2.1) fails in all cases where user has no write access to the workspace the association was created
-                // in dmx.deleteAssociation(requestRelation.getId());
-                // For now: API Usage Membership must be revoked per Email but personally and confirmed by the
-                // administrator. A respective hint was place in the "API Usage" dialog on the users account
-                // (/sign-up/edit) page.
-            }
-            return "{ \"membership_created\" : " + true + "}";
-        } else {
-            return "{ \"membership_created\" : " + false + "}";
-        }
-    }
-
     // --- Listeners --- //
 
     @Override
     public void postUpdateTopic(Topic topic, ChangeReport report, TopicModel updateModel)  {
-        if (topic.getTypeUri().equals(SIGN_UP_CONFIG_TYPE_URI)) {
-            reloadAssociatedSignupConfiguration();
-        } else if (topic.getTypeUri().equals(LOGIN_ENABLED)) {
+        if (topic.getTypeUri().equals(LOGIN_ENABLED)) {
             // Account status
             boolean status = Boolean.parseBoolean(topic.getSimpleValue().toString());
             // Account involved
@@ -655,13 +604,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                         mf.newTopicPlayerModel(emailAddressTopic.getId(), CHILD),
                         mf.newTopicPlayerModel(usernameTopic.getId(), PARENT)));
                     dmx.getPrivilegedAccess().assignToWorkspace(assoc, systemWorkspaceId);
-                    // 5) create membership to custom workspace topic
-                    if (customWorkspaceAssignmentTopic != null) {
-                        accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(),
-                            customWorkspaceAssignmentTopic.getId());
-                        logger.info("Created new Membership for " + usernameTopic.getSimpleValue().toString() + " in " +
-                            "workspace=" + customWorkspaceAssignmentTopic.getSimpleValue().toString());
-                    }
                     return emailAddressTopic;
                 }
             });
@@ -737,28 +679,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         dmx.getTopic(workspaces.getWorkspace(CONFIG_ACCOUNT_CREATION_AUTH_WS_URI).getId()).checkWriteAccess();
     }
 
-    @Override
-    public boolean isApiWorkspaceMember() {
-        String username = accesscontrol.getUsername();
-        if (username != null) {
-            String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
-            if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) {
-                Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
-                if (apiWorkspace != null) {
-                    return accesscontrol.isMember(username, apiWorkspace.getId());
-                }
-            } else {
-                Topic usernameTopic = accesscontrol.getUsernameTopic();
-                Topic apiMembershipRequestNote = dmx.getTopicByUri("dmx.signup.api_membership_requests");
-                Assoc requestRelation = getMembershipAssociation(usernameTopic.getId(), apiMembershipRequestNote.getId());
-                if (requestRelation != null) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private void sendPasswordResetToken(String emailAddress, String displayName, String redirectUrl) {
         String username = dmx.getPrivilegedAccess().getUsername(emailAddress);
         // Todo: Would need privileged access to "Display Name" to display it in password-update dialog
@@ -792,71 +712,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         logger.log(Level.INFO, "Set up password reset token data with token {0} for email address {1} valid until {3}",
             new Object[]{token, emailAddress, expiration});
         return token;
-    }
-
-    private void createApiMembershipRequestNoteAssociation(Topic usernameTopic, Topic membershipNote) {
-        Assoc apiRequest = dmx.createAssoc(mf.newAssocModel(ASSOCIATION,
-            mf.newTopicPlayerModel(usernameTopic.getId(), DEFAULT),
-            mf.newTopicPlayerModel(membershipNote.getId(), DEFAULT)));
-        dmx.getPrivilegedAccess().assignToWorkspace(apiRequest, dmx.getPrivilegedAccess().getSystemWorkspaceId());
-        logger.info("Request for new custom API Workspace Membership by user \"" +
-            usernameTopic.getSimpleValue().toString() + "\"");
-        String subject = emailTextProducer.getApiUsageRequestedSubject();
-        String message = emailTextProducer.getApiUsageRequestedMessage(usernameTopic.getSimpleValue().toString());
-        sendSystemMailboxNotification(subject, message);
-    }
-
-    private void createApiWorkspaceMembership(Topic usernameTopic) {
-        String apiWorkspaceUri = activeModuleConfiguration.getApiWorkspaceUri();
-        if (!apiWorkspaceUri.isEmpty() && !apiWorkspaceUri.equals("undefined")) { // don't use this option in production
-            Topic apiWorkspace = dmx.getPrivilegedAccess().getWorkspace(apiWorkspaceUri);
-            if (apiWorkspace != null) {
-                logger.info("Request for new custom API Workspace Membership by user \"" +
-                    usernameTopic.getSimpleValue().toString() + "\"");
-                // Attempt to create a Workspace membership for this Assocation/Relation
-                accesscontrol.createMembership(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId());
-            } else {
-                logger.info("Revoke Request for API Workspace Membership by user \"" +
-                    usernameTopic.getSimpleValue().toString() + "\"");
-                if (accesscontrol.isMember(usernameTopic.getSimpleValue().toString(), apiWorkspace.getId())) {
-                    Assoc assoc = getMembershipAssociation(usernameTopic.getId(), apiWorkspace.getId());
-                    dmx.deleteAssoc(assoc.getId());
-                } else {
-                    logger.info("Skipped Revoke Request for non-existent API Workspace Membership for \"" +
-                        usernameTopic.getSimpleValue().toString() + "\"");
-                }
-            }
-        } else {
-            logger.info("No API Workspace Configured: You must enter the URI of a programmatically created workspace " +
-                "topic into your current \"Signup Configuration\".");
-        }
-    }
-
-    /**
-     * Loads the sign-up configuration, a topic of type "Sign-up Configuration" associated to this plugins
-     * topic of type "Plugin".
-     *
-     * @see #init()
-     * @see #postUpdateTopic(Topic, ChangeReport, TopicModel)
-     */
-    private void reloadAssociatedSignupConfiguration() {
-        // load module configuration
-        activeModuleConfiguration = loadConfiguration();
-        if (!activeModuleConfiguration.isValid()) {
-            logger.warning("Could not load associated Sign-up Plugin Configuration Topic during init/postUpdate");
-            return;
-        }
-        activeModuleConfiguration.reload();
-        // check for custom workspace assignment
-        customWorkspaceAssignmentTopic = activeModuleConfiguration.getCustomWorkspaceAssignmentTopic();
-        if (customWorkspaceAssignmentTopic != null) {
-            logger.info("Configured Custom Sign-up Workspace => \"" + customWorkspaceAssignmentTopic.getSimpleValue() +
-                "\"");
-        }
-        logger.log(Level.INFO, "Sign-up Configuration Loaded (URI=\"{0}\"), Name=\"{1}\"", new Object[]{
-            activeModuleConfiguration.getConfigurationUri(),
-            activeModuleConfiguration.getConfigurationName()
-        });
     }
 
     private void sendConfirmationMail(String key, String username, String emailAddress) {
@@ -915,26 +770,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         String textMessage = isHtml ? null : message;   // + "\n\n" + DMX_HOST_URL + "\n\n"     // TODO?
         String htmlMessage = isHtml ? message : null;   // + "\n\n" + DMX_HOST_URL + "\n\n"     // TODO?
         sendmail.doEmailRecipientAs(sender, projectName, subject, textMessage, htmlMessage, recipientValues);
-    }
-
-    private Assoc getMembershipAssociation(long id1, long id2) {
-        return dmx.getAssocBetweenTopicAndTopic(ASSOCIATION,  id1, id2, DEFAULT, DEFAULT);
-    }
-
-    /**
-     * The sign-up configuration object is loaded once when this bundle/plugin
-     * is initialized by the framework and as soon as one configuration was
-     * edited.
-     *
-     * @see #reloadAssociatedSignupConfiguration()
-     */
-    private ModuleConfiguration loadConfiguration() {
-        return new ModuleConfiguration(dmx.getTopicByUri("dmx.signup.default_configuration"));
-    }
-
-    @Override
-    public ModuleConfiguration getConfiguration() {
-        return activeModuleConfiguration;
     }
 
     @Override

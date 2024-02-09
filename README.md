@@ -45,7 +45,7 @@ After downloading all bundle-files, place them in the `bundle-deploy` folder of 
 
 ## Plugin Configuration
 
-Since the 2.0.0 release, the following options must be configured in either the dmx-platform's `config.properties` (binary release) or `pom.xml` (if you run the platform from sources) file.
+The following options must be configured via dmx-platform's `config.properties`:
 
 ```
 dmx.signup.confirm_email_address = true
@@ -58,12 +58,6 @@ dmx.signup.ldap_account_creation = false
 dmx.signup.token_expiration_time = 2
 dmx.signup.username_policy = unconfined
 ```
-
-Legacy wise, the rest of the plugin options are stored in DB. The central topic for configuring the sign-up plugin is of type `Sign-up Configuration`. Editing this topic via the DMX Webclient allows you to interactively configure the appearance of the custom login and self-registration dialogs.
-
-The sign-up configuration is associated with the "Plugin" topic representing this plugin ("DMX Sign up"). It can be revealed by all members of the `Administration` workspace.
-
-Note: If you want to use the "Password reset" functionality without allowing users to self-register you must make sure "User Account" topics are equipped with a "User Mailbox". To set this up, see instructions here: https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/issues/2
 
 ### Configure account creation logic
 
@@ -127,33 +121,6 @@ dmx.signup.username_policy = unconfined | username_is_email | displayname_is_use
 
 to any of the possible values. The default value is ```unconfined```. 
 
-### Optional module configuration
-
-The module configuration is done through a configuration topic in DMX itself. However during the *first deployment* default values for the topic can be provided through the platform configuration through
-the following properties:
-```
-dmx.signup.config_api_enabled = false 
-dmx.signup.config_api_description =
-dmx.signup.config_api_details =
-dmx.signup.config_api_workspace_uri =
-```
-
-In case a value is not provided in the platform configuration a built-in default value is used.
-
-### Setup Custom Workspace Assignment
-
-There is currently just one more special configuration option: You can setup an automatic workspace assignment for self-registering users. If you do so, new users using the sign-up dialog automatically join (become members of) that works. To do so you need to associate that very workspace topic with your active sign-up configuration. 
-
-And here comes the **pitfall**: To take this "custom workspace assignment" into effect you must press "Edit" and "Save" on your current sign-up configuration topic once (or restart the platform). Only in these two cases the sign-up configuration is reloaded and comes into effect, see [#1](https://github.com/mukil/dm4-sign-up/issues/1)).
-
-You'll notice something similar to the following two lines in your server-side log (when editing and Saving your sign-up configuration):
-```
-Jan 15, 2021 01:28:37 AM systems.dmx.signup.SignupPlugin reloadAssociatedSignupConfiguration
-INFORMATION: Configured Custom Sign-up Workspace => "DMX"
-Jan 15, 2021 01:28:37 AM systems.dmx.signup.SignupPlugin reloadAssociatedSignupConfiguration
-INFORMATION: Sign-up Configuration Loaded (URI="dmx.signup.default_configuration"), Name="My DMX"
-```
-
 ### Account creation through LDAP plugin
 
 The plugin can be configured to use the dmx-ldap plugin for account creation. When enabled the username and password are stored in LDAP instead of DMX itself. The option is disabled by default and is switched on by setting the property:
@@ -182,6 +149,8 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 ## Version history
 **3.0.2** -- TBD
+
+* Removed API workspace and custom workspace handling
 
 **3.0.1** -- Dec, 20, 2023
 
