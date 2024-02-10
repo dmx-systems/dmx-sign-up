@@ -1,8 +1,8 @@
 {
     "topic_types": [
         {
-            "value": "Sign-up Config: Web-App Title",
-            "uri": "dmx.signup.config_webapp_title",
+            "value": "Display Name",
+            "uri": "dmx.signup.display_name",
             "dataTypeUri": "dmx.core.text",
             "viewConfigTopics": [
                 {
@@ -14,169 +14,16 @@
             ]
         },
         {
-            "value": "Sign-up Config: Web-App Logo Path",
-            "uri": "dmx.signup.config_webapp_logo_path",
-            "dataTypeUri": "dmx.core.text",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: Custom CSS Path",
-            "uri": "dmx.signup.config_custom_css_path",
-            "dataTypeUri": "dmx.core.text",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: Project Title",
-            "uri": "dmx.signup.config_project_title",
-            "dataTypeUri": "dmx.core.text",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: ToS Checkbox Label",
-            "uri": "dmx.signup.config_tos_label",
-            "dataTypeUri": "dmx.core.text",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: ToS Detail Text",
-            "uri": "dmx.signup.config_tos_detail",
-            "dataTypeUri": "dmx.core.html",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: Personal Data Checkbox Label",
-            "uri": "dmx.signup.config_pd_label",
-            "dataTypeUri": "dmx.core.text",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: Personal Data Detail Text",
-            "uri": "dmx.signup.config_pd_detail",
-            "dataTypeUri": "dmx.core.html",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: \"Read more\" URL",
-            "uri": "dmx.signup.config_read_more_url",
-            "dataTypeUri": "dmx.core.text",
-            "index_mode_uris": ["dmx.core.key"],
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Config: Sign-up Page Footer",
-            "uri": "dmx.signup.config_pages_footer",
-            "dataTypeUri": "dmx.core.html",
-            "viewConfigTopics": [
-                {
-                    "typeUri": "dmx.webclient.view_config",
-                    "children": {
-                        "dmx.webclient.add_to_create_menu": false
-                    }
-                }
-            ]
-        },
-        {
-            "value": "Sign-up Configuration",
-            "uri": "dmx.signup.configuration",
+            "value": "Display Name Facet",
+            "uri": "dmx.signup.display_name_facet",
             "dataTypeUri": "dmx.core.entity",
             "compDefs": [
                 {
-                    "childTypeUri":           "dmx.signup.config_project_title",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_tos_label",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_tos_detail",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_pd_label",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_pd_detail",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_webapp_title",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_webapp_logo_path",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_custom_css_path",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_read_more_url",
-                    "childCardinalityUri":    "dmx.core.one"
-                },
-                {
-                    "childTypeUri":           "dmx.signup.config_pages_footer",
+                    "childTypeUri":           "dmx.signup.display_name",
                     "childCardinalityUri":    "dmx.core.one"
                 }
-            ], "viewConfigTopics": [
+            ],
+            "viewConfigTopics": [
                 {
                     "typeUri": "dmx.webclient.view_config",
                     "children": {
