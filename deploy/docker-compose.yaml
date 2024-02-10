@@ -28,6 +28,8 @@ services:
       traefik.http.routers.dmx.rule: "PathPrefix(`/`)"
       traefik.http.routers.dmx.middlewares: "dmxreplace@docker"
       traefik.http.middlewares.dmxreplace.replacepathregex.regex: "^/static/(.*)"
+      traefik.http.routers.websock.rule: Host(`localhost:9080`) && PathPrefix(`/websocket`)
+      traefik.http.routers.websock.entrypoints: ws,wss
 
   ldap:
     container_name: dev-ldap
