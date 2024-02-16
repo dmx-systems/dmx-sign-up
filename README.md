@@ -168,6 +168,8 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 ## Version history
 **3.2.0** -- TBD
 
+* Password generation done in backend code
+
 **3.1.0** -- Feb, 10, 2024
 
 * During migration removes legacy configuration topics and topic types
