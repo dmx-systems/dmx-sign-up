@@ -1,6 +1,6 @@
 package systems.dmx.signup.usecase;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import systems.dmx.signup.configuration.AccountCreation;
 
 import javax.inject.Inject;
