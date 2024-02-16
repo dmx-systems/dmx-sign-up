@@ -8,7 +8,6 @@ import java.time.Duration;
 public class SignUpConfigOptions {
 
     // --- Global config options
-    public static final String DMX_HOST_URL = System.getProperty("dmx.host.url");
     public static final boolean DMX_ACCOUNTS_ENABLED = Boolean.parseBoolean(System.getProperty("dmx.security.new_accounts_are_enabled"));
 
     // --- Sign-up config options

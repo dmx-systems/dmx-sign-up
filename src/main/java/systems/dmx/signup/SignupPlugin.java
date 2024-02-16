@@ -12,7 +12,6 @@ import systems.dmx.core.model.TopicModel;
 import systems.dmx.core.osgi.PluginActivator;
 import systems.dmx.core.service.EventListener;
 import systems.dmx.core.service.*;
-import systems.dmx.core.service.accesscontrol.AccessControlException;
 import systems.dmx.core.service.accesscontrol.Credentials;
 import systems.dmx.core.service.event.AllPluginsActive;
 import systems.dmx.core.service.event.PostUpdateTopic;
@@ -29,7 +28,9 @@ import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.model.NewAccountData;
 import systems.dmx.signup.model.NewAccountTokenData;
 import systems.dmx.signup.model.PasswordResetTokenData;
+import systems.dmx.signup.usecase.GetAccountCreationPasswordUseCase;
 import systems.dmx.signup.usecase.GetLdapServiceUseCase;
+import systems.dmx.signup.usecase.HasAccountCreationPrivilegeUseCase;
 import systems.dmx.signup.usecase.OptionalService;
 import systems.dmx.workspaces.WorkspacesService;
 
@@ -75,7 +76,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Inject
     private SendmailService sendmail;
     @Inject
-    private WorkspacesService workspaces;
+    private WorkspacesService workspacesService;
 
     OptionalService<LDAPService> ldap;
 
@@ -95,17 +96,24 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     GetLdapServiceUseCase getLdapServiceUseCase;
 
+    GetAccountCreationPasswordUseCase getAccountCreationPasswordUseCase;
+
+    HasAccountCreationPrivilegeUseCase hasAccountCreationPrivilegeUseCase;
+
     // --- Hooks --- //
     private void runDependencyInjection() {
         // DI:
         SignupComponent component = DaggerSignupComponent.builder()
                 .coreService(dmx)
                 .accessControlService(accesscontrol)
+                .workspacesService(workspacesService)
                 .build();
 
         newAccountDataMapper = component.newAccountDataMapper();
         isValidEmailAdressMapper = component.isValidEmailAdressMapper();
         getLdapServiceUseCase = component.getLdapServiceUseCase();
+        getAccountCreationPasswordUseCase = component.getAccountCreationPasswordUseCase();
+        hasAccountCreationPrivilegeUseCase = component.hasAccountCreationPrivilegeUseCase();
     }
 
     @Override
@@ -223,7 +231,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     @Override
-    public SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String password,
+    public SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String providedPassword,
                                              boolean skipConfirmation) {
         if (!isSelfRegistrationEnabled() && !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
@@ -232,6 +240,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_INVALID_EMAIL);
         }
         NewAccountData newAccountData = mapToNewAccountData(username, emailAddress, displayName);
+        String password = getAccountCreationPasswordUseCase.invoke(CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING, providedPassword);
         try {
             if (SignUpConfigOptions.CONFIG_EMAIL_CONFIRMATION) {
                 return handleSignUpWithEmailConfirmation(newAccountData, password, skipConfirmation);
@@ -449,7 +458,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                                    @PathParam("password") String password) {
         logger.info("Creating user account with display name \"" + displayName + "\" and email address \"" + emailAddress +
             "\"");
-        checkAccountCreation();
+        hasAccountCreationPrivilegeUseCase.checkAccountCreation();
         Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, emailAddress, displayName), password);
         return usernameTopic;
     }
@@ -503,7 +512,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     public long getDisplayNamesWorkspaceId() {
-        Topic ws = workspaces.getWorkspace(DISPLAY_NAME_WS_URI);
+        Topic ws = workspacesService.getWorkspace(DISPLAY_NAME_WS_URI);
         return (ws != null) ? ws.getId() : -1;
     }
 
@@ -641,42 +650,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @Override
     public boolean hasAccountCreationPrivilege() {
-        try {
-            checkAccountCreation();
-            return true;
-        } catch (AccessControlException ace) {
-            return false;
-        } catch (RuntimeException re) {
-            // Deals with unexpected behavior of DMX: On missing read permission RuntimeException is thrown
-            return false;
-        }
-    }
-
-    private void checkAccountCreation() {
-        if (isAccountCreationWorkspaceUriConfigured()) {
-            try {
-                checkAccountCreationWorkspaceWriteAccess();
-            } catch (AccessControlException ace) {
-                checkAdministrationWorkspaceWriteAccess();
-            } catch (RuntimeException re) {
-                // Deals with unexpected behavior of DMX: On missing read permission RuntimeException is thrown
-                checkAdministrationWorkspaceWriteAccess();
-            }
-        } else {
-            checkAdministrationWorkspaceWriteAccess();
-        }
-    }
-    
-    private void checkAdministrationWorkspaceWriteAccess() {
-        dmx.getTopic(dmx.getPrivilegedAccess().getAdminWorkspaceId()).checkWriteAccess();
-    }
-
-    private boolean isAccountCreationWorkspaceUriConfigured() {
-        return !CONFIG_ACCOUNT_CREATION_AUTH_WS_URI.isEmpty();
-    }
-
-    private void checkAccountCreationWorkspaceWriteAccess() {
-        dmx.getTopic(workspaces.getWorkspace(CONFIG_ACCOUNT_CREATION_AUTH_WS_URI).getId()).checkWriteAccess();
+        return hasAccountCreationPrivilegeUseCase.invoke();
     }
 
     private void sendPasswordResetToken(String emailAddress, String displayName, String redirectUrl) {
