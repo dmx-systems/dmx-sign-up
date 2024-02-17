@@ -2,7 +2,6 @@ package systems.dmx.signup;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,10 +16,7 @@ import systems.dmx.signup.di.DaggerSignupComponent;
 import systems.dmx.signup.di.SignupComponent;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
-import systems.dmx.signup.usecase.GetAccountCreationPasswordUseCase;
-import systems.dmx.signup.usecase.GetLdapServiceUseCase;
-import systems.dmx.signup.usecase.HasAccountCreationPrivilegeUseCase;
-import systems.dmx.signup.usecase.OptionalService;
+import systems.dmx.signup.usecase.*;
 
 import java.lang.reflect.Field;
 import java.util.logging.Level;
@@ -29,8 +25,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static systems.dmx.signup.SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED;
-import static systems.dmx.signup.SignUpRequestResult.Code.ERROR_INVALID_EMAIL;
+import static systems.dmx.signup.SignUpRequestResult.Code.*;
 
 class SignupPluginTest {
 
@@ -44,6 +39,8 @@ class SignupPluginTest {
     private final GetAccountCreationPasswordUseCase getAccountCreationPasswordUseCase = mock();
 
     private final HasAccountCreationPrivilegeUseCase hasAccountCreationPrivilegeUseCase = mock();
+
+    private final IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase = mock();
 
     private final SignupPlugin subject = new SignupPlugin();
 
@@ -61,6 +58,7 @@ class SignupPluginTest {
         subject.hasAccountCreationPrivilegeUseCase = hasAccountCreationPrivilegeUseCase;
         subject.isValidEmailAdressMapper = isValidEmailAdressMapper;
         subject.newAccountDataMapper = newAccountDataMapper;
+        subject.isPasswordComplexEnoughUseCase = isPasswordComplexEnoughUseCase;
     }
 
     private void set(Object o, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
@@ -99,6 +97,7 @@ class SignupPluginTest {
             subject.getAccountCreationPasswordUseCase = null;
             subject.hasAccountCreationPrivilegeUseCase = null;
             subject.isValidEmailAdressMapper = null;
+            subject.isPasswordComplexEnoughUseCase = null;
 
             DaggerSignupComponent.Builder builder = mockBuilder();
             staticComponent.when(DaggerSignupComponent::builder).thenReturn(builder);
@@ -112,6 +111,7 @@ class SignupPluginTest {
             assertThat(subject.newAccountDataMapper).isEqualTo(newAccountDataMapper);
             assertThat(subject.getAccountCreationPasswordUseCase).isEqualTo(getAccountCreationPasswordUseCase);
             assertThat(subject.hasAccountCreationPrivilegeUseCase).isEqualTo(hasAccountCreationPrivilegeUseCase);
+            assertThat(subject.isPasswordComplexEnoughUseCase).isEqualTo(isPasswordComplexEnoughUseCase);
         }
     }
 
@@ -128,6 +128,7 @@ class SignupPluginTest {
         when(component.newAccountDataMapper()).thenReturn(newAccountDataMapper);
         when(component.getAccountCreationPasswordUseCase()).thenReturn(getAccountCreationPasswordUseCase);
         when(component.hasAccountCreationPrivilegeUseCase()).thenReturn(hasAccountCreationPrivilegeUseCase);
+        when(component.isPasswordComplexEnoughUseCase()).thenReturn(isPasswordComplexEnoughUseCase);
 
         DaggerSignupComponent.Builder builder = mock();
         when(builder.coreService(any())).thenReturn(builder);
@@ -151,6 +152,21 @@ class SignupPluginTest {
         // then:
         verify(getLdapServiceUseCase).invoke(any());
         assertThat(subject.ldap).isEqualTo(optionalService);
+    }
+
+    @Test
+    @DisplayName("isPasswordComplexEnough() should call IsPasswordComplexEnoughUseCase and return its value")
+    void isPasswordComplexEnough_should_call_IsPasswordComplexEnoughUseCase() {
+        // given:
+        String givenPassword = "passwurst";
+        when(isPasswordComplexEnoughUseCase.invoke(any(), any())).thenReturn(true);
+
+        // when:
+        Boolean result = subject.isPasswordComplexEnough(givenPassword);
+
+        // then:
+        verify(isPasswordComplexEnoughUseCase).invoke(any(), eq(givenPassword));
+        assertThat(result).isTrue();
     }
 
     @Test
@@ -220,13 +236,67 @@ class SignupPluginTest {
         }
     }
 
+    @Test
+    @DisplayName("requestSignUp() should return result with ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT when password complexity check fails")
+    void requestSignUp_should_deny_when_password_not_strong() {
+        // given:
+        when(isPasswordComplexEnoughUseCase.invoke(any(), anyString())).thenReturn(false);
+
+        String givenUsername = "username";
+        String givenEmailAddress = "email@address.org";
+        String givenDisplayName = "display name";
+        String givenPassword = "12345678";
+        boolean givenSkipConfirmation = false;
+
+        when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(true);
+        when(isValidEmailAdressMapper.map(anyString())).thenReturn(true);
+        when(getAccountCreationPasswordUseCase.invoke(any(), any())).thenReturn(givenPassword);
+
+        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
+            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
+
+            // when:
+            SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+
+            // then:
+            verify(isPasswordComplexEnoughUseCase).invoke(any(), eq(givenPassword));
+            assertThat(result.code).isEqualTo(ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT);
+        }
+    }
+
+    @Test
+    @DisplayName("requestSignUp() should not check password when password generated")
+    void requestSignUp_should_not_check_password_when_generated() {
+        // given:
+        when(isPasswordComplexEnoughUseCase.invoke(any(), anyString())).thenReturn(false);
+
+        String givenUsername = "username";
+        String givenEmailAddress = "email@address.org";
+        String givenDisplayName = "display name";
+        String givenPassword = "12345678";
+        boolean givenSkipConfirmation = false;
+
+        when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(true);
+        when(isValidEmailAdressMapper.map(anyString())).thenReturn(true);
+        when(getAccountCreationPasswordUseCase.invoke(any(), any())).thenReturn("some generated password that is different from the given one");
+
+        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
+            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
+
+            // when:
+            subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+
+            // then:
+            verifyNoInteractions(isPasswordComplexEnoughUseCase);
+        }
+    }
+
     private static Stream<Arguments> passwordHandlingParams() {
         return Stream.of(
                 Arguments.of(AccountCreation.PasswordHandling.GENERATED),
                 Arguments.of(AccountCreation.PasswordHandling.EDITABLE)
         );
     }
-
 
     @ParameterizedTest(name = "{displayName} with configured account creation handling {0} and password ")
     @MethodSource("passwordHandlingParams")
@@ -255,4 +325,6 @@ class SignupPluginTest {
             verify(getAccountCreationPasswordUseCase).invoke(any(), matches(givenPassword));
         }
     }
+
+    // TODO: Test that password complexity is enforced password change
 }

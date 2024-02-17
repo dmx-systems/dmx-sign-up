@@ -28,10 +28,7 @@ import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.model.NewAccountData;
 import systems.dmx.signup.model.NewAccountTokenData;
 import systems.dmx.signup.model.PasswordResetTokenData;
-import systems.dmx.signup.usecase.GetAccountCreationPasswordUseCase;
-import systems.dmx.signup.usecase.GetLdapServiceUseCase;
-import systems.dmx.signup.usecase.HasAccountCreationPrivilegeUseCase;
-import systems.dmx.signup.usecase.OptionalService;
+import systems.dmx.signup.usecase.*;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -100,6 +97,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     HasAccountCreationPrivilegeUseCase hasAccountCreationPrivilegeUseCase;
 
+    IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase;
+
     // --- Hooks --- //
     private void runDependencyInjection() {
         // DI:
@@ -114,6 +113,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         getLdapServiceUseCase = component.getLdapServiceUseCase();
         getAccountCreationPasswordUseCase = component.getAccountCreationPasswordUseCase();
         hasAccountCreationPrivilegeUseCase = component.hasAccountCreationPrivilegeUseCase();
+        isPasswordComplexEnoughUseCase = component.isPasswordComplexEnoughUseCase();
     }
 
     @Override
@@ -139,6 +139,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
             + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
             + "  dmx.signup.token_expiration_time: " + CONFIG_TOKEN_EXPIRATION_DURATION.toHours() + "\n"
+            + "  dmx.signup.expected_password_complexity: " + CONFIG_EXPECTED_PASSWORD_COMPLEXITY + "\n"
+
         );
         logger.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
         if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
@@ -241,6 +243,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
         NewAccountData newAccountData = mapToNewAccountData(username, emailAddress, displayName);
         String password = getAccountCreationPasswordUseCase.invoke(CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING, providedPassword);
+        if (Objects.equals(password, providedPassword) && !isPasswordComplexEnough(password)) {
+            return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT);
+        }
         try {
             if (SignUpConfigOptions.CONFIG_EMAIL_CONFIRMATION) {
                 return handleSignUpWithEmailConfirmation(newAccountData, password, skipConfirmation);
@@ -427,6 +432,9 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         logger.info("Processing Password Update Request Token... ");
         PasswordResetTokenData tokenData = passwordResetTokenData.get(token);
         if (tokenData != null) {
+            if (!isPasswordComplexEnough(password)) {
+                return PasswordChangeRequestResult.PASSWORD_COMPLEXITY_INSUFFICIENT;
+            }
             Credentials newCreds = new Credentials(tokenData.accountData.username, password);
             if (!isLdapAccountCreationEnabled()) {
                 // Change password stored in "User Account" topic
@@ -639,6 +647,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public boolean isUsernameTaken(@PathParam("username") String username) {
         return accesscontrol.getUsernameTopic(username.trim()) != null;
+    }
+
+    @Override
+    public Boolean isPasswordComplexEnough(String password) {
+        return isPasswordComplexEnoughUseCase.invoke(CONFIG_EXPECTED_PASSWORD_COMPLEXITY, password);
     }
 
     // --- Private Helpers --- //

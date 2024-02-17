@@ -116,6 +116,8 @@ public interface SignupService {
 
     boolean isUsernameTaken(String value);
 
+    Boolean isPasswordComplexEnough(String password);
+
     Boolean isLoggedIn();
 
     boolean isSelfRegistrationEnabled();

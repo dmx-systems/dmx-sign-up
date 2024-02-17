@@ -7,6 +7,7 @@ import org.codehaus.jettison.json.JSONObject;
 public enum PasswordChangeRequestResult implements JSONEnabled {
 
     SUCCESS,
+    PASSWORD_COMPLEXITY_INSUFFICIENT,
     PASSWORD_CHANGE_FAILED,
     NO_TOKEN,
     UNEXPECTED_ERROR;
