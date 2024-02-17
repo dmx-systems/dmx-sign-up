@@ -8,13 +8,13 @@ import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.usecase.GetAccountCreationPasswordUseCase;
 import systems.dmx.signup.usecase.GetLdapServiceUseCase;
 import systems.dmx.signup.usecase.HasAccountCreationPrivilegeUseCase;
+import systems.dmx.signup.usecase.IsPasswordComplexEnoughUseCase;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.inject.Singleton;
 
 @Singleton
-@Component(modules = {},
-        dependencies = {CoreService.class, AccessControlService.class, WorkspacesService.class})
+@Component(dependencies = {CoreService.class, AccessControlService.class, WorkspacesService.class})
 public interface SignupComponent {
 
     NewAccountDataMapper newAccountDataMapper();
@@ -26,4 +26,6 @@ public interface SignupComponent {
     GetAccountCreationPasswordUseCase getAccountCreationPasswordUseCase();
 
     HasAccountCreationPrivilegeUseCase hasAccountCreationPrivilegeUseCase();
+
+    IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase();
 }

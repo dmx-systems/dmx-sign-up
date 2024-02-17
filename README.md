@@ -57,6 +57,7 @@ dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 dmx.signup.token_expiration_time = 2
 dmx.signup.username_policy = unconfined
+dmx.signup.expected_password_complexity = complex
 ```
 
 ### Configure account creation logic
@@ -143,6 +144,26 @@ preserved in the web frontend. As such the property can also be used to enforce 
 
 When the property is not set, all known auth methods are allowed and their order is defined by the platform.
 
+### Configuring expected password complexity
+It is possible to select the expected password complexity by setting the property:
+```
+dmx.signup.expected_password_complexity = complex
+```
+
+The possible values are "complex" or "none" with the former being the default if no value was set or the value having
+been mistyped.
+
+The complex password rules are:
+ * minimum of 8 characters
+ * at least one lower-case letter
+ * at least on upper-case letter
+ * at least one digit
+ * at least one special character
+ * no whitespace
+ * no simple sequences (eg. 123456, qwertz, ABCDEF etc.)
+
+The password rules are enforced on account creation and password change.
+
 ## Legacy migrations
 
 Sign Up plugin 2.x contained configuration options stored in topics. Some of those options have become obsolete in
@@ -169,6 +190,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 **3.2.0** -- TBD
 
 * Password generation done in backend code
+* Add expected password complexity option
 
 **3.1.0** -- Feb, 10, 2024
 

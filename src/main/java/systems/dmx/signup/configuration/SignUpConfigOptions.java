@@ -15,6 +15,8 @@ public class SignUpConfigOptions {
 
     public static final AccountCreation.PasswordHandling CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING = AccountCreation.PasswordHandling.fromStringOrEditable(System.getProperty("dmx.signup.account_creation_password_handling"));
 
+    public static final ExpectedPasswordComplexity CONFIG_EXPECTED_PASSWORD_COMPLEXITY = ExpectedPasswordComplexity.fromStringOrComplex(System.getProperty("dmx.signup.expected_password_complexity"));
+
     public static final UsernamePolicy CONFIG_USERNAME_POLICY = UsernamePolicy.fromStringOrAgnostic(System.getProperty("dmx.signup.username_policy"));
     public static final boolean CONFIG_EMAIL_CONFIRMATION = Boolean.parseBoolean(System.getProperty("dmx.signup.confirm_email_address"));
     public static final String CONFIG_ADMIN_MAILBOX = System.getProperty("dmx.signup.admin_mailbox");
