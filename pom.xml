@@ -234,6 +234,8 @@
                         <!-- embeds everything that is in provided scope -->
                         <Embed-Dependency>*;scope=provided;inline=false</Embed-Dependency>
                         <Embed-Directory>dependencies</Embed-Directory>
+                        <Embed-Transitive>true</Embed-Transitive>
+                        <Import-Package>!com.google.common.hash;!org.cryptacular*,!org.springframework*,*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
