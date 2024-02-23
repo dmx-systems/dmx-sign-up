@@ -36,7 +36,14 @@ class IsPasswordComplexEnoughUseCaseTest {
                 Arguments.of("AFJEKFa6%"),
                 Arguments.of("Qgervza6%"),
                 Arguments.of("9a¤6f45Aa6"),
-                Arguments.of("F1BD4JDFa%")
+                Arguments.of("F1BD4JDFa%"),
+                Arguments.of("4pKw$Rs5x")
+        );
+    }
+
+    private static Stream<Arguments> tooLongPasswordParams() {
+        return Stream.of(
+                Arguments.of("öFlGKFa6%9a¤4f45-") // 17 characters
         );
     }
 
@@ -75,6 +82,17 @@ class IsPasswordComplexEnoughUseCaseTest {
         assertThat(result).isTrue();
     }
 
+    @ParameterizedTest(name = "{displayName} with too long password {0}")
+    @MethodSource("tooLongPasswordParams")
+    @DisplayName("invoke() should return true when expected password complexity is NONE")
+    void invoke_should_return_true_when_complexity_none_for_too_long_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.NONE, givenPassword);
+
+        // then:
+        assertThat(result).isTrue();
+    }
+
     @ParameterizedTest(name = "{displayName} with weak password {0}")
     @MethodSource("weakPasswordParams")
     @DisplayName("invoke() should return false when expected password complexity is COMPLEX")
@@ -102,9 +120,21 @@ class IsPasswordComplexEnoughUseCaseTest {
     @DisplayName("invoke() should return true when expected password complexity is COMPLEX")
     void invoke_should_return_true_when_complexity_complex_for_strong_passwords(String givenPassword) {
         // when:
-        boolean result = subject.invoke(ExpectedPasswordComplexity.NONE, givenPassword);
+        boolean result = subject.invoke(ExpectedPasswordComplexity.COMPLEX, givenPassword);
 
         // then:
         assertThat(result).isTrue();
     }
+
+    @ParameterizedTest(name = "{displayName} with too long password {0}")
+    @MethodSource("tooLongPasswordParams")
+    @DisplayName("invoke() should return false when expected password complexity is COMPLEX")
+    void invoke_should_return_false_when_complexity_complex_for_too_long_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.COMPLEX, givenPassword);
+
+        // then:
+        assertThat(result).isFalse();
+    }
+
 }

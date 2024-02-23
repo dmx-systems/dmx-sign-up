@@ -11,8 +11,10 @@ public class IsPasswordComplexEnoughUseCase {
 
     public static final int MINIMUM_PASSWORD_LENGTH = 8;
 
+    public static final int MAXIMUM_PASSWORD_LENGTH = 16;
+
     private final PasswordValidator validator = new PasswordValidator(
-            new LengthRule(MINIMUM_PASSWORD_LENGTH),
+            new LengthRule(MINIMUM_PASSWORD_LENGTH, MAXIMUM_PASSWORD_LENGTH),
             new CharacterRule(EnglishCharacterData.UpperCase, 1),
             new CharacterRule(EnglishCharacterData.LowerCase, 1),
             new CharacterRule(EnglishCharacterData.Digit, 1),

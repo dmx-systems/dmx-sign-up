@@ -154,7 +154,7 @@ The possible values are "complex" or "none" with the former being the default if
 been mistyped.
 
 The complex password rules are:
- * minimum of 8 characters
+ * minimum of 8 characters and maximum of 16 characters
  * at least one lower-case letter
  * at least on upper-case letter
  * at least one digit
