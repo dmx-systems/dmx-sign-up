@@ -12,7 +12,8 @@ maven-build:
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install -DskipTests=true
-  artifacts:
+    - echo "BUILD_JOB_ID=${CI_JOB_ID}" > target/.build_job_id.env
+ artifacts:
     paths:
       - target
     name: ${CI_PROJECT_NAME}-${CI_COMMIT_SHORT_SHA}
@@ -47,14 +48,14 @@ sonarqube-check:
 copy-to-ci:
   stage: deploy
   script:
-    - CIDIR='/var/www/download.dmx.systems/ci'
-    - DESTDIR="${CIDIR}/${CI_PROJECT_NAME}"
+    - source target/.build_job_id.env
+    - rm target/.build_job_id.env
+    - WEBCGI='https://download.dmx.systems/cgi-bin/v1/deploy-version.cgi?'
     - JARFILE="$( basename $( ls target/*.jar | tail -n1) )"
-    - NUNC="$( date +%F )"
-    - DESTJARFILE="$( basename ${JARFILE} .jar )_${NUNC}_${CI_PIPELINE_ID}.jar"
-    - if [ ! -d  ${DESTDIR} ]; then mkdir ${DESTDIR}; fi
-    - cp target/${JARFILE} ${DESTDIR}/${DESTJARFILE}
-    - ln -sf  ${DESTDIR}/${DESTJARFILE} ${DESTDIR}/${CI_PROJECT_NAME}-latest.jar
+    - APPEND="$( date +%F )_${CI_PIPELINE_ID}"
+    - PARAMS=("&append=${}APPEND&project=${CI_PROJECT_NAME}&tag=none")
+    - RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_DIR}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/target/${JARFILE}${PARAMS}" 2>&1 )"
+    - echo "RESULT=${RESULT}"
   dependencies:
     - maven-build
   only:
