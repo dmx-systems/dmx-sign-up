@@ -56,7 +56,8 @@ copy-to-ci:
     - JARFILE="$( basename $( ls target/*.jar | tail -n1) )"
     - APPEND="$( date +%F )_${CI_PIPELINE_ID}"
     - PARAMS=("&append=${APPEND}&project=${CI_PROJECT_NAME}&tag=none")
-    - 'RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/target/${JARFILE}${PARAMS}" 2>&1 )" || true'
+    #- 'RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/target/${JARFILE}${PARAMS}" 2>&1 )" || true'
+    - RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/target/${JARFILE}${PARAMS}" 2>&1 | head -n1 )"
     - echo "RESULT=${RESULT}"
   dependencies:
     - maven-build
