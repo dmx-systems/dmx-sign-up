@@ -106,7 +106,7 @@ install-in-container:
   dependencies:
     - maven-build
   script:
-    - deploy/ci-deploy-docker-instances.sh
+    - ci-deploy-docker-instances.sh
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_COMMIT_BRANCH == 'main' && $CI_COMMIT_TAG == null
