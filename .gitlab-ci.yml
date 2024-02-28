@@ -6,9 +6,12 @@ stages:
 
 # 1) Build every commit on every branch and add the COMMIT SHORT SHA as suffix
 maven-build:
+  image: container-registry.dmx.systems/dmx-intern/docker-images/maven-npm-nodejs
   stage: build
   tags:
-    - shell
+    - docker
+  before_script:
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" ${CI_REGISTRY}
   script:
     - export MAVEN_OPTS='-Xmx128m'
     - mvn clean install -DskipTests=true
@@ -24,9 +27,10 @@ maven-build:
 
 # 2) Run SonarQube Tests
 sonarqube-check:
+  image: container-registry.dmx.systems/dmx-intern/docker-images/maven-npm-nodejs
   stage: test
   tags:
-    - shell
+    - docker
   dependencies:
     - maven-build
   variables:
@@ -36,6 +40,8 @@ sonarqube-check:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
+  before_script:
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" ${CI_REGISTRY}
   script:
     - mvn -Pcoverage verify sonar:sonar -Dsonar.host.url=https://sonar.dmx.systems -Dsonar.projectKey=${CI_PROJECT_NAMESPACE}_${CI_PROJECT_NAME}_${SONAR_PROJECT_KEY}
   allow_failure: true
@@ -85,10 +91,12 @@ copy-to-release:
 
 # 5) Deploy into gitlab maven repository
 deploy-to-gitlab-maven:
+  image: container-registry.dmx.systems/dmx-intern/docker-images/maven-npm-nodejs
   stage: deploy
   tags:
-    - shell
-  #image: maven:3.6-jdk-11
+    - docker
+  before_script:
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" ${CI_REGISTRY}
   script:
     - 'mvn -Pgitlab-maven-deployment deploy -s ci_settings.xml'
   only:
@@ -101,7 +109,6 @@ deploy-to-gitlab-maven:
 install-in-container:
   stage: install
   tags:
-    ## requires shell-docker runner
     - shell-docker
   dependencies:
     - maven-build
