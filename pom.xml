@@ -12,13 +12,13 @@
     <parent>
         <groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.3.3</version>
+        <version>5.3.5-SNAPSHOT</version>
     </parent>
 
     <properties>
         <commons-lang3.version>3.10</commons-lang3.version>
         <dagger.version>2.48.1</dagger.version>
-        <dmx.version>5.3.3</dmx.version>
+        <dmx.version>5.3.5-SNAPSHOT</dmx.version>
         <dmx-ldap.version>0.7.0</dmx-ldap.version>
         <dmx-sendmail.version>2.1.1</dmx-sendmail.version>
         <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
@@ -42,25 +42,6 @@
             <properties>
                 <dmx.deploy.dir>./deploy/instance/dev/bundle-deploy</dmx.deploy.dir>
             </properties>
-        </profile>
-        <profile>
-            <id>gitlab-maven-deployment</id>
-            <repositories>
-                <repository>
-                    <id>gitlab-maven</id>
-                    <url>${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/maven</url>
-                </repository>
-            </repositories>
-            <distributionManagement>
-                <repository>
-                    <id>gitlab-maven</id>
-                    <url>${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/maven</url>
-                </repository>
-                <snapshotRepository>
-                    <id>gitlab-maven</id>
-                    <url>${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/maven</url>
-                </snapshotRepository>
-            </distributionManagement>
         </profile>
         <profile>
             <id>coverage</id>
