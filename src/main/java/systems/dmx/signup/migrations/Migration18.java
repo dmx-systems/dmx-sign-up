@@ -34,7 +34,6 @@ public class Migration18 extends Migration {
 
     private static final String MIGRATION18_LEGACY_CONFIG_LOGGING_OUT_HINT = "dmx.signup.legacy_config_logging_out_hint";
 
-
     @Override
     public void run() {
         logger.info("Removing everything related to Sign Up configuration via topics");
@@ -59,6 +58,10 @@ public class Migration18 extends Migration {
         purgeTopicType(MIGRATION18_CONFIG_API_ENABLED);
         purgeTopicType(MIGRATION18_CONFIG_API_WORKSPACE_URI);
         purgeTopicType(MIGRATION18_SIGNUP_CONFIGURATION_TYPE_URI);
+
+        // Not deleting the dmx.notes.note with the URI dmx.signup.api_membership_requests here on purpose.
+        // The existance of the topic in an earlier migration is being used as a marker that migration 18 and 19
+        // had been run once.
     }
     
     private void purgeTopicType(String s) {
