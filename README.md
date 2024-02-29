@@ -166,6 +166,10 @@ option in topics anymore.
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+**3.1.1** -- Feb, 10, 2024
+
+* Add resetting plugin version to 2 after everything done
+
 **3.1.0** -- Feb, 10, 2024
 
 * During migration removes legacy configuration topics and topic types
