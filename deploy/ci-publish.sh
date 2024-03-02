@@ -83,8 +83,10 @@ else
     CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' )"
     echo "FILE_SIZE=${FILE_SIZE} and CONTENT_LENGTH=${CONTENT_LENGTH}"
     if [ "${CONTENT_LENGTH}" == "${FILE_SIZE}" ]; then
+        echo "foo"
         echo "INFO: ${FILE_NAME} successfuly published for download at ${DOWNLOAD_URL}"
     else
+        echo "bar"
         echo "ERROR! File size mismatch. (FILE_SIZE=${FILE_SIZE} and CONTENT_LENGTH=${CONTENT_LENGTH})"
         exit 1
     fi
