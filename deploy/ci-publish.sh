@@ -54,7 +54,7 @@ if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
     exit 1
 fi
 
-## check file exists for download
+## set url for download
 if [ "${TARGET}" == "snapshot" ]; then
     if [ "${CI_PROJECT_ROOT_NAMESPACE}" == "dmx-plugins" ]; then
         DOWNLOAD_URL="https://download.dmx.systems/ci/${CI_PROJECT_NAME}/${DESTFILE}"
@@ -67,11 +67,6 @@ elif [ "${TARGET}" == "release" ]; then
     elif [ "${CI_PROJECT_ROOT_NAMESPACE}" == "dmx-platform" ]; then
         DOWNLOAD_URL="https://download.dmx.systems/${DESTFILE}"
     fi
-fi
-if [ -z "$( curl -o /dev/null --silent -Iw '%{http_code}' "${DOWNLOAD_URL}" | grep 200 )" ]; then
-    echo "ERROR! File not found at ${DOWNLOAD_URL}."
-else
-    echo "INFO: ${FILENAME} successfuly published for download at ${DESTFILE} "
 fi
 
 ## check file exists for download and content length is > 0
@@ -86,7 +81,12 @@ if [ -z "$( echo "${RESULT}" | grep Content-Length )" ]; then
     exit 1
 else
     CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' )"
-    echo "CONTENT_LENGTH=${CONTENT_LENGTH} | FILE_SIZE=${FILE_SIZE}"
+    if [ "${CONTENT_LENGTH}" == "${FILE_SIZE}" ]; then
+        echo "INFO: ${FILE_NAME} successfuly published for download at ${DOWNLOAD_URL}"
+    else
+        echo "ERROR! File size mismatch. (FILE_SIZE=${FILE_SIZE} vs. CONTENT_LENGTH=${CONTENT_LENGTH})"
+        exit 1
+    fi
 fi
 
 ## EOF
