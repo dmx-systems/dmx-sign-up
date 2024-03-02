@@ -73,4 +73,7 @@ else
     echo "INFO: ${FILENAME} successfuly published for download at ${DESTFILE} "
 fi
 
+curl -s -L -I "${DOWNLOAD_URL}" | gawk -v IGNORECASE=1 '/^Content-Length/ { print $2 }'
+
+
 ## EOF
