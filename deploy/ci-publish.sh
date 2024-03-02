@@ -73,7 +73,10 @@ else
     echo "INFO: ${FILENAME} successfuly published for download at ${DESTFILE} "
 fi
 
-curl -s -L -I "${DOWNLOAD_URL}" 2>&1
-
+## check file exists for download and content length is > 0
+RESULT="$( curl -s -L -I "${DOWNLOAD_URL}" 2>&1 )"
+echo "RESULT=${RESULT}"
+echo "${RESULT}" | grep 200 | grep OK
+echo "${RESULT}" | grep Content-Length
 
 ## EOF
