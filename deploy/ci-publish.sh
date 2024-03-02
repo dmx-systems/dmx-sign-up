@@ -47,7 +47,7 @@ else
 fi
 
 ## action
-RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/${ARTIFACTS_PATH}/${FILE_NAME}${PARAMS}" 2>&1 | head -n1 )"
+RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${MAVEN_BUILD_JOB_ID}/artifacts/raw/${ARTIFACTS_PATH}/${FILE_NAME}${PARAMS}" 2>&1 | head -n1 )"
 if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
     echo "ERROR! Failed to trigger download for ${DESTFILE}. (RESULT=${RESULT}"
     exit 1
