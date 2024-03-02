@@ -52,9 +52,10 @@ fi
 
 ## action
 RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${BUILD_JOB_ID}/artifacts/raw/${ARTIFACTS_PATH}/${FILE_NAME}${PARAMS}" 2>&1 | head -n1 )"
-echo "RESULT=${RESULT}"
-
-## check result
+if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
+    echo "ERROR! Failed to trigger download for ${DESTFILE}. (RESULT=${RESULT}"
+    exit 1
+fi
 
 ## check file exists for download
 if [ "${TARGET}" == "snapshot" ]; then
@@ -70,8 +71,10 @@ elif [ "${TARGET}" == "release" ]; then
         DOWNLOAD_URL="https://download.dmx.systems/${DESTFILE}"
     fi
 fi
+if [ -z "$( curl -o /dev/null --silent -Iw '%{http_code}' "${DOWNLOAD_URL}" | grep 200 )" ]; then
+    echo "ERROR! File not found at ${DOWNLOAD_URL}."
+else
+    echo "INFO: Successfuly published ${DESTFILE}."
+fi
 
-curl -o /dev/null --silent -Iw '%{http_code}' "${DOWNLOAD_URL}"
-
-
-
+## EOF
