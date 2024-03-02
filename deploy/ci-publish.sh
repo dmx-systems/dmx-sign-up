@@ -76,7 +76,16 @@ fi
 ## check file exists for download and content length is > 0
 RESULT="$( curl -s -L -I "${DOWNLOAD_URL}" 2>&1 )"
 echo "RESULT=${RESULT}"
-echo "${RESULT}" | grep 200 | grep OK
-echo "${RESULT}" | grep Content-Length
+if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
+    echo "ERROR! File not found at ${DOWNLOAD_URL}."
+    exit 1
+fi
+if [ -z "$( echo "${RESULT}" | grep Content-Length )" ]; then
+    echo "ERROR! Content-Length not found at ${DOWNLOAD_URL}."
+    exit 1
+else
+    CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' )"
+    echo "CONTENT_LENGTH=${CONTENT_LENGTH}"
+fi
 
 ## EOF
