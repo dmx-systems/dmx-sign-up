@@ -73,7 +73,7 @@ else
     echo "INFO: ${FILENAME} successfuly published for download at ${DESTFILE} "
 fi
 
-curl -s -L -I "${DOWNLOAD_URL}" | grep Content-Length
+curl -s -L -I "${DOWNLOAD_URL}" 2>&1
 
 
 ## EOF
