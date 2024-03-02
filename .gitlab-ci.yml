@@ -54,6 +54,7 @@ copy-to-ci:
   tags:
     - shell
   script:
+    - deploy/ci-get-job-id.sh
     - source target/.build_job_id.env
     - rm target/.build_job_id.env
     - WEBCGI='https://download.dmx.systems/cgi-bin/v1/deploy-version.cgi?'
@@ -75,7 +76,6 @@ copy-to-release:
   tags:
     - shell
   script:
-    - deploy/ci-get-job-id.sh
     - source target/.build_job_id.env
     - rm target/.build_job_id.env
     - WEBCGI='https://download.dmx.systems/cgi-bin/v1/deploy-version.cgi?'
