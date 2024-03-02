@@ -2,18 +2,14 @@
 
 TARGET="$1"
 if [ "${TARGET}" != "snapshot" ] && [ "${TARGET}" != "release" ]; then
-    echo "ERROR! Please enter a valid target: 'snapshot' or 'release'."
+    echo "ERROR! Please enter a valid target: $( basename $0 ) 'snapshot' or 'release' (without quotes)."
     exit 1
-else
-    echo "INFO: Publishing '${TARGET}' build artifacts for ${CI_PROJECT_NAME}."
 fi
 
 ## get job id of maven-buil job (required to access artifacts)
 RESULT="$( curl -sS --header "JOB_TOKEN: ${CI_JOB_TOKEN}" "https://git.dmx.systems/api/v4/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/jobs?scope[]=success" )"
 MAVEN_BUILD_JOB_ID="$( echo "${RESULT}" | jq -c '.[] | select(.name | contains("maven-build")).id' )"
-if [ ! -z "${MAVEN_BUILD_JOB_ID##*[!0-9]*}" ]; then
-    echo "INFO: Found job id from 'maven-build' job. (MAVEN_BUILD_JOB_ID=${MAVEN_BUILD_JOB_ID})"
-else
+if [ -z "${MAVEN_BUILD_JOB_ID##*[!0-9]*}" ]; then
     echo "ERROR! Could not get job id from 'maven-build' job. (MAVEN_BUILD_JOB_ID=${MAVEN_BUILD_JOB_ID})"
     exit 1
 fi
@@ -74,7 +70,7 @@ fi
 if [ -z "$( curl -o /dev/null --silent -Iw '%{http_code}' "${DOWNLOAD_URL}" | grep 200 )" ]; then
     echo "ERROR! File not found at ${DOWNLOAD_URL}."
 else
-    echo "INFO: Successfuly published ${DESTFILE}."
+    echo "INFO: ${FILENAME} successfuly published for download at ${DESTFILE} "
 fi
 
 ## EOF
