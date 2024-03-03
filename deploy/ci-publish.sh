@@ -32,7 +32,7 @@ else
 fi
 
 FILE_NAME="$( basename $( ls ${ARTIFACTS_PATH}/dmx-*.${FILE_EXT} | tail -n1 ) )"
-FILE_SIZE="$( stat --format=%s "${ARTIFACTS_PATH}/${FILE_NAME}" )"
+FILE_SIZE="$( stat --format=%s "${ARTIFACTS_PATH}/${FILE_NAME}" | sed 's/[^0-9]//g' )"
 APPEND="$( date +%F )_${CI_PIPELINE_ID}"
 
 ## snapshot vs. release
@@ -80,7 +80,7 @@ if [ -z "$( echo "${RESULT}" | grep Content-Length )" ]; then
     echo "ERROR! Content-Length not found at ${DOWNLOAD_URL}."
     exit 1
 else
-    CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' )"
+    CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' | sed 's/[^0-9]//g' )"
     echo "FILE_SIZE=<${FILE_SIZE}> and CONTENT_LENGTH=<${CONTENT_LENGTH}>"
     if [ "${CONTENT_LENGTH}" == "${FILE_SIZE}" ]; then
         echo "foo"
