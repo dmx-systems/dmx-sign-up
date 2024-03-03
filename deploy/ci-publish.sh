@@ -71,7 +71,7 @@ fi
 
 ## check file exists for download and content length is > 0
 RESULT="$( curl -s -L -I "${DOWNLOAD_URL}" 2>&1 )"
-echo "RESULT=${RESULT}"
+# echo "RESULT=${RESULT}"
 if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
     echo "ERROR! File not found at ${DOWNLOAD_URL}."
     exit 1
