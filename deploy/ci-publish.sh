@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# ci-publish.sh
+#
+# jpn - 20240303
+#
 
 TARGET="$1"
 if [ "${TARGET}" != "snapshot" ] && [ "${TARGET}" != "release" ]; then
@@ -14,7 +19,7 @@ if [ -z "${MAVEN_BUILD_JOB_ID##*[!0-9]*}" ]; then
     exit 1
 fi
 
-## vars
+## url of cgi-bin with '?'
 WEBCGI='https://download.dmx.systems/cgi-bin/v1/deploy-version.cgi?'
 
 ## plugin vs. platform
@@ -47,7 +52,7 @@ else
     exit 1
 fi
 
-## action
+## action: call cgi-bin
 RESULT="$( wget --server-response -q -O - "${WEBCGI}/${CI_PROJECT_PATH}/-/jobs/${MAVEN_BUILD_JOB_ID}/artifacts/raw/${ARTIFACTS_PATH}/${FILE_NAME}${PARAMS}" 2>&1 | head -n1 )"
 if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
     echo "ERROR! Failed to trigger download for ${DESTFILE}. (RESULT=${RESULT})"
@@ -69,9 +74,8 @@ elif [ "${TARGET}" == "release" ]; then
     fi
 fi
 
-## check file exists for download and content length is > 0
+## check file exists for download and content length matches file size
 RESULT="$( curl -s -L -I "${DOWNLOAD_URL}" 2>&1 )"
-# echo "RESULT=${RESULT}"
 if [ -z "$( echo "${RESULT}" | grep 200 | grep OK )" ]; then
     echo "ERROR! File not found at ${DOWNLOAD_URL}."
     exit 1
@@ -80,14 +84,11 @@ if [ -z "$( echo "${RESULT}" | grep Content-Length )" ]; then
     echo "ERROR! Content-Length not found at ${DOWNLOAD_URL}."
     exit 1
 else
-    CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/\ //g' | sed 's/[^0-9]//g' )"
-    echo "FILE_SIZE=<${FILE_SIZE}> and CONTENT_LENGTH=<${CONTENT_LENGTH}>"
+    CONTENT_LENGTH="$( echo "${RESULT}" | grep Content-Length | cut -d' ' -f2 | sed 's/[^0-9]//g' )"
     if [ "${CONTENT_LENGTH}" == "${FILE_SIZE}" ]; then
-        echo "foo"
-        echo "INFO: ${FILE_NAME} successfuly published for download at ${DOWNLOAD_URL}"
+        echo -e "INFO: ${FILE_NAME} successfuly published for download\n      ${DOWNLOAD_URL}"
     else
-        echo "bar"
-        echo "ERROR! File size mismatch. (FILE_SIZE=${FILE_SIZE} and CONTENT_LENGTH=${CONTENT_LENGTH})"
+        echo "ERROR! File size mismatch. (${FILE_NAME}=${FILE_SIZE} and ${DESTFILE}=${CONTENT_LENGTH})"
         exit 1
     fi
 fi
