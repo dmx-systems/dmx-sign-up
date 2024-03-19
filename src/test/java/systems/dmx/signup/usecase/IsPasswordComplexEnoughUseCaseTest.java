@@ -47,7 +47,11 @@ class IsPasswordComplexEnoughUseCaseTest {
         );
     }
 
-    private final IsPasswordComplexEnoughUseCase subject = new IsPasswordComplexEnoughUseCase();
+    private final int minPasswordLength = 8;
+
+    private final int maxPasswordLength = 16;
+
+    private final IsPasswordComplexEnoughUseCase subject = new IsPasswordComplexEnoughUseCase(minPasswordLength, maxPasswordLength);
 
     @ParameterizedTest(name = "{displayName} with weak password {0}")
     @MethodSource("weakPasswordParams")
