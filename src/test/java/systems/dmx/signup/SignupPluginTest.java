@@ -65,7 +65,6 @@ class SignupPluginTest {
         Field field = PluginActivator.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(o, value);
-
     }
 
     @Test
