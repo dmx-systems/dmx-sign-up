@@ -154,7 +154,7 @@ The possible values are "complex" or "none" with the former being the default if
 been mistyped.
 
 The complex password rules are:
- * minimum of 8 characters and maximum of 16 characters
+ * minimum and maximum characters according to separate settings (see next section)
  * at least one lower-case letter
  * at least on upper-case letter
  * at least one digit
@@ -163,6 +163,17 @@ The complex password rules are:
  * no simple sequences (eg. 123456, qwertz, ABCDEF etc.)
 
 The password rules are enforced on account creation and password change.
+
+### Configuring expected password length
+When the expected password complexity is "complex" you can configure the expected password lengths as follows:
+
+```
+dmx.signup.expected_min_password_length = 8
+dmx.signup.expected_max_password_length = 64
+```
+
+The values should be positive and the max value higher or equal than the min value. If no value is specified the
+defaults are a minimum of 8 characters and a maximum of 64 characters. 
 
 ## Legacy migrations
 
@@ -191,6 +202,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 * Password generation done in backend code
 * Add expected password complexity option
+* Add expected password length option
 
 **3.1.0** -- Feb, 10, 2024
 

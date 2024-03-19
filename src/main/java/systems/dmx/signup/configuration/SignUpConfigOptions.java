@@ -17,6 +17,10 @@ public class SignUpConfigOptions {
 
     public static final ExpectedPasswordComplexity CONFIG_EXPECTED_PASSWORD_COMPLEXITY = ExpectedPasswordComplexity.fromStringOrComplex(System.getProperty("dmx.signup.expected_password_complexity"));
 
+    public static final int CONFIG_EXPECTED_MIN_PASSWORD_LENGTH = Integer.parseInt(System.getProperty("dmx.signup.expected_min_password_length", "8"));
+
+    public static final int CONFIG_EXPECTED_MAX_PASSWORD_LENGTH = Integer.parseInt(System.getProperty("dmx.signup.expected_max_password_length", "64"));
+
     public static final UsernamePolicy CONFIG_USERNAME_POLICY = UsernamePolicy.fromStringOrAgnostic(System.getProperty("dmx.signup.username_policy"));
     public static final boolean CONFIG_EMAIL_CONFIRMATION = Boolean.parseBoolean(System.getProperty("dmx.signup.confirm_email_address"));
     public static final String CONFIG_ADMIN_MAILBOX = System.getProperty("dmx.signup.admin_mailbox");
