@@ -31,6 +31,18 @@ class IsPasswordComplexEnoughUseCaseTest {
         );
     }
 
+    private static Stream<Arguments> simplePasswordParams() {
+        return Stream.of(
+                Arguments.of("ABCDEFa6%"),    // simple char sequence
+                Arguments.of("Qwertza6%"),    // simple char sequence
+                Arguments.of("12345Aa6%"),    // simple digit sequence
+                Arguments.of("AAAAAAa6"),    // no special char
+                Arguments.of("AAAAAAa%"),    // no digit
+                Arguments.of("AAAAAA6%"),    // no lower-case letter
+                Arguments.of("aaaaaa6%")    // no upper-case letter
+        );
+    }
+
     private static Stream<Arguments> strongPasswordParams() {
         return Stream.of(
                 Arguments.of("AFJEKFa6%"),
@@ -100,7 +112,7 @@ class IsPasswordComplexEnoughUseCaseTest {
     @ParameterizedTest(name = "{displayName} with weak password {0}")
     @MethodSource("weakPasswordParams")
     @DisplayName("invoke() should return false when expected password complexity is COMPLEX")
-    void invoke_should_return_false_when_complexity_none_for_weak_passwords(String givenPassword) {
+    void invoke_should_return_false_when_complexity_complex_for_weak_passwords(String givenPassword) {
         // when:
         boolean result = subject.invoke(ExpectedPasswordComplexity.COMPLEX, givenPassword);
 
@@ -121,6 +133,17 @@ class IsPasswordComplexEnoughUseCaseTest {
 
     @ParameterizedTest(name = "{displayName} with strong password {0}")
     @MethodSource("strongPasswordParams")
+    @DisplayName("invoke() should return true when expected password complexity is SIMPLE")
+    void invoke_should_return_true_when_complexity_simple_for_strong_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.SIMPLE, givenPassword);
+
+        // then:
+        assertThat(result).isTrue();
+    }
+
+    @ParameterizedTest(name = "{displayName} with strong password {0}")
+    @MethodSource("strongPasswordParams")
     @DisplayName("invoke() should return true when expected password complexity is COMPLEX")
     void invoke_should_return_true_when_complexity_complex_for_strong_passwords(String givenPassword) {
         // when:
@@ -128,6 +151,39 @@ class IsPasswordComplexEnoughUseCaseTest {
 
         // then:
         assertThat(result).isTrue();
+    }
+
+    @ParameterizedTest(name = "{displayName} with simple password {0}")
+    @MethodSource("simplePasswordParams")
+    @DisplayName("invoke() should return true when expected password complexity is SIMPLE")
+    void invoke_should_return_true_when_complexity_simple_for_simple_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.SIMPLE, givenPassword);
+
+        // then:
+        assertThat(result).isTrue();
+    }
+
+    @ParameterizedTest(name = "{displayName} with simple password {0}")
+    @MethodSource("simplePasswordParams")
+    @DisplayName("invoke() should return false when expected password complexity is COMPLEX")
+    void invoke_should_return_false_when_complexity_complex_for_simple_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.COMPLEX, givenPassword);
+
+        // then:
+        assertThat(result).isFalse();
+    }
+
+    @ParameterizedTest(name = "{displayName} with too long password {0}")
+    @MethodSource("tooLongPasswordParams")
+    @DisplayName("invoke() should return false when expected password complexity is SIMPE")
+    void invoke_should_return_false_when_complexity_simple_for_too_long_passwords(String givenPassword) {
+        // when:
+        boolean result = subject.invoke(ExpectedPasswordComplexity.SIMPLE, givenPassword);
+
+        // then:
+        assertThat(result).isFalse();
     }
 
     @ParameterizedTest(name = "{displayName} with too long password {0}")

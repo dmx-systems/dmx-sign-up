@@ -150,8 +150,8 @@ It is possible to select the expected password complexity by setting the propert
 dmx.signup.expected_password_complexity = complex
 ```
 
-The possible values are "complex" or "none" with the former being the default if no value was set or the value having
-been mistyped.
+The possible values are "complex", "simple" or "none" with "complex" being the default if no value was set or the value
+having been mistyped.
 
 The complex password rules are:
  * minimum and maximum characters according to separate settings (see next section)
@@ -161,6 +161,10 @@ The complex password rules are:
  * at least one special character
  * no whitespace
  * no simple sequences (eg. 123456, qwertz, ABCDEF etc.)
+
+The simple password rules are:
+* minimum and maximum characters according to separate settings (see next section)
+* no whitespace
 
 The password rules are enforced on account creation and password change.
 
