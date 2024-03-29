@@ -42,6 +42,8 @@ class SignupPluginTest {
 
     private final IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase = mock();
 
+    private final LogAndVerifyConfigurationUseCase logAndVerifyConfigurationUseCase = mock();
+
     private final SignupPlugin subject = new SignupPlugin();
 
 
@@ -59,6 +61,7 @@ class SignupPluginTest {
         subject.isValidEmailAdressMapper = isValidEmailAdressMapper;
         subject.newAccountDataMapper = newAccountDataMapper;
         subject.isPasswordComplexEnoughUseCase = isPasswordComplexEnoughUseCase;
+        subject.logAndVerifyConfigurationUseCase = logAndVerifyConfigurationUseCase;
     }
 
     private void set(Object o, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
@@ -98,6 +101,7 @@ class SignupPluginTest {
             subject.hasAccountCreationPrivilegeUseCase = null;
             subject.isValidEmailAdressMapper = null;
             subject.isPasswordComplexEnoughUseCase = null;
+            subject.logAndVerifyConfigurationUseCase = null;
 
             DaggerSignupComponent.Builder builder = mockBuilder();
             staticComponent.when(DaggerSignupComponent::builder).thenReturn(builder);
@@ -112,6 +116,7 @@ class SignupPluginTest {
             assertThat(subject.getAccountCreationPasswordUseCase).isEqualTo(getAccountCreationPasswordUseCase);
             assertThat(subject.hasAccountCreationPrivilegeUseCase).isEqualTo(hasAccountCreationPrivilegeUseCase);
             assertThat(subject.isPasswordComplexEnoughUseCase).isEqualTo(isPasswordComplexEnoughUseCase);
+            assertThat(subject.logAndVerifyConfigurationUseCase).isEqualTo(logAndVerifyConfigurationUseCase);
         }
     }
 
@@ -129,6 +134,7 @@ class SignupPluginTest {
         when(component.getAccountCreationPasswordUseCase()).thenReturn(getAccountCreationPasswordUseCase);
         when(component.hasAccountCreationPrivilegeUseCase()).thenReturn(hasAccountCreationPrivilegeUseCase);
         when(component.isPasswordComplexEnoughUseCase()).thenReturn(isPasswordComplexEnoughUseCase);
+        when(component.logAndVerifyConfigurationUseCase()).thenReturn(logAndVerifyConfigurationUseCase);
 
         DaggerSignupComponent.Builder builder = mock();
         when(builder.coreService(any())).thenReturn(builder);

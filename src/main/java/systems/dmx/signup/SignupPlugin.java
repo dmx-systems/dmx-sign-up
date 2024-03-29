@@ -99,6 +99,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase;
 
+    LogAndVerifyConfigurationUseCase logAndVerifyConfigurationUseCase;
+
     // --- Hooks --- //
     private void runDependencyInjection() {
         // DI:
@@ -114,6 +116,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         getAccountCreationPasswordUseCase = component.getAccountCreationPasswordUseCase();
         hasAccountCreationPrivilegeUseCase = component.hasAccountCreationPrivilegeUseCase();
         isPasswordComplexEnoughUseCase = component.isPasswordComplexEnoughUseCase();
+        logAndVerifyConfigurationUseCase = component.logAndVerifyConfigurationUseCase();
     }
 
     @Override
@@ -125,31 +128,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     public void allPluginsActive() {
         ldap = getLdapServiceUseCase.invoke(getBundleContext());
         // Log configuration settings
-        logConfigurationSettings();
-    }
-
-    private void logConfigurationSettings() {
-        logger.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
-            + "  dmx.signup.account_creation_password_handling: " + CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING + "\n"
-            + "  dmx.signup.username_policy: " + CONFIG_USERNAME_POLICY + "\n"
-            + "  dmx.signup.confirm_email_address: " + CONFIG_EMAIL_CONFIRMATION + "\n"
-            + "  dmx.signup.admin_mailbox: " + CONFIG_ADMIN_MAILBOX + "\n"
-            + "  dmx.signup.system_mailbox: " + CONFIG_FROM_MAILBOX + "\n"
-            + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
-            + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
-            + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
-            + "  dmx.signup.token_expiration_time: " + CONFIG_TOKEN_EXPIRATION_DURATION.toHours() + "\n"
-            + "  dmx.signup.expected_password_complexity: " + CONFIG_EXPECTED_PASSWORD_COMPLEXITY + "\n"
-
-        );
-        logger.info("Available auth methods and order:" + getAuthorizationMethods() + "\n");
-        if (CONFIG_CREATE_LDAP_ACCOUNTS && !isLdapPluginAvailable()) {
-            logger.warning("LDAP Account creation configured but respective plugin not available!");
-        }
-
-        if (CONFIG_ADMIN_MAILBOX == null || CONFIG_ADMIN_MAILBOX.isEmpty()) {
-            logger.warning("'dmx.signup.admin_mailbox' is not configured. Please correct this otherwise various notification emails cannot be send.");
-        }
+        logAndVerifyConfigurationUseCase.invoke(isLdapPluginAvailable() ? ldap.get().getConfiguration() : null, getAuthorizationMethods());
     }
 
     // TODO: use platform's shutdown() hook instead, importing BundleContext and calling super not necessary then
