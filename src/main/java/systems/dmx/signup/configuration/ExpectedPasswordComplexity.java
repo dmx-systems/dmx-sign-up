@@ -1,7 +1,7 @@
 package systems.dmx.signup.configuration;
 
 public enum ExpectedPasswordComplexity {
-    NONE, COMPLEX;
+    NONE, SIMPLE, COMPLEX;
 
     public static ExpectedPasswordComplexity fromStringOrComplex(String value) {
         try {

@@ -10,10 +10,12 @@ import javax.inject.Singleton;
 @Singleton
 public class IsPasswordComplexEnoughUseCase {
 
-    private final PasswordValidator validator;
+    private final PasswordValidator complexValidator;
+
+    private final PasswordValidator simpleValidator;
 
     IsPasswordComplexEnoughUseCase(int minPasswordLength, int maxPasswordLength) {
-        validator = new PasswordValidator(
+        complexValidator = new PasswordValidator(
                 new LengthRule(minPasswordLength, maxPasswordLength),
                 new CharacterRule(EnglishCharacterData.UpperCase, 1),
                 new CharacterRule(EnglishCharacterData.LowerCase, 1),
@@ -22,6 +24,11 @@ public class IsPasswordComplexEnoughUseCase {
                 new IllegalSequenceRule(EnglishSequenceData.Alphabetical, 5, false),
                 new IllegalSequenceRule(EnglishSequenceData.Numerical, 5, false),
                 new IllegalSequenceRule(EnglishSequenceData.USQwerty, 5, false),
+                new WhitespaceRule()
+        );
+
+        simpleValidator = new PasswordValidator(
+                new LengthRule(minPasswordLength, maxPasswordLength),
                 new WhitespaceRule()
         );
     }
@@ -36,8 +43,10 @@ public class IsPasswordComplexEnoughUseCase {
         switch (expectedPasswordComplexity) {
             case NONE:
                 return true;
+            case SIMPLE:
+                return simpleValidator.validate(new PasswordData(password)).isValid();
             case COMPLEX:
-                return validator.validate(new PasswordData(password)).isValid();
+                return complexValidator.validate(new PasswordData(password)).isValid();
             default:
                 throw new IllegalStateException("Unexpected password complexity: " + expectedPasswordComplexity);
         }
