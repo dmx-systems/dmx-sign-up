@@ -137,7 +137,7 @@ Keep in mind that the dmx-ldap plugin also has a configuration option that contr
 The dmx-ldap plugin can be configured to use a bind account or not. Many of the advanced functionalities that are needed
 for the sign-up plugin (e.g. password change, account creation) require the bind (or manager) account.
 
-If the bind account is not used
+If the bind account is not used account creation and password change will not work!
 
 ### Restricting authorization (login) methods and/or defining their order
 
