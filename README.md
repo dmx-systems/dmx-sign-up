@@ -132,6 +132,13 @@ dmx.signup.ldap_account_creation = true
 
 Keep in mind that the dmx-ldap plugin also has a configuration option that controls account creation functionality. This  must be enabled as well. Refer to the [plugins README](https://git.dmx.systems/dmx-plugins/dmx-ldap/-/blob/master/README.md) for more information on its configuration. 
 
+### Dependency on LDAP plugin bind account usage
+
+The dmx-ldap plugin can be configured to use a bind account or not. Many of the advanced functionalities that are needed
+for the sign-up plugin (e.g. password change, account creation) require the bind (or manager) account.
+
+If the bind account is not used
+
 ### Restricting authorization (login) methods and/or defining their order
 
 The plugin allows restricting the allowed authorization methods by setting the property:
@@ -207,6 +214,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 * Password generation done in backend code
 * Add expected password complexity option
 * Add expected password length option
+* Depend on dmx-ldap 0.8
 
 **3.1.0** -- Feb, 10, 2024
 
