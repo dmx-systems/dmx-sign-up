@@ -2,6 +2,7 @@ package systems.dmx.signup;
 
 
 import systems.dmx.core.Topic;
+import systems.dmx.signup.configuration.Configuration;
 
 import java.net.URISyntaxException;
 import java.util.List;
@@ -14,6 +15,13 @@ import java.util.List;
  */
 
 public interface SignupService {
+
+    /**
+     * Returns the configuration in use for this plugin instance.
+     *
+     * @return
+     */
+    Configuration getConfiguration();
 
     /**
      * Sets the {@link EmailTextProducer} instance that is called whenever email subjects and bodies need to be created.
