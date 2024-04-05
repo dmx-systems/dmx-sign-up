@@ -1,6 +1,5 @@
 package systems.dmx.signup.usecase;
 
-import org.apache.commons.lang.StringUtils;
 import systems.dmx.ldap.Configuration;
 
 import javax.inject.Inject;
@@ -15,7 +14,8 @@ public class LogAndVerifyConfigurationUseCase {
     static final Logger logger = Logger.getLogger(LogAndVerifyConfigurationUseCase.class.getName());
 
     @Inject
-    LogAndVerifyConfigurationUseCase() {}
+    LogAndVerifyConfigurationUseCase() {
+    }
 
     public void invoke(Configuration ldapConfiguration, List<String> authorizationMethods) {
         logger.info("\n  dmx.signup.account_creation: " + CONFIG_ACCOUNT_CREATION + "\n"
