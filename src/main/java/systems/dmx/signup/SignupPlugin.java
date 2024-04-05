@@ -20,6 +20,7 @@ import systems.dmx.facets.FacetsService;
 import systems.dmx.ldap.service.LDAPService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
+import systems.dmx.signup.configuration.Configuration;
 import systems.dmx.signup.configuration.SignUpConfigOptions;
 import systems.dmx.signup.di.DaggerSignupComponent;
 import systems.dmx.signup.di.SignupComponent;
@@ -100,6 +101,25 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     IsPasswordComplexEnoughUseCase isPasswordComplexEnoughUseCase;
 
     LogAndVerifyConfigurationUseCase logAndVerifyConfigurationUseCase;
+
+    @Override
+    public Configuration getConfiguration() {
+        return new Configuration(
+                CONFIG_ACCOUNT_CREATION,
+                CONFIG_ACCOUNT_CREATION_PASSWORD_HANDLING,
+                CONFIG_EXPECTED_PASSWORD_COMPLEXITY,
+                CONFIG_EXPECTED_MIN_PASSWORD_LENGTH,
+                CONFIG_EXPECTED_MAX_PASSWORD_LENGTH,
+                CONFIG_USERNAME_POLICY,
+                CONFIG_EMAIL_CONFIRMATION,
+                CONFIG_ADMIN_MAILBOX,
+                CONFIG_FROM_MAILBOX,
+                CONFIG_CREATE_LDAP_ACCOUNTS,
+                CONFIG_ACCOUNT_CREATION_AUTH_WS_URI,
+                CONFIG_RESTRICT_AUTH_METHODS,
+                CONFIG_TOKEN_EXPIRATION_DURATION
+        );
+    }
 
     // --- Hooks --- //
     private void runDependencyInjection() {
