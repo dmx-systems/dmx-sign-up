@@ -29,6 +29,7 @@ public class Migration4 extends Migration {
                     "Detected run of dmx-sign-up 3.1 migrations after the migrations had been run previously.\n" +
                             "This is not supposed to be done. To not cause data corruption the execution will fail here.\n" +
                             "You can safely upgrade to dmx-sign-up 3.2 now.");
+            throw new IllegalStateException("Failing to prevent DB corruption");
         }
 
     }
