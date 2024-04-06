@@ -31,6 +31,7 @@ import systems.dmx.signup.model.NewAccountTokenData;
 import systems.dmx.signup.model.PasswordResetTokenData;
 import systems.dmx.signup.usecase.GetLdapServiceUseCase;
 import systems.dmx.signup.usecase.OptionalService;
+import systems.dmx.signup.usecase.ResetPluginMigrationNrUseCase;
 import systems.dmx.workspaces.WorkspacesService;
 
 import javax.ws.rs.*;
@@ -95,6 +96,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     GetLdapServiceUseCase getLdapServiceUseCase;
 
+    ResetPluginMigrationNrUseCase resetPluginMigrationNrUseCase;
+
     // --- Hooks --- //
     private void runDependencyInjection() {
         // DI:
@@ -106,10 +109,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         newAccountDataMapper = component.newAccountDataMapper();
         isValidEmailAdressMapper = component.isValidEmailAdressMapper();
         getLdapServiceUseCase = component.getLdapServiceUseCase();
+        resetPluginMigrationNrUseCase = component.resetPluginMigrationNrUseCase();
     }
 
     @Override
     public void init() {
+        transactional(resetPluginMigrationNrUseCase::invoke);
         runDependencyInjection();
     }
 

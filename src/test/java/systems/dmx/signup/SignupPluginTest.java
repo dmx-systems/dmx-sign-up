@@ -14,6 +14,7 @@ import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
 import systems.dmx.signup.usecase.GetLdapServiceUseCase;
 import systems.dmx.signup.usecase.OptionalService;
+import systems.dmx.signup.usecase.ResetPluginMigrationNrUseCase;
 
 import java.lang.reflect.Field;
 import java.util.logging.Level;
@@ -31,6 +32,8 @@ class SignupPluginTest {
     private final IsValidEmailAdressMapper isValidEmailAdressMapper = mock();
     private final NewAccountDataMapper newAccountDataMapper = mock();
 
+    private final ResetPluginMigrationNrUseCase resetPluginMigrationNrUseCase = mock();
+
     private final SignupPlugin subject = new SignupPlugin();
 
 
@@ -39,10 +42,14 @@ class SignupPluginTest {
         // silence logger
         SignupPlugin.logger.setLevel(Level.OFF);
 
+        // DMX transaction
+        when(dmx.beginTx()).thenReturn(mock());
+
         // Manual inject
         set(subject, "dmx", dmx);
         subject.accesscontrol = accesscontrol;
         subject.getLdapServiceUseCase = getLdapServiceUseCase;
+        subject.resetPluginMigrationNrUseCase = resetPluginMigrationNrUseCase;
     }
 
     private void set(Object o, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
@@ -84,6 +91,7 @@ class SignupPluginTest {
             assertThat(subject.getLdapServiceUseCase).isEqualTo(getLdapServiceUseCase);
             assertThat(subject.isValidEmailAdressMapper).isEqualTo(isValidEmailAdressMapper);
             assertThat(subject.newAccountDataMapper).isEqualTo(newAccountDataMapper);
+            assertThat(subject.resetPluginMigrationNrUseCase).isEqualTo(resetPluginMigrationNrUseCase);
         }
     }
 
@@ -98,6 +106,7 @@ class SignupPluginTest {
         when(component.getLdapServiceUseCase()).thenReturn(getLdapServiceUseCase);
         when(component.isValidEmailAdressMapper()).thenReturn(isValidEmailAdressMapper);
         when(component.newAccountDataMapper()).thenReturn(newAccountDataMapper);
+        when(component.resetPluginMigrationNrUseCase()).thenReturn(resetPluginMigrationNrUseCase);
 
         DaggerSignupComponent.Builder builder = mock();
         when(builder.coreService(any())).thenReturn(builder);
@@ -121,5 +130,4 @@ class SignupPluginTest {
         verify(getLdapServiceUseCase).invoke(any());
         assertThat(subject.ldap).isEqualTo(optionalService);
     }
-
 }
