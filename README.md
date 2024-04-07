@@ -215,6 +215,7 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 * Add expected password complexity option
 * Add expected password length option
 * Depend on dmx-ldap 0.8
+* Removal of legacy migration code
 
 **3.1.0** -- Feb, 10, 2024
 
