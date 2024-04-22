@@ -114,8 +114,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @Override
     public void init() {
-        transactional(resetPluginMigrationNrUseCase::invoke);
         runDependencyInjection();
+        transactional(resetPluginMigrationNrUseCase::invoke);
     }
 
     @Override
