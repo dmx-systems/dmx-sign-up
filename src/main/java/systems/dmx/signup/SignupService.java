@@ -30,8 +30,6 @@ public interface SignupService {
      */
     void setEmailTextProducer(EmailTextProducer emailTextProducer);
 
-    String getSystemEmailContactOrEmpty();
-
     /**
      * Returns the display name of the given user.
      *

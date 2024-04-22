@@ -7,72 +7,35 @@ import java.time.Duration;
  */
 public class Configuration {
 
-    /**
-     * {@link AccountCreation}
-     */
     public final AccountCreation accountCreation;
 
-    /**
-     * {@link AccountCreation.PasswordHandling}
-     */
     public final AccountCreation.PasswordHandling accountCreationPasswordHandling;
 
-    /**
-     * {@link ExpectedPasswordComplexity}
-     */
     public final ExpectedPasswordComplexity expectedPasswordComplexity;
 
-    /**
-     * Minimum number of characters for a password to be accepted.
-     */
     public final int expectedMinPasswordLength;
 
-    /**
-     * Maximum number of characters for a password to be accepted.
-     */
     public final int expectedMaxPasswordLength;
 
-    /**
-     * {@link UsernamePolicy}
-     */
     public final UsernamePolicy usernamePolicy;
 
-    /**
-     * Toggle whether an email address needs to be confirmed by following a link that is in the email.
-     */
     public final boolean emailConfirmationEnabled;
 
-    /**
-     * Email address of the admin user
-     */
     public final String adminEmailAddress;
 
-    /**
-     * Email address that appears in "from" in all automated emails.
-     */
     public final String fromEmailAddress;
 
-    /**
-     * Toggle whether new users are created in LDAP.
-     */
+    public final String fromName;
+
     public final boolean createLdapAccountsEnabled;
 
-    /**
-     * URI of the workspace that is used for checking whether a user has account creation privilege.
-     */
     public final String accountCreationAuthWorkspaceUri;
 
-    /**
-     * List and order of which auth methods are available.
-     */
     public final String restrictAuthMethods;
 
-    /**
-     * Duration after which account creation or password change tokens expire when not used.
-     */
     public final Duration tokenExpirationDuration;
 
-    public Configuration(AccountCreation accountCreation, AccountCreation.PasswordHandling accountCreationPasswordHandling, ExpectedPasswordComplexity expectedPasswordComplexity, int expectedMinPasswordLength, int expectedMaxPasswordLength, UsernamePolicy usernamePolicy, boolean emailConfirmationEnabled, String adminEmailAddress, String fromEmailAddress, boolean createLdapAccountsEnabled, String accountCreationAuthWorkspaceUri, String restrictAuthMethods, Duration tokenExpirationDuration) {
+    public Configuration(AccountCreation accountCreation, AccountCreation.PasswordHandling accountCreationPasswordHandling, ExpectedPasswordComplexity expectedPasswordComplexity, int expectedMinPasswordLength, int expectedMaxPasswordLength, UsernamePolicy usernamePolicy, boolean emailConfirmationEnabled, String adminEmailAddress, String fromEmailAddress, String fromName, boolean createLdapAccountsEnabled, String accountCreationAuthWorkspaceUri, String restrictAuthMethods, Duration tokenExpirationDuration) {
         this.accountCreation = accountCreation;
         this.accountCreationPasswordHandling = accountCreationPasswordHandling;
         this.expectedPasswordComplexity = expectedPasswordComplexity;
@@ -82,10 +45,108 @@ public class Configuration {
         this.emailConfirmationEnabled = emailConfirmationEnabled;
         this.adminEmailAddress = adminEmailAddress;
         this.fromEmailAddress = fromEmailAddress;
+        this.fromName = fromName;
         this.createLdapAccountsEnabled = createLdapAccountsEnabled;
         this.accountCreationAuthWorkspaceUri = accountCreationAuthWorkspaceUri;
         this.restrictAuthMethods = restrictAuthMethods;
         this.tokenExpirationDuration = tokenExpirationDuration;
     }
 
+    /**
+     * {@link AccountCreation}
+     */
+    public AccountCreation getAccountCreation() {
+        return accountCreation;
+    }
+
+    /**
+     * {@link AccountCreation.PasswordHandling}
+     */
+    public AccountCreation.PasswordHandling getAccountCreationPasswordHandling() {
+        return accountCreationPasswordHandling;
+    }
+
+    /**
+     * {@link ExpectedPasswordComplexity}
+     */
+    public ExpectedPasswordComplexity getExpectedPasswordComplexity() {
+        return expectedPasswordComplexity;
+    }
+
+    /**
+     * Minimum number of characters for a password to be accepted.
+     */
+    public int getExpectedMinPasswordLength() {
+        return expectedMinPasswordLength;
+    }
+
+    /**
+     * Maximum number of characters for a password to be accepted.
+     */
+    public int getExpectedMaxPasswordLength() {
+        return expectedMaxPasswordLength;
+    }
+
+    /**
+     * {@link UsernamePolicy}
+     */
+    public UsernamePolicy getUsernamePolicy() {
+        return usernamePolicy;
+    }
+
+    /**
+     * Toggle whether an email address needs to be confirmed by following a link that is in the email.
+     */
+    public boolean isEmailConfirmationEnabled() {
+        return emailConfirmationEnabled;
+    }
+
+    /**
+     * Email address of the admin user
+     */
+    public String getAdminEmailAddress() {
+        return adminEmailAddress;
+    }
+
+    /**
+     * Email address that appears in "from" in all automated emails.
+     */
+    public String getFromEmailAddress() {
+        return fromEmailAddress;
+    }
+
+    /**
+     * Name that appears in "from" in all automated emails.
+     */
+    public String getFromName() {
+        return fromName;
+    }
+
+    /**
+     * Toggle whether new users are created in LDAP.
+     */
+    public boolean isCreateLdapAccountsEnabled() {
+        return createLdapAccountsEnabled;
+    }
+
+    /**
+     * URI of the workspace that is used for checking whether a user has account creation privilege.
+     */
+    public String getAccountCreationAuthWorkspaceUri() {
+        return accountCreationAuthWorkspaceUri;
+    }
+
+    /**
+     * List and order of which auth methods are available.
+     */
+    public String getRestrictAuthMethods() {
+        return restrictAuthMethods;
+    }
+
+    /**
+     * Duration after which account creation or password change tokens expire when not used.
+     */
+    public Duration getTokenExpirationDuration() {
+        return tokenExpirationDuration;
+    }
 }

@@ -49,8 +49,9 @@ The following options must be configured via dmx-platform's `config.properties`:
 
 ```
 dmx.signup.confirm_email_address = true
-dmx.signup.admin_mailbox = signup-test@dmx.systems
-dmx.signup.system_mailbox = nomail@dmx.systems
+dmx.signup.system_admin_mailbox = signup-test@dmx.systems
+dmx.signup.system_from_mailbox = nomail@dmx.systems
+dmx.signup.system_from_name = Mr. Nomail
 dmx.signup.account_creation = admin
 dmx.signup.account_creation_password_handling = generated
 dmx.signup.account_creation_auth_ws_uri =
@@ -216,6 +217,9 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 * Add expected password length option
 * Depend on dmx-ldap 0.8
 * Removal of legacy migration code
+* Introduce configuration property 'dmx.signup.system_admin_mailbox'
+* Introduce configuration property 'dmx.signup.system_from_mailbox'
+* Introduce configuration property 'dmx.signup.system_from_name'
 
 **3.1.0** -- Feb, 10, 2024
 

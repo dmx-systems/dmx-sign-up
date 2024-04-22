@@ -12,6 +12,7 @@ import systems.dmx.core.osgi.PluginActivator;
 import systems.dmx.core.service.CoreService;
 import systems.dmx.ldap.service.LDAPService;
 import systems.dmx.signup.configuration.AccountCreation;
+import systems.dmx.signup.configuration.Configuration;
 import systems.dmx.signup.di.DaggerSignupComponent;
 import systems.dmx.signup.di.SignupComponent;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
@@ -44,6 +45,12 @@ class SignupPluginTest {
 
     private final LogAndVerifyConfigurationUseCase logAndVerifyConfigurationUseCase = mock();
 
+    private final SendMailUseCase sendMailUseCase = mock();
+
+    private final OptionalService<LDAPService> ldap = mock();
+
+    private final Configuration configuration = mock();
+
     private final SignupPlugin subject = new SignupPlugin();
 
 
@@ -51,6 +58,12 @@ class SignupPluginTest {
     public void before() throws NoSuchFieldException, IllegalAccessException {
         // silence logger
         SignupPlugin.logger.setLevel(Level.OFF);
+
+        // provides mock ldap optional service
+        when(getLdapServiceUseCase.invoke(any())).thenReturn(ldap);
+
+        // provides mock configuration
+        when(logAndVerifyConfigurationUseCase.invoke(any(), any())).thenReturn(configuration);
 
         // Manual inject
         set(subject, "dmx", dmx);
@@ -62,13 +75,13 @@ class SignupPluginTest {
         subject.newAccountDataMapper = newAccountDataMapper;
         subject.isPasswordComplexEnoughUseCase = isPasswordComplexEnoughUseCase;
         subject.logAndVerifyConfigurationUseCase = logAndVerifyConfigurationUseCase;
+        subject.sendMailUseCase = sendMailUseCase;
     }
 
     private void set(Object o, String fieldName, Object value) throws NoSuchFieldException, IllegalAccessException {
         Field field = PluginActivator.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(o, value);
-
     }
 
     @Test
@@ -102,6 +115,7 @@ class SignupPluginTest {
             subject.isValidEmailAdressMapper = null;
             subject.isPasswordComplexEnoughUseCase = null;
             subject.logAndVerifyConfigurationUseCase = null;
+            subject.sendMailUseCase = null;
 
             DaggerSignupComponent.Builder builder = mockBuilder();
             staticComponent.when(DaggerSignupComponent::builder).thenReturn(builder);
@@ -117,6 +131,7 @@ class SignupPluginTest {
             assertThat(subject.hasAccountCreationPrivilegeUseCase).isEqualTo(hasAccountCreationPrivilegeUseCase);
             assertThat(subject.isPasswordComplexEnoughUseCase).isEqualTo(isPasswordComplexEnoughUseCase);
             assertThat(subject.logAndVerifyConfigurationUseCase).isEqualTo(logAndVerifyConfigurationUseCase);
+            assertThat(subject.sendMailUseCase).isEqualTo(sendMailUseCase);
         }
     }
 
@@ -128,6 +143,7 @@ class SignupPluginTest {
     private DaggerSignupComponent.Builder mockBuilder() {
         // Sets up SignupComponent
         SignupComponent component = mock();
+        // when a new dependency is add that the component can return add a mock implementation that returns it here
         when(component.getLdapServiceUseCase()).thenReturn(getLdapServiceUseCase);
         when(component.isValidEmailAdressMapper()).thenReturn(isValidEmailAdressMapper);
         when(component.newAccountDataMapper()).thenReturn(newAccountDataMapper);
@@ -135,11 +151,15 @@ class SignupPluginTest {
         when(component.hasAccountCreationPrivilegeUseCase()).thenReturn(hasAccountCreationPrivilegeUseCase);
         when(component.isPasswordComplexEnoughUseCase()).thenReturn(isPasswordComplexEnoughUseCase);
         when(component.logAndVerifyConfigurationUseCase()).thenReturn(logAndVerifyConfigurationUseCase);
+        when(component.sendMailUseCase()).thenReturn(sendMailUseCase);
 
         DaggerSignupComponent.Builder builder = mock();
+        // when a new component is consumed, add a method here that returns the builder
         when(builder.coreService(any())).thenReturn(builder);
         when(builder.accessControlService(any())).thenReturn(builder);
         when(builder.workspacesService(any())).thenReturn(builder);
+        when(builder.sendmailService(any())).thenReturn(builder);
+
         when(builder.build()).thenReturn(component);
 
         return builder;
@@ -167,6 +187,8 @@ class SignupPluginTest {
         String givenPassword = "passwurst";
         when(isPasswordComplexEnoughUseCase.invoke(any(), any())).thenReturn(true);
 
+        subject.allPluginsActive();
+
         // when:
         Boolean result = subject.isPasswordComplexEnough(givenPassword);
 
@@ -179,20 +201,21 @@ class SignupPluginTest {
     @DisplayName("requestSignUp() should return result with ACCOUNT_CREATION_DENIED when self registration is not enabled")
     void requestSignUp_should_deny_when_no_self_registration() {
         // given:
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.DISABLED);
+
         String givenUsername = "username";
         String givenEmailAddress = "email@address.org";
         String givenDisplayName = "display name";
         String givenPassword = "12345678";
         boolean givenSkipConfirmation = false;
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.DISABLED);
 
-            // when:
-            SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        subject.allPluginsActive();
 
-            // then:
-            assertThat(result.code).isEqualTo(ACCOUNT_CREATION_DENIED);
-        }
+        // when:
+        SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+
+        // then:
+        assertThat(result.code).isEqualTo(ACCOUNT_CREATION_DENIED);
     }
 
     @Test
@@ -200,21 +223,21 @@ class SignupPluginTest {
     void requestSignUp_should_deny_when_no_account_creation_privilege() {
         // given:
         when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(false);
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.ADMIN);
 
         String givenUsername = "username";
         String givenEmailAddress = "email@address.org";
         String givenDisplayName = "display name";
         String givenPassword = "12345678";
         boolean givenSkipConfirmation = false;
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.ADMIN);
 
-            // when:
-            SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        subject.allPluginsActive();
 
-            // then:
-            assertThat(result.code).isEqualTo(ACCOUNT_CREATION_DENIED);
-        }
+        // when:
+        SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+
+        // then:
+        assertThat(result.code).isEqualTo(ACCOUNT_CREATION_DENIED);
     }
 
     @Test
@@ -223,6 +246,7 @@ class SignupPluginTest {
         // given:
         when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(true);
         when(isValidEmailAdressMapper.map(anyString())).thenReturn(false);
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.PUBLIC);
 
         String givenUsername = "username";
         String givenEmailAddress = "email@address.org";
@@ -230,16 +254,14 @@ class SignupPluginTest {
         String givenPassword = "12345678";
         boolean givenSkipConfirmation = false;
 
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
+        subject.allPluginsActive();
 
-            // when:
-            SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        // when:
+        SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
 
-            // then:
-            verify(isValidEmailAdressMapper).map(givenEmailAddress);
-            assertThat(result.code).isEqualTo(ERROR_INVALID_EMAIL);
-        }
+        // then:
+        verify(isValidEmailAdressMapper).map(givenEmailAddress);
+        assertThat(result.code).isEqualTo(ERROR_INVALID_EMAIL);
     }
 
     @Test
@@ -257,24 +279,24 @@ class SignupPluginTest {
         when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(true);
         when(isValidEmailAdressMapper.map(anyString())).thenReturn(true);
         when(getAccountCreationPasswordUseCase.invoke(any(), any())).thenReturn(givenPassword);
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.PUBLIC);
 
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
+        subject.allPluginsActive();
 
-            // when:
-            SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        // when:
+        SignUpRequestResult result = subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
 
-            // then:
-            verify(isPasswordComplexEnoughUseCase).invoke(any(), eq(givenPassword));
-            assertThat(result.code).isEqualTo(ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT);
-        }
+        // then:
+        verify(isPasswordComplexEnoughUseCase).invoke(any(), eq(givenPassword));
+        assertThat(result.code).isEqualTo(ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT);
     }
 
     @Test
     @DisplayName("requestSignUp() should not check password when password generated")
-    void requestSignUp_should_not_check_password_when_generated() {
+    void requestSignUp_should_not_check_password_when_generated() throws Exception {
         // given:
         when(isPasswordComplexEnoughUseCase.invoke(any(), anyString())).thenReturn(false);
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.PUBLIC);
 
         String givenUsername = "username";
         String givenEmailAddress = "email@address.org";
@@ -286,15 +308,13 @@ class SignupPluginTest {
         when(isValidEmailAdressMapper.map(anyString())).thenReturn(true);
         when(getAccountCreationPasswordUseCase.invoke(any(), any())).thenReturn("some generated password that is different from the given one");
 
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
+        subject.allPluginsActive();
 
-            // when:
-            subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        // when:
+        subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
 
-            // then:
-            verifyNoInteractions(isPasswordComplexEnoughUseCase);
-        }
+        // then:
+        verifyNoInteractions(isPasswordComplexEnoughUseCase);
     }
 
     private static Stream<Arguments> passwordHandlingParams() {
@@ -311,6 +331,8 @@ class SignupPluginTest {
         // given:
         when(hasAccountCreationPrivilegeUseCase.invoke()).thenReturn(true);
         when(isValidEmailAdressMapper.map(anyString())).thenReturn(true);
+        when(configuration.getAccountCreation()).thenReturn(AccountCreation.PUBLIC);
+        when(configuration.getAccountCreationPasswordHandling()).thenReturn(givenPasswordHandling);
 
         String givenUsername = "username";
         String givenEmailAddress = "email@address.org";
@@ -318,18 +340,62 @@ class SignupPluginTest {
         String givenPassword = "12345678";
         boolean givenSkipConfirmation = false;
 
-        try (MockedStatic<AccountCreation> mockedStatic = mockStatic(AccountCreation.class);
-             MockedStatic<AccountCreation.PasswordHandling> mockedStatic2 = mockStatic(AccountCreation.PasswordHandling.class)) {
-            mockedStatic.when(() -> AccountCreation.fromStringOrDisabled(anyString())).thenReturn(AccountCreation.PUBLIC);
-            mockedStatic2.when(() -> AccountCreation.PasswordHandling.fromStringOrEditable(anyString())).thenReturn(givenPasswordHandling);
+        subject.allPluginsActive();
 
-            // when:
-            subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
+        // when:
+        subject.requestSignUp(givenUsername, givenEmailAddress, givenDisplayName, givenPassword, givenSkipConfirmation);
 
-            // then:
-            // first parameter should actually be givenPasswordHandling. Somehow the static mocking does not work properly
-            verify(getAccountCreationPasswordUseCase).invoke(any(), matches(givenPassword));
-        }
+        // then:
+        // first parameter should actually be givenPasswordHandling. Somehow the static mocking does not work properly
+        verify(getAccountCreationPasswordUseCase).invoke(givenPasswordHandling,givenPassword);
+    }
+
+    @Test
+    @DisplayName("isLdapAccountCreationEnabled() should return true when ldap account creation enabled and LDAP plugin available")
+    void isLdapAccountCreationEnabled_should_return_true() {
+        // given:
+        when (configuration.isCreateLdapAccountsEnabled()).thenReturn(true);
+        when (ldap.get()).thenReturn(mock());
+
+        subject.allPluginsActive();
+
+        // when:
+        boolean result = subject.isLdapAccountCreationEnabled();
+
+        // then:
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("isLdapAccountCreationEnabled() should return false when ldap account creation disabled")
+    void isLdapAccountCreationEnabled_should_return_false_when_ldap_account_creation_disabled() {
+        // given:
+        when (configuration.isCreateLdapAccountsEnabled()).thenReturn(false);
+        when (ldap.get()).thenReturn(mock());
+
+        subject.allPluginsActive();
+
+        // when:
+        boolean result = subject.isLdapAccountCreationEnabled();
+
+        // then:
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("isLdapAccountCreationEnabled() should return false when ldap account creation enabled but LDAP plugin not available")
+    void isLdapAccountCreationEnabled_should_return_false_when_ldap_plugin() {
+        // given:
+        when (configuration.isCreateLdapAccountsEnabled()).thenReturn(true);
+        when (ldap.get()).thenReturn(null);
+
+        subject.allPluginsActive();
+
+        // when:
+        boolean result = subject.isLdapAccountCreationEnabled();
+
+        // then:
+        assertThat(result).isFalse();
     }
 
     // TODO: Test that password complexity is enforced password change
