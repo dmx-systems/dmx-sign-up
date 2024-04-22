@@ -166,7 +166,9 @@ option in topics anymore.
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
-**3.1.3** -- TBD
+**3.1.3** -- Apr, 22, 2024
+
+* Fix NullPointerException during initialization
 
 **3.1.2** -- Apr, 7, 2024
 
