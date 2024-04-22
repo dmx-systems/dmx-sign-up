@@ -2,8 +2,15 @@
 
 # Sign-Up
 dmx.signup.confirm_email_address = true
-dmx.signup.admin_mailbox = signup-test@dmx.systems
-dmx.signup.system_mailbox = nomail@dmx.systems
+
+# Deprecated
+#dmx.signup.admin_mailbox = deprecated_admin_mailbox@dmx.systems
+#dmx.signup.system_mailbox = deprecated_system_mailbox@dmx.systems
+
+dmx.signup.system_admin_mailbox = system_admin_mailbox@dmx.systems
+dmx.signup.system_from_mailbox = system_from_mailbox@dmx.systems
+dmx.signup.system_from_name = Example System From Name
+
 dmx.signup.account_creation_auth_ws_uri =
 dmx.signup.ldap_account_creation = false
 dmx.signup.account_creation = admin
