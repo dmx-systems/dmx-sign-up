@@ -212,6 +212,7 @@
                         <Bundle-Activator>
                             systems.dmx.signup.SignupPlugin
                         </Bundle-Activator>
+                        <Export-Package>systems.dmx.signup,systems.dmx.signup.configuration</Export-Package>
                         <!-- embeds everything that is in provided scope -->
                         <Embed-Dependency>*;scope=provided;inline=false</Embed-Dependency>
                         <Embed-Directory>dependencies</Embed-Directory>
