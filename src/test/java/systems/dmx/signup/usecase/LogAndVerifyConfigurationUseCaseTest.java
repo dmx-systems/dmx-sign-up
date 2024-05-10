@@ -38,7 +38,7 @@ class LogAndVerifyConfigurationUseCaseTest {
         when(configurationRepository.getString(eq(Keys.SYSTEM_ADMIN_MAILBOX), any())).thenReturn(adminEmailAddress);
 
         // when:
-        Configuration result = subject.invoke(mock(), emptyList());
+        Configuration result = subject.invoke(emptyList());
 
         // then:
         assertThat(result.adminEmailAddress).isEqualTo(adminEmailAddress.value);
@@ -53,7 +53,7 @@ class LogAndVerifyConfigurationUseCaseTest {
         when(configurationRepository.getString(any(), eq(Keys.DEPRECATED_ADMIN_MAILBOX))).thenReturn(adminEmailAddress);
 
         // when:
-        Configuration result = subject.invoke(mock(), emptyList());
+        Configuration result = subject.invoke(emptyList());
 
         // then:
         assertThat(result.adminEmailAddress).isEqualTo(adminEmailAddress.value);
@@ -68,7 +68,7 @@ class LogAndVerifyConfigurationUseCaseTest {
         when(configurationRepository.getString(eq(Keys.SYSTEM_FROM_MAILBOX), any())).thenReturn(fromEmailAddress);
 
         // when:
-        Configuration result = subject.invoke(mock(), emptyList());
+        Configuration result = subject.invoke(emptyList());
 
         // then:
         assertThat(result.fromEmailAddress).isEqualTo(fromEmailAddress.value);
@@ -83,7 +83,7 @@ class LogAndVerifyConfigurationUseCaseTest {
         when(configurationRepository.getString(any(), eq(Keys.DEPRECATED_FROM_MAILBOX))).thenReturn(fromEmailAddress);
 
         // when:
-        Configuration result = subject.invoke(mock(), emptyList());
+        Configuration result = subject.invoke(emptyList());
 
         // then:
         assertThat(result.fromEmailAddress).isEqualTo(fromEmailAddress.value);
@@ -98,7 +98,7 @@ class LogAndVerifyConfigurationUseCaseTest {
         when(configurationRepository.getStringWithDefault(eq(Keys.SYSTEM_FROM_NAME), any())).thenReturn(fromName);
 
         // when:
-        Configuration result = subject.invoke(mock(), emptyList());
+        Configuration result = subject.invoke(emptyList());
 
         // then:
         assertThat(result.fromName).isEqualTo(fromName.value);

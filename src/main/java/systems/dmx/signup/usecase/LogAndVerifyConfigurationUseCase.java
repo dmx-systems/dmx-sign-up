@@ -26,7 +26,7 @@ public class LogAndVerifyConfigurationUseCase {
         return String.format("A configuration value from the deprecated property '%s' was used. Please migrate the value to the property '%s'.", deprecatedPropertyKey, propertyKey);
     }
 
-    public Configuration invoke(systems.dmx.ldap.Configuration ldapConfiguration, List<String> authorizationMethods) {
+    public Configuration invoke(List<String> authorizationMethods) {
         ConfigurationRepository.Value adminEmailAddress = configurationRepository.getString(Keys.SYSTEM_ADMIN_MAILBOX, Keys.DEPRECATED_ADMIN_MAILBOX);
         ConfigurationRepository.Value fromEmailAddress = configurationRepository.getString(Keys.SYSTEM_FROM_MAILBOX, Keys.DEPRECATED_FROM_MAILBOX);
         ConfigurationRepository.Value fromName = configurationRepository.getStringWithDefault(Keys.SYSTEM_FROM_NAME, "");
@@ -38,7 +38,6 @@ public class LogAndVerifyConfigurationUseCase {
                 + "  dmx.signup.system_admin_mailbox: " + adminEmailAddress.value + "\n"
                 + "  dmx.signup.system_from_mailbox: " + fromEmailAddress.value + "\n"
                 + "  dmx.signup.system_from_name: " + fromName.value + "\n"
-                + "  dmx.signup.ldap_account_creation: " + CONFIG_CREATE_LDAP_ACCOUNTS + "\n"
                 + "  dmx.signup.account_creation_auth_ws_uri: " + CONFIG_ACCOUNT_CREATION_AUTH_WS_URI + "\n"
                 + "  dmx.signup.restrict_auth_methods: " + CONFIG_RESTRICT_AUTH_METHODS + "\n"
                 + "  dmx.signup.token_expiration_time: " + CONFIG_TOKEN_EXPIRATION_DURATION.toHours() + "\n"
@@ -46,6 +45,7 @@ public class LogAndVerifyConfigurationUseCase {
         );
 
         logger.info("Available auth methods and order:" + authorizationMethods + "\n");
+        /* Those warnings should go into LDAP plugin instead
         if (ldapConfiguration == null) {
             if (CONFIG_CREATE_LDAP_ACCOUNTS) {
                 logger.warning("LDAP Account creation configured but respective plugin not available!");
@@ -56,6 +56,7 @@ public class LogAndVerifyConfigurationUseCase {
                 logger.warning("LDAP Account creation configured but no bind account should be used. Enable and provide a bind account otherwise account creation cannot work.");
             }
         }
+        */
 
         if (StringUtils.isBlank(adminEmailAddress.value)) {
             logger.warning("'dmx.signup.system_admin_mailbox' is not configured. Please correct this otherwise various notification emails cannot be send.");
@@ -80,7 +81,6 @@ public class LogAndVerifyConfigurationUseCase {
                 adminEmailAddress.value,
                 fromEmailAddress.value,
                 fromName.value,
-                CONFIG_CREATE_LDAP_ACCOUNTS,
                 CONFIG_ACCOUNT_CREATION_AUTH_WS_URI,
                 CONFIG_RESTRICT_AUTH_METHODS,
                 CONFIG_TOKEN_EXPIRATION_DURATION

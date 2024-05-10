@@ -6,7 +6,6 @@ import systems.dmx.core.service.CoreService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.mapper.IsValidEmailAdressMapper;
 import systems.dmx.signup.mapper.NewAccountDataMapper;
-import systems.dmx.signup.repository.ConfigurationRepository;
 import systems.dmx.signup.usecase.*;
 import systems.dmx.workspaces.WorkspacesService;
 
@@ -19,8 +18,6 @@ public interface SignupComponent {
     NewAccountDataMapper newAccountDataMapper();
 
     IsValidEmailAdressMapper isValidEmailAdressMapper();
-
-    GetLdapServiceUseCase getLdapServiceUseCase();
 
     GetAccountCreationPasswordUseCase getAccountCreationPasswordUseCase();
 
