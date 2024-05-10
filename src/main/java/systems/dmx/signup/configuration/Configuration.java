@@ -27,15 +27,13 @@ public class Configuration {
 
     public final String fromName;
 
-    public final boolean createLdapAccountsEnabled;
-
     public final String accountCreationAuthWorkspaceUri;
 
     public final String restrictAuthMethods;
 
     public final Duration tokenExpirationDuration;
 
-    public Configuration(AccountCreation accountCreation, AccountCreation.PasswordHandling accountCreationPasswordHandling, ExpectedPasswordComplexity expectedPasswordComplexity, int expectedMinPasswordLength, int expectedMaxPasswordLength, UsernamePolicy usernamePolicy, boolean emailConfirmationEnabled, String adminEmailAddress, String fromEmailAddress, String fromName, boolean createLdapAccountsEnabled, String accountCreationAuthWorkspaceUri, String restrictAuthMethods, Duration tokenExpirationDuration) {
+    public Configuration(AccountCreation accountCreation, AccountCreation.PasswordHandling accountCreationPasswordHandling, ExpectedPasswordComplexity expectedPasswordComplexity, int expectedMinPasswordLength, int expectedMaxPasswordLength, UsernamePolicy usernamePolicy, boolean emailConfirmationEnabled, String adminEmailAddress, String fromEmailAddress, String fromName, String accountCreationAuthWorkspaceUri, String restrictAuthMethods, Duration tokenExpirationDuration) {
         this.accountCreation = accountCreation;
         this.accountCreationPasswordHandling = accountCreationPasswordHandling;
         this.expectedPasswordComplexity = expectedPasswordComplexity;
@@ -46,7 +44,6 @@ public class Configuration {
         this.adminEmailAddress = adminEmailAddress;
         this.fromEmailAddress = fromEmailAddress;
         this.fromName = fromName;
-        this.createLdapAccountsEnabled = createLdapAccountsEnabled;
         this.accountCreationAuthWorkspaceUri = accountCreationAuthWorkspaceUri;
         this.restrictAuthMethods = restrictAuthMethods;
         this.tokenExpirationDuration = tokenExpirationDuration;
@@ -120,13 +117,6 @@ public class Configuration {
      */
     public String getFromName() {
         return fromName;
-    }
-
-    /**
-     * Toggle whether new users are created in LDAP.
-     */
-    public boolean isCreateLdapAccountsEnabled() {
-        return createLdapAccountsEnabled;
     }
 
     /**

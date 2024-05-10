@@ -2,9 +2,9 @@ package systems.dmx.signup;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import org.apache.commons.lang3.StringUtils;
-import org.osgi.framework.BundleContext;
 import systems.dmx.accesscontrol.AccessControlService;
 import systems.dmx.accesscontrol.event.PostLoginUser;
+import systems.dmx.accountmanagement.AccountManagementService;
 import systems.dmx.core.Assoc;
 import systems.dmx.core.RelatedTopic;
 import systems.dmx.core.Topic;
@@ -18,7 +18,6 @@ import systems.dmx.core.service.event.AllPluginsActive;
 import systems.dmx.core.service.event.PostUpdateTopic;
 import systems.dmx.core.storage.spi.DMXTransaction;
 import systems.dmx.facets.FacetsService;
-import systems.dmx.ldap.service.LDAPService;
 import systems.dmx.sendmail.SendmailService;
 import systems.dmx.signup.configuration.AccountCreation;
 import systems.dmx.signup.configuration.Configuration;
@@ -74,7 +73,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Inject
     private WorkspacesService workspacesService;
 
-    OptionalService<LDAPService> ldap;
+    @Inject
+    private AccountManagementService accountManagementService;
 
     @Context
     UriInfo uri;
@@ -89,8 +89,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     NewAccountDataMapper newAccountDataMapper;
 
     IsValidEmailAdressMapper isValidEmailAdressMapper;
-
-    GetLdapServiceUseCase getLdapServiceUseCase;
 
     GetAccountCreationPasswordUseCase getAccountCreationPasswordUseCase;
 
@@ -121,7 +119,6 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
         newAccountDataMapper = component.newAccountDataMapper();
         isValidEmailAdressMapper = component.isValidEmailAdressMapper();
-        getLdapServiceUseCase = component.getLdapServiceUseCase();
         getAccountCreationPasswordUseCase = component.getAccountCreationPasswordUseCase();
         hasAccountCreationPrivilegeUseCase = component.hasAccountCreationPrivilegeUseCase();
         isPasswordComplexEnoughUseCase = component.isPasswordComplexEnoughUseCase();
@@ -136,16 +133,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     @Override
     public void allPluginsActive() {
-        ldap = getLdapServiceUseCase.invoke(getBundleContext());
         // Log configuration settings
-        configuration = logAndVerifyConfigurationUseCase.invoke(isLdapPluginAvailable() ? ldap.get().getConfiguration() : null, getAuthorizationMethods());
-    }
-
-    // TODO: use platform's shutdown() hook instead, importing BundleContext and calling super not necessary then
-    @Override
-    public void stop(BundleContext context) {
-        ldap.release();
-        super.stop(context);
+        configuration = logAndVerifyConfigurationUseCase.invoke(getAuthorizationMethods());
     }
 
     // --- SignupService Implementation --- //
@@ -176,7 +165,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Override
     public String getDisplayName(@PathParam("username") String username) {
         try {
-            Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+            Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
             if (usernameTopic != null) {
                 Topic displayName = facets.getFacet(usernameTopic, DISPLAY_NAME_FACET);
                 if (displayName != null) {
@@ -198,7 +187,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         try {
             long workspaceId = getDisplayNamesWorkspaceId();
             dmx.getPrivilegedAccess().runInWorkspaceContext(workspaceId, () -> {
-                Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+                Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
                 if (usernameTopic != null) {
                     facets.updateFacet(usernameTopic, DISPLAY_NAME_FACET,
                             mf.newFacetValueModel(DISPLAY_NAME).set(displayName)
@@ -212,12 +201,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    private NewAccountData mapToNewAccountData(String username, String emailAddress, String displayName) {
-        return newAccountDataMapper.map(CONFIG_USERNAME_POLICY, username, emailAddress, displayName);
+    private NewAccountData mapToNewAccountData(String methodName, String username, String emailAddress, String displayName) {
+        return newAccountDataMapper.map(CONFIG_USERNAME_POLICY, methodName, username, emailAddress, displayName);
     }
 
     @Override
-    public SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String providedPassword,
+    public SignUpRequestResult requestSignUp(String methodName, String username, String emailAddress, String displayName, String providedPassword,
                                              boolean skipConfirmation) {
         if (!isSelfRegistrationEnabled() && !hasAccountCreationPrivilege()) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ACCOUNT_CREATION_DENIED);
@@ -225,7 +214,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         if (!isValidEmailAdressMapper.map(emailAddress)) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_INVALID_EMAIL);
         }
-        NewAccountData newAccountData = mapToNewAccountData(username, emailAddress, displayName);
+        NewAccountData newAccountData = mapToNewAccountData(methodName, username, emailAddress, displayName);
         String password = getAccountCreationPasswordUseCase.invoke(configuration.getAccountCreationPasswordHandling(), providedPassword);
         if (Objects.equals(password, providedPassword) && !isPasswordComplexEnough(password)) {
             return new SignUpRequestResult(SignUpRequestResult.Code.ERROR_PASSWORD_COMPLEXITY_INSUFFICIENT);
@@ -420,17 +409,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 return PasswordChangeRequestResult.PASSWORD_COMPLEXITY_INSUFFICIENT;
             }
             Credentials newCreds = new Credentials(tokenData.accountData.username, password);
-            if (!isLdapAccountCreationEnabled()) {
-                // Change password stored in "User Account" topic
-                dmx.getPrivilegedAccess().changePassword(newCreds);
-            } else {
-                if (ldap.get().changePassword(newCreds) != null) {
-                    logger.info("If no previous errors are reported here or in the LDAP-service log, the " +
-                            "credentials for user " + newCreds.username + " should now have been changed succesfully.");
-                } else {
-                    logger.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
-                    return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
-                }
+            try {
+                // TODO: Must change dmx-signup password change API to provide current credentials properly
+                accountManagementService.changePassword(null, newCreds);
+            } catch (Exception e) {
+                logger.severe("Credentials for user " + newCreds.username + " COULD NOT be changed succesfully.");
+                return PasswordChangeRequestResult.PASSWORD_CHANGE_FAILED;
             }
             passwordResetTokenData.remove(token);
             return PasswordChangeRequestResult.SUCCESS;
@@ -451,13 +435,13 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         logger.info("Creating user account with display name \"" + displayName + "\" and email address \"" + emailAddress +
                 "\"");
         hasAccountCreationPrivilegeUseCase.checkAccountCreation();
-        Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(username, emailAddress, displayName), password);
+        Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(null, username, emailAddress, displayName), password);
         return usernameTopic;
     }
 
     private void setupDisplayName(String username, String displayName) throws Exception {
         // 2) create and assign displayname topic to "System" workspace
-        final Topic usernameTopic = accesscontrol.getUsernameTopic(username);
+        final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
         final long usernameTopicId = usernameTopic.getId();
         long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
 
@@ -484,7 +468,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
         try {
             // 1) NewAccountData is set according to username policy
-            String username = createSimpleUserAccount(newAccountData.username, password,
+            String username = createSimpleUserAccount(newAccountData.methodName, newAccountData.username, password,
                     newAccountData.emailAddress);
             final String displayName = newAccountData.displayName;
 
@@ -495,7 +479,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                 deferredDisplayName.put(username, displayName);
             }
 
-            return accesscontrol.getUsernameTopic(username);
+            return dmx.getPrivilegedAccess().getUsernameTopic(username);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Unable to create custom account", e);
             throw new RuntimeException("Creating custom user account failed, mailbox='" + newAccountData.emailAddress +
@@ -553,38 +537,16 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         }
     }
 
-    private boolean isLdapPluginAvailable() {
-        try {
-            return ldap.get() != null;
-        } catch (NoClassDefFoundError error) {
-            return false;
-        }
-    }
-
-    @Override
-    public boolean isLdapAccountCreationEnabled() {
-        return configuration.isCreateLdapAccountsEnabled() && isLdapPluginAvailable();
-    }
-
     @Override
     public boolean isAccountCreationPasswordEditable() {
         return configuration.getAccountCreationPasswordHandling() == AccountCreation.PasswordHandling.EDITABLE;
     }
 
     private Topic createUsername(Credentials credentials) throws Exception {
-        if (isLdapAccountCreationEnabled()) {
-            LDAPService ldapService = ldap.get();
-            if (ldapService != null) {
-                return ldapService.createUser(credentials);
-            } else {
-                throw new RuntimeException("LDAPService not available to create user");
-            }
-        } else {
-            return accesscontrol._createUserAccount(credentials);
-        }
+        return accountManagementService._createUserAccount(credentials);
     }
 
-    private String createSimpleUserAccount(String username, String password, String emailAddress) {
+    private String createSimpleUserAccount(String methodName, String username, String password, String emailAddress) {
         try {
             if (isUsernameTaken(username)) {
                 // Might be thrown if two users compete for registration (of the same username)
@@ -594,6 +556,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
             // 1) Creates a new username topic (in LDAP and/or DMX)
             Credentials creds = new Credentials(username, password);
+            creds.methodName = methodName;
             final Topic usernameTopic = createUsername(creds);
 
             if (usernameTopic == null) {
@@ -640,7 +603,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     @Path("/username/{username}/taken")
     @Override
     public boolean isUsernameTaken(@PathParam("username") String username) {
-        return accesscontrol.getUsernameTopic(username.trim()) != null;
+        return dmx.getPrivilegedAccess().getUsernameTopic(username.trim()) != null;
     }
 
     @Override
@@ -685,7 +648,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
         String token = UUID.randomUUID().toString();
         Instant expiration = calculateTokenExpiration();
         PasswordResetTokenData tokenData = new PasswordResetTokenData(
-                new NewAccountData(username, emailAddress, displayName),
+                new NewAccountData(null, username, emailAddress, displayName),
                 expiration,
                 redirectUrl
         );

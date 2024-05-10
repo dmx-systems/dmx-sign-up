@@ -6,7 +6,7 @@
 
     <name>DMX Sign up</name>
     <artifactId>dmx-sign-up</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <parent>
@@ -19,8 +19,7 @@
         <commons-lang3.version>3.10</commons-lang3.version>
         <dagger.version>2.48.1</dagger.version>
         <dmx.version>5.3.5-SNAPSHOT</dmx.version>
-        <dmx-ldap.version>0.8.0-SNAPSHOT</dmx-ldap.version>
-        <dmx-sendmail.version>2.1.2-SNAPSHOT</dmx-sendmail.version>
+        <dmx-sendmail.version>2.1.1</dmx-sendmail.version>
         <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <mockito.version>4.11.0</mockito.version>
@@ -85,13 +84,6 @@
             <version>${dmx-sendmail.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>systems.dmx</groupId>
-            <artifactId>dmx-ldap</artifactId>
-            <version>${dmx-ldap.version}</version>
-            <optional>true</optional>
-        </dependency>
-
         <!-- DMX -->
         <dependency>
             <groupId>systems.dmx</groupId>
@@ -106,6 +98,11 @@
         <dependency>
             <groupId>systems.dmx</groupId>
             <artifactId>dmx-accesscontrol</artifactId>
+            <version>${dmx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>systems.dmx</groupId>
+            <artifactId>dmx-account-management</artifactId>
             <version>${dmx.version}</version>
         </dependency>
         <dependency>
