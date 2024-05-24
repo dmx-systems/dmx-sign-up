@@ -573,7 +573,12 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
 
     private Topic createUsername(Credentials credentials) throws Exception {
         if (isLdapAccountCreationEnabled()) {
-            return ldap.get().createUser(credentials);
+            LDAPService ldapService = ldap.get();
+            if (ldapService != null) {
+                return ldapService.createUser(credentials);
+            } else {
+                throw new RuntimeException("LDAPService not available to create user");
+            }
         } else {
             return accesscontrol._createUserAccount(credentials);
         }
@@ -590,6 +595,11 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
             // 1) Creates a new username topic (in LDAP and/or DMX)
             Credentials creds = new Credentials(username, password);
             final Topic usernameTopic = createUsername(creds);
+
+            if (usernameTopic == null) {
+                throw new RuntimeException("Username topic had not been created. Cannot continue.");
+            }
+
             dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
                 @Override
                 public Topic call() {
