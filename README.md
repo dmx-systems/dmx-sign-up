@@ -144,7 +144,7 @@ If the bind account is not used account creation and password change will not wo
 
 The plugin allows restricting the allowed authorization methods by setting the property:
 ```
-dmx.signup.restrict_auth_methods = LDAP, BASIC
+dmx.signup.restrict_auth_methods = LDAP, DMX
 ```
 
 The value is a comma-separated list of auth method values. Please note that the order of the restriction list is
