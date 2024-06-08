@@ -717,7 +717,7 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     public List<String> getAuthorizationMethods() {
         Map<String, String> knownAms = new HashMap<>();
         Set<String> originalAms = new HashSet<>(accesscontrol.getAuthorizationMethods());
-        originalAms.add("Basic");
+//        originalAms.add("Basic");
         for (String s : originalAms) {
             // key: lowercased
             // value: original value
