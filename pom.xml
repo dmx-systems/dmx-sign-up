@@ -20,7 +20,7 @@
         <dagger.version>2.48.1</dagger.version>
         <dmx.version>5.3.5-SNAPSHOT</dmx.version>
         <dmx-ldap.version>0.8.0-SNAPSHOT</dmx-ldap.version>
-        <dmx-sendmail.version>2.1.1</dmx-sendmail.version>
+        <dmx-sendmail.version>2.1.2-SNAPSHOT</dmx-sendmail.version>
         <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <mockito.version>4.11.0</mockito.version>
