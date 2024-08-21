@@ -72,7 +72,8 @@ public interface SignupService {
     PasswordChangeRequestResult requestPasswordChange(String token, String password);
     
     /**
-     * Creates a user account with display name, email address as username and password.
+     * Creates a user account with display name, email address as username and password with the globally configured
+     * <em>account managment method</em>.
      *
      * Parts of the given arguments might be ignored depending on the configured username policy.
      *
@@ -96,7 +97,7 @@ public interface SignupService {
      * @return  String  Workspace Topic ID
      */
 
-    SignUpRequestResult requestSignUp(String username, String emailAddress, String displayName, String password,
+    SignUpRequestResult requestSignUp(String methodName, String username, String emailAddress, String displayName, String password,
                                       boolean skipConfirmation);
 
     ProcessSignUpRequestResult requestProcessSignUp(String token);
@@ -112,8 +113,6 @@ public interface SignupService {
      * @return Redirects the request to either "/sign-up/token-info" or "/sign-up/error", depending on the address.
      */
     InitiatePasswordResetRequestResult requestInitiateRedirectPasswordReset(String email, String redirectUrl);
-
-    boolean isLdapAccountCreationEnabled();
 
     /** Returns whether a password can be set during account creation or not. */
     boolean isAccountCreationPasswordEditable();

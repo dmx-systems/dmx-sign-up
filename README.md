@@ -144,7 +144,7 @@ If the bind account is not used account creation and password change will not wo
 
 The plugin allows restricting the allowed authorization methods by setting the property:
 ```
-dmx.signup.restrict_auth_methods = LDAP, BASIC
+dmx.signup.restrict_auth_methods = LDAP, DMX
 ```
 
 The value is a comma-separated list of auth method values. Please note that the order of the restriction list is
@@ -210,6 +210,10 @@ option in topics anymore.
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
+**3.3.0** -- TBD
+
+* Support DMX' decentralized account management
+
 **3.2.0** -- TBD
 
 * Password generation done in backend code
