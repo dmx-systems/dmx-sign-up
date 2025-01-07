@@ -440,29 +440,17 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
     }
 
     private void setupDisplayName(String username, String displayName) throws Exception {
-        // 2) create and assign displayname topic to "System" workspace
-        final Topic usernameTopic = dmx.getPrivilegedAccess().getUsernameTopic(username);
-        final long usernameTopicId = usernameTopic.getId();
+        long usernameTopicId = accesscontrol.getUsernameTopic(username).getId();
         long displayNamesWorkspaceId = getDisplayNamesWorkspaceId();
-
-        dmx.getPrivilegedAccess().runInWorkspaceContext(-1, new Callable<Topic>() {
-            @Override
-            public Topic call() {
-                // create display name facet for username topic
-                facets.addFacetTypeToTopic(usernameTopicId, DISPLAY_NAME_FACET);
-                facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET, mf.newFacetValueModel(DISPLAY_NAME)
-                        .set(displayName));
-                // automatically make users member in "Display Names" workspace
-                dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
-                logger.info("Created membership for new user account in \"Display Names\" workspace " +
-                        "(SharingMode.Collaborative)");
-                // Account creator should be member of "Display Names"
-                RelatedTopic result = facets.getFacet(usernameTopicId, DISPLAY_NAME_FACET);
-                dmx.getPrivilegedAccess().assignToWorkspace(result, displayNamesWorkspaceId);
-
-                return result;
-            }
+        // 1) set user's display name
+        // Note: Display Name topics are created always in "Display Names" workspace
+        dmx.getPrivilegedAccess().runInWorkspaceContext(displayNamesWorkspaceId, () -> {
+            facets.updateFacet(usernameTopicId, DISPLAY_NAME_FACET, mf.newFacetValueModel(DISPLAY_NAME).set(displayName));
+            return null;
         });
+        // 2) invite user to "Display Names" workspace
+        logger.info("Inviting user \"" + username + "\" to workspace \"Display Names\"");
+        dmx.getPrivilegedAccess().createMembership(username, displayNamesWorkspaceId);
     }
 
     private Topic createCustomUserAccount(NewAccountData newAccountData, String password) {
