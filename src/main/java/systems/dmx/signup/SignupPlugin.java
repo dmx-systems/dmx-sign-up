@@ -432,8 +432,8 @@ public class SignupPlugin extends PluginActivator implements SignupService, Post
                                    @PathParam("emailAddress") String emailAddress,
                                    @PathParam("displayname") String displayName,
                                    @PathParam("password") String password) {
-        logger.info("Creating user account with display name \"" + displayName + "\" and email address \"" + emailAddress +
-                "\"");
+        logger.info(String.format("Creating user account \"%s\", emailAddress=\"%s\", displayName=\"%s\", password=\"%s\"",
+            username, emailAddress, displayName, password));
         hasAccountCreationPrivilegeUseCase.checkAccountCreation();
         Topic usernameTopic = createCustomUserAccount(mapToNewAccountData(null, username, emailAddress, displayName), password);
         return usernameTopic;
