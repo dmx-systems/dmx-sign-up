@@ -210,43 +210,45 @@ option in topics anymore.
 DMX Sign-up is available freely under the GNU Affero General Public License, version 3 or later (see [License](https://git.dmx.systems/dmx-plugins/dmx-sign-up/-/blob/master/LICENSE)).
 
 ## Version history
-**3.3.0** -- TBD
 
-* Support DMX' decentralized account management
+**3.3.0** -- Feb 16, 2025
 
-**3.2.0** -- TBD
+* Fix: supports accounts w/ same Display Name (no duplicate Display Name topics)
+* Compatible with DMX's decentralized account management as of DMX 5.3.5
+
+**3.2.0** -- *not released*
 
 * Password generation done in backend code
 * Add expected password complexity option
 * Add expected password length option
 * Depend on dmx-ldap 0.8
 * Removal of legacy migration code
-* Introduce configuration property 'dmx.signup.system_admin_mailbox'
-* Introduce configuration property 'dmx.signup.system_from_mailbox'
-* Introduce configuration property 'dmx.signup.system_from_name'
+* Introduce configuration property `dmx.signup.system_admin_mailbox`
+* Introduce configuration property `dmx.signup.system_from_mailbox`
+* Introduce configuration property `dmx.signup.system_from_name`
 
-**3.1.0** -- Feb, 10, 2024
+**3.1.0** -- Feb 10, 2024
 
 * During migration removes legacy configuration topics and topic types
 * During migration removes API workspace related configuration topics and topic types
 
-**3.0.2** -- Feb, 10, 2024
+**3.0.2** -- Feb 10, 2024
 
 * Last version to store configuration values in a legacy configuration topic
 * Removed API workspace and custom workspace handling
 
-**3.0.1** -- Dec, 20, 2023
+**3.0.1** -- Dec 20, 2023
 
 * Removed unneeded Thymeleaf dependency
 
-**3.0.0** -- Nov, 22, 2023
+**3.0.0** -- Nov 22, 2023
 
 * Compatible with DMX 5.3.3
 * Compatible with dmx-ldap 0.7.0
 * All UI-related code moved into its own plugin
 * Introduced username policies
 
-**2.1.0** -- Jul, 14, 2023
+**2.1.0** -- Jul 14, 2023
 
 * Compatible with DMX 5.3
 * Account creation through LDAP plugin
@@ -314,14 +316,16 @@ DMX Sign-up is available freely under the GNU Affero General Public License, ver
 
 **1.4** -- Jul 11, 2016
 
-New features and changes:<br/>
+New features and changes:
+
 * Extended dialogs to manage passwort reset and login
 * Introduces password reset functionality via Email
 * Added migration moved config topic to 'Administration'
 * Configuration can thus only be loaded during 'init' hook or by 'admin'
 * Compatible with DeepaMehta 4.8
 
-Additional Changes:<br/>
+Additional Changes:
+
 - New Configuration options in particular as required by dm4-kiezatlas-website:<br/>
   Displaying Logout functionality if the user is currently logged-in and visits the login page<br/>
   Added two custom workspace membership features: 1) is set up via a simple _Association_ between the Workspace and the Sign-up Configuraton topic and the other 2) is modelled as a _Note_ relating requests for an additional workspace membership (which works for _private_ or _confidential_ workspaces)<br/>
@@ -330,7 +334,8 @@ Additional Changes:<br/>
 - Signed up mailboxes are for now stored in _admins_ _Private Workspace_ workspace<br/>
 - Providing a OSGi mail notification service for other plugins to send mails to the mailbox configured in _System Recipient Mailbox_
 
-Fixes:<br/>
+Fixes:
+
 - Bug in client side form validation leading to a possible registration when the username is already taken
 
 
@@ -352,11 +357,11 @@ Note: This plugin is not compatible with previous installations of the dm4-sign-
 **1.0.0** -- Dec 25, 2014
 
 - configurable by end-users
-- compatible with 4.4
+- compatible with DeepaMehta 4.4
 - feature complete
 
 Authors
 -------
 
 Copyright (c) 2014-2019 Malte Reißig
-Copyright (c) 2020-2022 DMX Systems
+Copyright (c) 2020-2025 DMX Systems
