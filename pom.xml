@@ -12,14 +12,14 @@
     <parent>
         <groupId>systems.dmx</groupId>
         <artifactId>dmx-plugin</artifactId>
-        <version>5.3.5-SNAPSHOT</version>
+        <version>5.3.5</version>
     </parent>
 
     <properties>
         <commons-lang3.version>3.10</commons-lang3.version>
         <dagger.version>2.48.1</dagger.version>
-        <dmx.version>5.3.5-SNAPSHOT</dmx.version>
-        <dmx-sendmail.version>2.1.2-SNAPSHOT</dmx-sendmail.version>
+        <dmx.version>5.3.5</dmx.version>
+        <dmx-sendmail.version>2.1.2</dmx-sendmail.version>
         <maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <mockito.version>4.11.0</mockito.version>
